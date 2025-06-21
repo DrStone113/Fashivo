@@ -1,5 +1,7 @@
+const JSend = require("../jsend");
+
 function createProduct(req, res) {
-  return res.status(201).json({ product: {} });
+  return res.status(201).json(JSend.success({ product: {} }));
 }
 
 function getProduct(req, res) {
@@ -16,17 +18,19 @@ function getProduct(req, res) {
 
   console.log(filters.join("&"));
 
-  return res.json({ product: [] });
+  return res.json(
+    JSend.success({
+      product: [],
+    })
+  );
 }
 
 function updateProduct(req, res) {
-  return res.json({ product: [] });
+  return res.json(JSend.success({ product: {} }));
 }
 
 function deleteProduct(req, res) {
-  return res.json({
-    message: "Product deleted!",
-  });
+  return res.json(JSend.success());
 }
 
 module.exports = {
