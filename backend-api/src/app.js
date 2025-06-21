@@ -8,7 +8,7 @@ const {
   resourceNotFound,
   handleError,
 } = require("./controllers/errors.controller");
-const swaggerDocument = require("./docs/openapiSpec.json");
+const swaggerDocument = require("../docs/openapiSpec.json");
 
 const app = express();
 
