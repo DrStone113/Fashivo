@@ -8,5 +8,5 @@ app.listen(port, (error) => {
     console.error(`Error starting server:, ${error}`);
     throw error;
   }
-  console.error(`Server is running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });

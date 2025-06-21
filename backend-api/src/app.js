@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 
+const productRouter = require("./routes/product.router");
+
 const app = express();
 
 app.use(cors());
@@ -12,5 +14,7 @@ app.get("/", (req, res) => {
     message: "ok",
   });
 });
+
+productRouter.setup(app);
 
 module.exports = app;

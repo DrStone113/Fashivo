@@ -1,0 +1,15 @@
+const express = require("express");
+
+const productController = require("../controllers/product.controller");
+
+const router = express.Router();
+
+module.exports.setup = (app) => {
+  app.use("/api/v1/product", router);
+
+  router.get("/", productController.getProduct);
+  router.post("/", productController.createProduct);
+
+  router.put("/:id", productController.updateProduct);
+  router.delete("/:id", productController.deleteProduct);
+};
