@@ -7,10 +7,12 @@ const router = express.Router();
 module.exports.setup = (app) => {
   app.use("/api/v1/product", router);
 
-  router.get("/", productController.getProduct);
+  router.get("/", productController.getProductsByFilter);
   router.post("/", productController.createProduct);
+  router.delete("/", productController.deleteAllProducts);
   router.all("/", methodNotAllowed);
 
+  router.get("/:id", productController.getProduct);
   router.put("/:id", productController.updateProduct);
   router.delete("/:id", productController.deleteProduct);
   router.all("/:id", methodNotAllowed);

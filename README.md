@@ -1,6 +1,6 @@
 # CT313H: WEB TECHNOLOGIES AND SERVICES
 
-## Project Name: ...
+## Project Name: Fashivo - Fashion E-commerce Website
 
 Semester 3, Academic year: 2024-2025
 
@@ -13,4 +13,3 @@ Semester 3, Academic year: 2024-2025
 **Student Name 2**: Thạch Nguyễn Khang
 
 **Class Number**: M02
-

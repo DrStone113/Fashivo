@@ -4,7 +4,7 @@ function createProduct(req, res) {
   return res.status(201).json(JSend.success({ product: {} }));
 }
 
-function getProduct(req, res) {
+function getProductsByFilter(req, res) {
   const filters = [];
   const { name, type } = req.query;
 
@@ -25,6 +25,10 @@ function getProduct(req, res) {
   );
 }
 
+function getProduct(req, res) {
+  return res.json(JSend.success({ product: {} }));
+}
+
 function updateProduct(req, res) {
   return res.json(JSend.success({ product: {} }));
 }
@@ -33,7 +37,13 @@ function deleteProduct(req, res) {
   return res.json(JSend.success());
 }
 
+function deleteAllProducts(req, res) {
+  return res.json(JSend.success());
+}
+
 module.exports = {
+  getProductsByFilter,
+  deleteAllProducts,
   getProduct,
   createProduct,
   updateProduct,
