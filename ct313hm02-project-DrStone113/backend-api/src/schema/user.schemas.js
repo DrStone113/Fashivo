@@ -24,7 +24,7 @@ const userIdParamSchema = z.object({
 const updateUserBodySchema = z.object({
   name: z.string().min(1, 'Name cannot be empty').optional(),
   email: z.string().email('Invalid email address').min(1, 'Email cannot be empty').optional(),
-  password: z.string().min(6, 'Password must be at least 6 characters long').optional(),
+  //password: z.string().min(6, 'Password must be at least 6 characters long').optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   role: z.enum(['admin', 'user']).optional(),
