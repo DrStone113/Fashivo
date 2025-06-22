@@ -39,6 +39,14 @@
             "description": "Filter by product type"
           },
           {
+            "in": "query",
+            "name": "available",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by product availability (true/false)"
+          },
+          {
             "$ref": "#/components/parameters/limitParam"
           },
           {
@@ -93,7 +101,41 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Product"
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Product type (e.g., Apparel, Footwear)",
+                    "example": "Apparel"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Product name",
+                    "example": "Elegant Silk Scarf"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Product description",
+                    "example": "A luxurious silk scarf made from 100% pure silk."
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Product price",
+                    "example": 49.99
+                  },
+                  "stock": {
+                    "type": "boolean",
+                    "description": "Product availability (true for in stock, false for out of stock)",
+                    "example": true
+                  },
+                  "imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Product image file to upload"
+                  }
+                },
+                "required": ["type", "name", "price", "stock", "imageFile"]
               }
             }
           }
@@ -139,7 +181,7 @@
           "products"
         ],
         "responses": {
-          "200": {
+          "204": {
             "description": "All products deleted",
             "$ref": "#/components/responses/200NoData"
           }
@@ -203,7 +245,41 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Product"
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Product type (e.g., Apparel, Footwear)",
+                    "example": "Apparel"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Product name",
+                    "example": "Elegant Silk Scarf"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Product description",
+                    "example": "A luxurious silk scarf made from 100% pure silk."
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Product price",
+                    "example": 49.99
+                  },
+                  "stock": {
+                    "type": "boolean",
+                    "description": "Product availability (true for in stock, false for out of stock)",
+                    "example": true
+                  },
+                  "imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Product image file to upload"
+                  }
+                },
+                "required": ["type", "name", "price", "stock", "imageFile"]
               }
             }
           }
@@ -254,7 +330,7 @@
           "products"
         ],
         "responses": {
-          "200": {
+          "204": {
             "description": "Product deleted",
             "$ref": "#/components/responses/200NoData"
           }
@@ -269,41 +345,43 @@
         "properties": {
           "id": {
             "type": "integer",
-            "readOnly": true
+            "readOnly": true,
+            "description": "Product ID (serial)"
           },
           "name": {
             "type": "string",
-            "description": "Product name"
+            "description": "Product name",
+            "example": "Elegant Silk Scarf"
           },
           "type": {
             "type": "string",
-            "description": "Product type"
+            "description": "Product type",
+            "example": "Apparel"
           },
           "description": {
             "type": "string",
-            "description": "Product description"
+            "description": "Product description",
+            "example": "A luxurious silk scarf made from 100% pure silk."
           },
           "price": {
             "type": "number",
             "format": "float",
-            "description": "Product price"
+            "description": "Product price",
+            "example": 49.99
           },
           "available": {
             "type": "boolean",
             "default": true,
-            "description": "Product availability"
+            "description": "Product availability (true for in stock, false for out of stock)",
+            "example": true
           },
-          "image": {
+          "image_url": {
             "type": "string",
             "readOnly": true,
-            "description": "Product image file path"
-          },
-          "imageFile": {
-            "type": "string",
-            "format": "binary",
-            "writeOnly": true,
-            "description": "Product image file"
+            "description": "Product image URL path",
+            "example": "/public/img/products/product-12345.jpeg"
           }
+          // Loại bỏ 'imageFile' khỏi schemas/Product vì nó chỉ là input, không phải thuộc tính của Product
         }
       },
       "PaginationMetadata": {
@@ -361,6 +439,52 @@
             }
           }
         }
+      },
+      "BadRequest": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["fail"]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": ["object", "null"],
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["error"]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": ["object", "null"],
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
       }
     },
     "parameters": {
@@ -370,7 +494,8 @@
         "required": true,
         "in": "path",
         "schema": {
-          "type": "integer"
+          "type": "integer",
+          "format": "int32"
         }
       },
       "limitParam": {
