@@ -381,7 +381,6 @@
             "description": "Product image URL path",
             "example": "/public/img/products/product-12345.jpeg"
           }
-          // Loại bỏ 'imageFile' khỏi schemas/Product vì nó chỉ là input, không phải thuộc tính của Product
         }
       },
       "PaginationMetadata": {

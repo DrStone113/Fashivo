@@ -2,19 +2,13 @@
 const JSend = require("../jsend");
 const ApiError = require("../api-error");
 const catchAsync = require("../catchAsync"); 
-const productService = require("../../services/product.service");
+const productService = require("../services/product.service");
 
-
-// ct313hm02-project-DrStone113/backend-api/src/catchAsync.js
-const catchAsync = (fn) => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-};
-// module.exports = catchAsync;
 
 const createProduct = catchAsync(async (req, res, _next) => {
     let image_url = null;
     if (req.file) {
-        image_url = `/public/image/products/${req.file.filename}`; 
+        image_url = `/public/img/products/${req.file.filename}`; 
     } else {
         return _next(new ApiError(400, 'Product image is required!'));
     }
@@ -40,7 +34,7 @@ const updateProduct = catchAsync(async (req, res, _next) => {
 
     let image_url = undefined;
     if (req.file) {
-        image_url = `/public/img/products/${req.file.filename}`; // Sửa 'image' thành 'img'
+        image_url = `/public/img/products/${req.file.filename}`; 
         // TODO: Logic xóa ảnh cũ nếu có
     }
 
@@ -49,7 +43,7 @@ const updateProduct = catchAsync(async (req, res, _next) => {
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
         ...(price !== undefined && { price }),
-        ...(stock !== undefined && { available: stock }), // stock là boolean
+        ...(stock !== undefined && { available: stock }), 
         ...(image_url !== undefined && { image_url })
     };
 
