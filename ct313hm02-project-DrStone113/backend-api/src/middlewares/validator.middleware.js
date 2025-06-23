@@ -1,5 +1,5 @@
 // ct313hm02-project-DrStone113/backend-api/src/middlewares/validator.middleware.js
-const { ApiError } = require("../api-error"); // Import ApiError
+const  ApiError = require("../api-error"); // Import ApiError
 const { z } = require('zod'); // Import Zod để xử lý ZodError
 
 const validate = (schema) => (req, res, next) => {
@@ -11,9 +11,9 @@ const validate = (schema) => (req, res, next) => {
         });
         next();
     } catch (error) {
-        if (error instanceof z.ZodError) {
+        if (error.issues && Array.isArray(error.issues)) {
             // Chuyển đổi ZodError thành một định dạng dễ đọc hơn
-            const errors = error.errors.map(err => ({
+            const errors = error.issues.map(err => ({ // Sử dụng 'issues' thay vì 'errors' trực tiếp
                 path: err.path.join('.'),
                 message: err.message,
             }));

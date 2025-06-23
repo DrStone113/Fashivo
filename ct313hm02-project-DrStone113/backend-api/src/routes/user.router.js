@@ -1,8 +1,8 @@
 // backend-api/src/routes/user.router.js
 const express = require('express');
 const userController = require('../controllers/user.controller');
-const { userSchema, userIdParamSchema, updateUserSchema } = require("../schemas/user.schemas"); 
-const validate = require("../middlewares/validator.middleware"); 
+const { userSchema, userIdParamSchema, updateUserSchema } = require("../schema/user.schemas"); 
+const { validate } = require("../middlewares/validator.middleware"); 
 const multer = require("multer");
 
 // Cấu hình Multer để lưu trữ ảnh avatar
