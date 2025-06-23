@@ -6,6 +6,7 @@ const swaggerUi = require("swagger-ui-express");
 const JSend = require("./jsend");
 const productRouter = require("./routes/product.router");
 const userRouter = require("./routes/user.router");
+const categoryRouter = require("./routes/category.router");
 
 const {
   resourceNotFound,
@@ -41,6 +42,7 @@ app.use("/public", express.static("public")); // Để phục vụ ảnh đã up
 
 productRouter.setup(app); // Gọi hàm setup của router
 userRouter.setup(app);
+categoryRouter.setup(app);
 
 // Handle 404 error for unknown URL paths
 app.use(resourceNotFound);

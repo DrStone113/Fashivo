@@ -684,7 +684,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": { 
               "schema": {
                 "type": "object",
                 "properties": {
@@ -697,16 +697,27 @@
                     "type": "string",
                     "description": "URL path for the category (slug). If not provided, it will be automatically generated from the name.",
                     "example": "mens-apparel",
-                    "nullable": true
+                    "nullable": true 
                   },
                   "description": {
                     "type": "string",
-                    "nullable": true,
+                    "nullable": true, 
                     "description": "Category description",
                     "example": "Clothing and accessories for men."
                   }
                 },
-                "required": ["name"]
+                "required": ["name"] 
+              },
+              "encoding": { 
+                "name": {
+                  "contentType": "text/plain"
+                },
+                "url_path": {
+                  "contentType": "text/plain"
+                },
+                "description": {
+                  "contentType": "text/plain"
+                }
               }
             }
           }
