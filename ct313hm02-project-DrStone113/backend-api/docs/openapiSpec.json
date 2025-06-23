@@ -1,0 +1,1370 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Fashivo - Fashion E-commerce Website API",
+    "version": "1.0.0",
+    "description": "API for Fashivo fashion e-commerce website",
+    "contact": {
+      "name": "Huỳnh Thanh Nhuận, Thạch Nguyễn Khang",
+      "email": "khangb2205987@student.ctu.edu.vn"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/v1/product": {
+      "get": {
+        "summary": "Get products by filter",
+        "description": "Get products by filter",
+        "operationId": "getProductsByFilter",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by product name"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by product type"
+          },
+          {
+            "in": "query",
+            "name": "minPrice",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Filter by minimum price"
+          },
+          {
+            "in": "query",
+            "name": "maxPrice",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Filter by maximum price"
+          },
+          {
+            "in": "query",
+            "name": "available",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by availability (true/false)"
+          },
+          {
+            "$ref": "#/components/parameters/pageParam"
+          },
+          {
+            "$ref": "#/components/parameters/limitParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of products.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Product"
+                          }
+                        },
+                        "metadata": {
+                          "$ref": "#/components/schemas/PaginationMetadata"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Product"]
+      },
+      "post": {
+        "summary": "Create a new product",
+        "description": "Create a new product with image upload.",
+        "operationId": "createProduct",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "description": "Product type" },
+                  "name": { "type": "string", "description": "Product name" },
+                  "description": { "type": "string", "description": "Product description" },
+                  "price": { "type": "number", "format": "float", "description": "Product price" },
+                  "stock": { "type": "boolean", "description": "Product stock availability" },
+                  "imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file for the product"
+                  }
+                },
+                "required": ["type", "name", "price", "stock", "imageFile"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "product": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Product"]
+      },
+      "delete": {
+        "summary": "Delete all products",
+        "description": "Deletes all products. (Use with caution)",
+        "operationId": "deleteAllProducts",
+        "responses": {
+          "204": {
+            "description": "All products deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Product"]
+      }
+    },
+    "/api/v1/product/{id}": {
+      "get": {
+        "summary": "Get product by ID",
+        "description": "Retrieve a single product by its ID.",
+        "operationId": "getProductById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/productIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "product": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Product"]
+      },
+      "put": {
+        "summary": "Update an existing product",
+        "description": "Updates an existing product's information, including optional image upload.",
+        "operationId": "updateProduct",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/productIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "description": "Product type" },
+                  "name": { "type": "string", "description": "Product name" },
+                  "description": { "type": "string", "description": "Product description" },
+                  "price": { "type": "number", "format": "float", "description": "Product price" },
+                  "stock": { "type": "boolean", "description": "Product stock availability" },
+                  "imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "New image file for the product (optional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "product": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Product"]
+      },
+      "delete": {
+        "summary": "Delete a product by ID",
+        "description": "Deletes a specific product by its ID.",
+        "operationId": "deleteProduct",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/productIdParam"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Product deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Product"]
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "summary": "Get all categories",
+        "description": "Retrieve a list of all product categories with optional filtering by name and pagination.",
+        "operationId": "getAllCategories",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter categories by name (case-insensitive, partial match)."
+          },
+          {
+            "$ref": "#/components/parameters/pageParam"
+          },
+          {
+            "$ref": "#/components/parameters/limitParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "categories": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Category"
+                          }
+                        },
+                        "metadata": {
+                          "$ref": "#/components/schemas/PaginationMetadata"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Category"]
+      },
+      "post": {
+        "summary": "Create a new category",
+        "description": "Creates a new product category.",
+        "operationId": "createCategory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "category": {
+                          "$ref": "#/components/schemas/Category"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Category"]
+      },
+      "delete": {
+        "summary": "Delete all categories",
+        "description": "Deletes all product categories. (Use with caution)",
+        "operationId": "deleteAllCategories",
+        "responses": {
+          "204": {
+            "description": "All categories deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Category"]
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "get": {
+        "summary": "Get category by ID",
+        "description": "Retrieve a single product category by its ID.",
+        "operationId": "getCategoryById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/categoryIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "category": {
+                          "$ref": "#/components/schemas/Category"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Category"]
+      },
+      "put": {
+        "summary": "Update an existing category",
+        "description": "Updates an existing product category's information.",
+        "operationId": "updateCategory",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/categoryIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "category": {
+                          "$ref": "#/components/schemas/Category"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Category"]
+      },
+      "delete": {
+        "summary": "Delete a category by ID",
+        "description": "Deletes a specific product category by its ID.",
+        "operationId": "deleteCategory",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/categoryIdParam"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Category"]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "summary": "Get all users",
+        "description": "Retrieve a list of all users.",
+        "operationId": "getAllUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A list of users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/User"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["User"]
+      },
+      "post": {
+        "summary": "Create a new user",
+        "description": "Creates a new user with an optional avatar image.",
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "description": "User's name" },
+                  "email": { "type": "string", "format": "email", "description": "User's email" },
+                  "address": { "type": "string", "description": "User's address (optional)" },
+                  "phone": { "type": "string", "description": "User's phone number (optional)" },
+                  "role": { "type": "string", "enum": ["customer", "admin"], "default": "customer", "description": "User's role (customer or admin)" },
+                  "avatarFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Avatar image file (optional)"
+                  }
+                },
+                "required": ["name", "email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "description": "Email already exists." },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["User"]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "description": "Retrieve a single user by their ID.",
+        "operationId": "getUserById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["User"]
+      },
+      "put": {
+        "summary": "Update an existing user",
+        "description": "Updates an existing user's information, including optional avatar upload.",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "description": "User's name (optional)" },
+                  "email": { "type": "string", "format": "email", "description": "User's email (optional)" },
+                  "address": { "type": "string", "description": "User's address (optional)" },
+                  "phone": { "type": "string", "description": "User's phone number (optional)" },
+                  "role": { "type": "string", "enum": ["customer", "admin"], "description": "User's role (customer or admin, optional)" },
+                  "avatarFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "New avatar image file (optional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Email already exists." },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["User"]
+      },
+      "delete": {
+        "summary": "Delete a user by ID",
+        "description": "Deletes a specific user by their ID.",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userIdParam"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["User"]
+      }
+    },
+    "/api/v1/carts": {
+      "get": {
+        "summary": "Get all carts",
+        "description": "Retrieve a list of all shopping carts with pagination and optional user ID filter.",
+        "operationId": "getAllCarts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "user_id",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "description": "Filter carts by user ID."
+          },
+          {
+            "$ref": "#/components/parameters/pageParam"
+          },
+          {
+            "$ref": "#/components/parameters/limitParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of carts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "carts": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CartWithItems"
+                          }
+                        },
+                        "metadata": {
+                          "$ref": "#/components/schemas/PaginationMetadata"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      },
+      "post": {
+        "summary": "Create or update a shopping cart",
+        "description": "Adds items to a user's cart. If the cart doesn't exist, it creates one. If the product already exists in the cart, it updates the quantity. This operation expects multipart/form-data where 'items' is a JSON string.",
+        "operationId": "createCart",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "ID of the user for whom the cart is being created/updated.",
+                    "minimum": 1
+                  },
+                  "items": {
+                    "type": "string",
+                    "description": "JSON string representing an array of cart items. Example: `[{\"product_id\": 1, \"quantity\": 2}, {\"product_id\": 3, \"quantity\": 1}]`",
+                    "example": "[{\"product_id\": 1, \"quantity\": 2}, {\"product_id\": 3, \"quantity\": 1}]"
+                  }
+                },
+                "required": ["user_id", "items"]
+              },
+              "encoding": {
+                "items": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cart created or updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cart": {
+                          "$ref": "#/components/schemas/CartWithItems"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      },
+      "delete": {
+        "summary": "Delete all shopping carts",
+        "description": "Deletes all shopping carts and their items. (Use with caution)",
+        "operationId": "deleteAllCarts",
+        "responses": {
+          "204": {
+            "description": "All carts deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      }
+    },
+    "/api/v1/carts/user/{userId}": {
+      "get": {
+        "summary": "Get a user's shopping cart",
+        "description": "Retrieve a specific user's shopping cart, including all items within it.",
+        "operationId": "getCartByUserId",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User's cart data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cart": {
+                          "$ref": "#/components/schemas/CartWithItems"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      }
+    },
+    "/api/v1/carts/{id}": {
+      "get": {
+        "summary": "Get a shopping cart by ID",
+        "description": "Retrieve a specific shopping cart by its ID, including all items within it.",
+        "operationId": "getCartById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cartIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cart": {
+                          "$ref": "#/components/schemas/CartWithItems"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      },
+      "delete": {
+        "summary": "Delete a shopping cart by ID",
+        "description": "Deletes a shopping cart and all its associated items.",
+        "operationId": "deleteCart",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cartIdParam"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cart deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      }
+    },
+    "/api/v1/carts/{id}/item/{productId}": {
+      "put": {
+        "summary": "Update quantity of a specific item in a cart",
+        "description": "Updates the quantity of a product within a specified shopping cart. This operation expects multipart/form-data for 'quantity'.",
+        "operationId": "updateCartItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the cart",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "productId",
+            "in": "path",
+            "description": "ID of the product within the cart",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "description": "New quantity for the product in the cart",
+                    "minimum": 1
+                  }
+                },
+                "required": ["quantity"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cart item quantity updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cartItem": {
+                          "$ref": "#/components/schemas/CartItemDetailed"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      },
+      "delete": {
+        "summary": "Delete a specific item from a cart",
+        "description": "Removes a product from a specified shopping cart.",
+        "operationId": "deleteCartItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the cart",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "productId",
+            "in": "path",
+            "description": "ID of the product to remove from the cart",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cart item deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        },
+        "tags": ["Cart"]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int32", "example": 1 },
+          "type": { "type": "string", "example": "Electronics" },
+          "name": { "type": "string", "example": "Smartphone" },
+          "description": { "type": "string", "example": "Latest model smartphone" },
+          "price": { "type": "number", "format": "float", "example": 699.99 },
+          "available": { "type": "boolean", "example": true },
+          "image_url": { "type": "string", "example": "/public/img/products/product-12345.jpg" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int32", "example": 1 },
+          "name": { "type": "string", "example": "Áo Khoác" },
+          "url_path": { "type": "string", "example": "ao-khoac" },
+          "description": { "type": "string", "example": "Các loại áo khoác nam nữ" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CategoryInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Áo Khoác", "description": "Category name" },
+          "url_path": { "type": "string", "example": "ao-khoac", "description": "URL friendly path (optional)" },
+          "description": { "type": "string", "example": "Các loại áo khoác nam nữ", "description": "Category description (optional)" }
+        },
+        "required": ["name"]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int32", "example": 1 },
+          "name": { "type": "string", "example": "John Doe" },
+          "email": { "type": "string", "format": "email", "example": "john.doe@example.com" },
+          "address": { "type": "string", "example": "123 Main St" },
+          "phone": { "type": "string", "example": "123-456-7890" },
+          "role": { "type": "string", "enum": ["customer", "admin"], "example": "customer" },
+          "avatar_url": { "type": "string", "example": "/public/avatars/user-avatar.jpg" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CartItem": {
+        "type": "object",
+        "properties": {
+          "product_id": { "type": "integer", "format": "int32", "example": 1 },
+          "quantity": { "type": "integer", "example": 2 }
+        },
+        "required": ["product_id", "quantity"]
+      },
+      "CartItemDetailed": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int32", "example": 1 },
+          "cart_id": { "type": "integer", "format": "int32", "example": 1 },
+          "product_id": { "type": "integer", "format": "int32", "example": 1 },
+          "quantity": { "type": "integer", "example": 2 },
+          "item_price": { "type": "number", "format": "float", "example": 699.99, "description": "Price of the product when it was added to the cart" },
+          "product_name": { "type": "string", "example": "Smartphone" },
+          "product_description": { "type": "string", "example": "Latest model smartphone" },
+          "current_product_price": { "type": "number", "format": "float", "example": 729.99, "description": "Current price of the product" },
+          "product_image_url": { "type": "string", "example": "/public/img/products/product-12345.jpg" },
+          "product_available": { "type": "boolean", "example": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Cart": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int32", "example": 1 },
+          "user_id": { "type": "integer", "format": "int32", "example": 1 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CartWithItems": {
+        "type": "object",
+        "allOf": [
+          { "$ref": "#/components/schemas/Cart" },
+          {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CartItemDetailed"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PaginationMetadata": {
+        "type": "object",
+        "properties": {
+          "totalRecords": { "type": "integer", "example": 50 },
+          "currentPage": { "type": "integer", "example": 1 },
+          "totalPages": { "type": "integer", "example": 5 },
+          "firstPage": { "type": "integer", "example": 1 },
+          "lastPage": { "type": "integer", "example": 5 },
+          "limit": { "type": "integer", "example": 10 }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "error" },
+          "message": { "type": "string", "example": "Something went wrong" },
+          "statusCode": { "type": "integer", "example": 500 }
+        }
+      }
+    },
+    "parameters": {
+      "productIdParam": {
+        "name": "id",
+        "description": "Product ID",
+        "required": true,
+        "in": "path",
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "limitParam": {
+        "name": "limit",
+        "description": "Number of records per page",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100
+        },
+        "required": false
+      },
+      "pageParam": {
+        "name": "page",
+        "description": "Page number of records",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1
+        },
+        "required": false
+      },
+      "categoryIdParam": {
+        "name": "id",
+        "description": "Category ID",
+        "required": true,
+        "in": "path",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        }
+      },
+      "userIdParam": {
+        "name": "userId",
+        "description": "User ID",
+        "required": true,
+        "in": "path",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        }
+      },
+      "cartIdParam": {
+        "name": "id",
+        "description": "Cart ID",
+        "required": true,
+        "in": "path",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid input data.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Product",
+      "description": "Operations related to products"
+    },
+    {
+      "name": "Category",
+      "description": "Operations related to categories"
+    },
+    {
+      "name": "User",
+      "description": "Operations related to users"
+    },
+    {
+      "name": "Cart",
+      "description": "Operations related to shopping carts"
+    }
+  ]
+}
