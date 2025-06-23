@@ -1109,9 +1109,8 @@
             }
           }
         }
-      }
-    },
-    "Category": {
+      },
+      "Category": {
         "type": "object",
         "properties": {
           "id": {
@@ -1178,7 +1177,8 @@
             }
           }
         }
-      },
+      }
+    },
       "BadRequest": {
         "description": "Bad Request",
         "content": {
@@ -1300,51 +1300,51 @@
             }
           }
         }
-      }
-    },
-    "parameters": {
-      "productIdParam": {
-        "name": "id",
-        "description": "Product ID",
-        "required": true,
-        "in": "path",
-        "schema": {
-          "type": "integer",
-          "format": "int32"
-        }
       },
-      "limitParam": {
-        "name": "limit",
-        "description": "Number of records per page",
-        "in": "query",
-        "schema": {
-          "type": "integer",
-          "default": 5,
-          "minimum": 1,
-          "maximum": 100
+      "parameters": {
+        "productIdParam": {
+          "name": "id",
+          "description": "Product ID",
+          "required": true,
+          "in": "path",
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
         },
-        "required": false
-      },
-      "pageParam": {
-        "name": "page",
-        "description": "Page number of records",
-        "in": "query",
-        "schema": {
-          "type": "integer",
-          "default": 1,
-          "minimum": 1
+        "limitParam": {
+          "name": "limit",
+          "description": "Number of records per page",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "required": false
         },
-        "required": false
-      },
-  "categoryIdParam": {
-        "name": "id",
-        "description": "Category ID",
-        "required": true,
-        "in": "path",
-        "schema": {
-          "type": "integer",
-          "format": "int32",
-          "minimum": 1
+        "pageParam": {
+          "name": "page",
+          "description": "Page number of records",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "default": 1,
+            "minimum": 1
+          },
+          "required": false
+        },
+    "categoryIdParam": {
+          "name": "id",
+          "description": "Category ID",
+          "required": true,
+          "in": "path",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          }
         }
       }
     },
