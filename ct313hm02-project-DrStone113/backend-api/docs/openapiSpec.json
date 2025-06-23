@@ -1093,9 +1093,8 @@
             }
           }
         }
-      }
-    },
-    "Category": {
+      },
+      "Category": {
         "type": "object",
         "properties": {
           "id": {
@@ -1132,7 +1131,7 @@
             "readOnly": true
           }
         },
-        "required": ["name"] 
+        "required": ["name"]
       }
     },
     "responses": {
@@ -1320,7 +1319,7 @@
         },
         "required": false
       },
-  "categoryIdParam": {
+      "categoryIdParam": {
         "name": "id",
         "description": "Category ID",
         "required": true,
@@ -1331,7 +1330,8 @@
           "minimum": 1
         }
       }
-    },
+    }
+  },
   "tags": [
     {
       "name": "products",
