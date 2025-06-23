@@ -56,11 +56,13 @@
           },
           {
             "in": "query",
-            "name": "available",
+            "name": "category_id",
             "schema": {
-              "type": "boolean"
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
             },
-            "description": "Filter by availability (true/false)"
+            "description": "Filter by product availability stock (true/false)"
           },
           {
             "$ref": "#/components/parameters/pageParam"
