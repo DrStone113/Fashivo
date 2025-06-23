@@ -1,26 +1,29 @@
-// ct313hm02-project-DrStone113/backend-api/src/middlewares/validator.middleware.js
-const  ApiError = require("../api-error"); // Import ApiError
-const { z } = require('zod'); // Import Zod để xử lý ZodError
+const ApiError = require("../api-error");
+const { z } = require('zod');
 
 const validate = (schema) => (req, res, next) => {
     try {
-        schema.parse({
-            body: req.body,
-            query: req.query,
-            params: req.params,
-        });
+        if (schema.body) {
+            // Parse và gán lại req.body đã được validate
+            // req.body chứa các trường text từ multipart/form-data do multer.none() xử lý
+            req.body = schema.body.parse(req.body);
+        }
+        if (schema.query) {
+            req.query = schema.query.parse(req.query);
+        }
+        if (schema.params) {
+            req.params = schema.params.parse(req.params);
+        }
         next();
     } catch (error) {
-        if (error.issues && Array.isArray(error.issues)) {
-            // Chuyển đổi ZodError thành một định dạng dễ đọc hơn
-            const errors = error.issues.map(err => ({ // Sử dụng 'issues' thay vì 'errors' trực tiếp
+        if (error instanceof z.ZodError) { // Kiểm tra nếu là ZodError
+            const errors = error.issues.map(err => ({
                 path: err.path.join('.'),
                 message: err.message,
             }));
             return next(new ApiError(400, "Validation failed", { validationErrors: errors }));
         }
-        // Các lỗi khác không phải ZodError
-        next(error);
+        next(error); // Chuyển các lỗi khác không phải ZodError
     }
 };
 

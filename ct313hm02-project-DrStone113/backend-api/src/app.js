@@ -1,4 +1,3 @@
-// ct313hm02-project-DrStone113/backend-api/src/app.js
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
@@ -6,12 +5,12 @@ const swaggerUi = require("swagger-ui-express");
 const JSend = require("./jsend");
 const productRouter = require("./routes/product.router");
 const userRouter = require("./routes/user.router");
-const categoryRouter = require("./routes/category.router");
+const categoryRouter = require("./routes/category.router"); // <-- Đảm bảo dòng này
 
 const {
   resourceNotFound,
   handleError,
-} = require("./controllers/errors.controller"); 
+} = require("./controllers/errors.controller");
 let swaggerDocument;
 try {
   swaggerDocument = require("../docs/openapiSpec.json");
@@ -25,10 +24,10 @@ try {
 const app = express();
 
 app.use(cors());
-app.use(express.json()); // Để xử lý application/json
-app.use(express.urlencoded({ extended: true })); // Để xử lý application/x-www-form-urlencoded
+app.use(express.json()); // Để xử lý application/json (cho các route khác không dùng multipart)
+app.use(express.urlencoded({ extended: true })); // Để xử lý application/x-www-form-urlencoded (cho các route khác không dùng multipart)
 
-// Multer xử lý multipart/form-data, nên không cần express.json() hay urlencoded cho loại này
+// Multer xử lý multipart/form-data, nên không cần express.json() hay urlencoded cho loại này TRÊN CÁC ROUTE CÓ MULTER
 
 app.get("/", (req, res) => {
   return res.json(JSend.success({ message: "Welcome to Fashivo API!" }));
@@ -42,7 +41,7 @@ app.use("/public", express.static("public")); // Để phục vụ ảnh đã up
 
 productRouter.setup(app); // Gọi hàm setup của router
 userRouter.setup(app);
-categoryRouter.setup(app);
+categoryRouter.setup(app); // <-- Đảm bảo dòng này
 
 // Handle 404 error for unknown URL paths
 app.use(resourceNotFound);

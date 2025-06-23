@@ -1,13 +1,11 @@
-// ct313hm02-project-DrStone113/backend-api/src/schemas/category.schemas.js
 const { z } = require('zod');
 
 // Schema cho việc tạo/cập nhật danh mục
+// Đây là schema cho TRỰC TIẾP req.body sau khi multer đã xử lý
 const categorySchema = z.object({
-  body: z.object({
-    name: z.string().min(1, 'Category name is required').max(100, 'Category name cannot be more than 100 characters'),
-    url_path: z.string().min(1, 'URL path is required').max(100, 'URL path cannot be more than 100 characters').toLowerCase().trim().optional(), // Có thể để optional và xử lý gen trong controller
-    description: z.string().max(500, 'Category description cannot be more than 500 characters').optional().nullable(),
-  }),
+  name: z.string().min(1, 'Category name is required').max(100, 'Category name cannot be more than 100 characters'),
+  url_path: z.string().max(100, 'URL path cannot be more than 100 characters').toLowerCase().trim().optional().nullable(), // url_path có thể là null hoặc undefined nếu không cung cấp
+  description: z.string().max(500, 'Category description cannot be more than 500 characters').optional().nullable(),
 });
 
 // Schema cho truy vấn danh mục (GET /api/v1/categories)
