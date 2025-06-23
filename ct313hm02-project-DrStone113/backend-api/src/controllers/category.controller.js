@@ -78,6 +78,8 @@ const getAllCategories = catchAsync(async (req, res, _next) => {
 });
 
 const getCategoryById = catchAsync(async (req, res, _next) => {
+    console.log("Value of req.params.id:", req.params.id); 
+    
     const category = await categoryService.getCategoryById(req.params.id);
     if (!category) return _next(new ApiError(404, "No category found with that ID"));
     res.status(200).json(JSend.success({ category }));

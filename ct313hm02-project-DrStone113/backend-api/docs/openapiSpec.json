@@ -768,7 +768,15 @@
         "tags": ["Categories"],
         "parameters": [
           {
-            "$ref": "#/components/parameters/categoryIdParam"
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Category ID",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
           }
         ],
         "responses": {
@@ -811,7 +819,15 @@
         "tags": ["Categories"],
         "parameters": [
           {
-            "$ref": "#/components/parameters/categoryIdParam"
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Category ID",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
           }
         ],
         "requestBody": {
