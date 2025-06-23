@@ -15,45 +15,52 @@ class ProductService {
             price: productData.price,
             available: productData.available, 
             image_url: productData.image_url,
-            
+            category_id: productData.category_id,
         }).returning('*'); 
         return newProduct;
     }
 
     // READ (Get all with filters)
     async getAllProducts(filters) {
-        let query = this.knex('products');
-
+        let query = this.knex('products')
+            .leftJoin('categories', 'products.category_id', 'categories.id')
+            .select(
+                'products.*',
+                'categories.name as category_name',
+                'categories.description as category_description'
+            );
+    
         if (filters.name) {
-            query = query.where('name', 'ilike', `%${filters.name}%`);
+            query = query.where('products.name', 'ilike', `%${filters.name}%`);
         }
         if (filters.type) {
-            query = query.where('type', filters.type);
+            query = query.where('products.type', filters.type);
         }
         if (filters.minPrice) {
-            query = query.where('price', '>=', parseFloat(filters.minPrice));
+            query = query.where('products.price', '>=', parseFloat(filters.minPrice));
         }
         if (filters.maxPrice) {
-            query = query.where('price', '<=', parseFloat(filters.maxPrice));
+            query = query.where('products.price', '<=', parseFloat(filters.maxPrice));
         }
         if (filters.available !== undefined) {
-             
             const availableBoolean = String(filters.available).toLowerCase() === 'true';
-            query = query.where('available', availableBoolean);
+            query = query.where('products.available', availableBoolean);
         }
-
-
-        const totalItems = await query.clone().count('* as count').first();
-        const totalRecords = parseInt(totalItems.count, 10);
-
+        if (filters.category_id !== undefined) {
+            query = query.where('products.category_id', filters.category_id);
+        }
+    
+        const totalItemsResult = await query.clone().clearSelect().count('* as count').first();
+        const totalRecords = parseInt(totalItemsResult.count, 10);
+    
         const page = parseInt(filters.page, 10) || 1;
         const limit = parseInt(filters.limit, 10) || 10;
         const offset = (page - 1) * limit;
-
+    
         const products = await query.offset(offset).limit(limit);
-
+    
         const totalPages = Math.ceil(totalRecords / limit);
-
+    
         return {
             products,
             totalItems: totalRecords,
@@ -61,11 +68,21 @@ class ProductService {
             totalPages,
         };
     }
+    
 
     // READ (Get by ID)
     async getProductById(id) {
         
-        return await this.knex('products').where({ id: id }).first();
+        // Thêm join để lấy thông tin category khi lấy sản phẩm theo ID
+        return await this.knex('products')
+            .leftJoin('categories', 'products.category_id', 'categories.id')
+            .select(
+                'products.*',
+                'categories.name as category_name',
+                'categories.description as category_description'
+            )
+            .where('products.id', id) // Chỉ rõ bảng
+            .first();
     }
 
     // UPDATE

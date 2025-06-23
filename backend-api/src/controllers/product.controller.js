@@ -3,6 +3,7 @@ const JSend = require("../jsend");
 const ApiError = require("../api-error");
 const catchAsync = require("../catchAsync"); 
 const productService = require("../services/product.service");
+const categoryService = require("../services/category.service");
 
 
 const createProduct = catchAsync(async (req, res, _next) => {
@@ -13,7 +14,15 @@ const createProduct = catchAsync(async (req, res, _next) => {
         return _next(new ApiError(400, 'Product image is required!'));
     }
 
-    const { type, name, description, price, stock } = req.body;
+    const { type, name, description, price, stock, category_id } = req.body;
+
+    // Kiểm tra sự tồn tại của category_id (tùy chọn, DB Foreign Key cũng sẽ kiểm tra)
+    if (category_id !== undefined && category_id !== null) {
+        const categoryExists = await categoryService.getCategoryById(category_id);
+        if (!categoryExists) {
+            return _next(new ApiError(400, `Category with ID ${category_id} does not exist.`));
+        }
+    }
 
     const productData = {
         type,
@@ -22,6 +31,7 @@ const createProduct = catchAsync(async (req, res, _next) => {
         price,
         available: stock, 
         image_url,
+        category_id,
     };
 
     const newProduct = await productService.createProduct(productData);
@@ -30,12 +40,20 @@ const createProduct = catchAsync(async (req, res, _next) => {
 
 const updateProduct = catchAsync(async (req, res, _next) => {
     const { id } = req.params;
-    const { type, name, description, price, stock } = req.body;
+    const { type, name, description, price, stock, category_id } = req.body;
 
     let image_url = undefined;
     if (req.file) {
         image_url = `/public/img/products/${req.file.filename}`; 
         // TODO: Logic xóa ảnh cũ nếu có
+    }
+
+    // Kiểm tra sự tồn tại của category_id khi cập nhật
+    if (category_id !== undefined && category_id !== null) {
+        const categoryExists = await categoryService.getCategoryById(category_id);
+        if (!categoryExists) {
+            return _next(new ApiError(400, `Category with ID ${category_id} does not exist.`));
+        }
     }
 
     const productData = {
@@ -44,7 +62,8 @@ const updateProduct = catchAsync(async (req, res, _next) => {
         ...(description !== undefined && { description }),
         ...(price !== undefined && { price }),
         ...(stock !== undefined && { available: stock }), 
-        ...(image_url !== undefined && { image_url })
+        ...(image_url !== undefined && { image_url }),
+        ...(category_id !== undefined && { category_id })
     };
 
     // Kiểm tra xem có dữ liệu để cập nhật không

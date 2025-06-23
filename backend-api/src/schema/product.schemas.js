@@ -9,6 +9,7 @@ const productSchema = z.object({
     description: z.string().optional(),
     price: z.coerce.number().positive('Price must be a positive number'),
     stock: z.coerce.boolean(), // Sẽ chuyển đổi "true"/"false" từ form-data thành boolean
+    category_id: z.coerce.number().int().positive('Category ID must be a positive integer').optional(),
   }),
 });
 
@@ -20,6 +21,7 @@ const getProductQuerySchema = z.object({
     minPrice: z.coerce.number().optional(),
     maxPrice: z.coerce.number().optional(),
     available: z.coerce.boolean().optional(), // Thêm filter available
+    category_id: z.coerce.number().int().positive().optional(),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(10),
   }),
