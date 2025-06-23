@@ -122,9 +122,15 @@
                     "type": "string",
                     "format": "binary",
                     "description": "Image file for the product"
+                  },
+		  "category_id": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "ID of product catalog",
+                    "example": 1
                   }
                 },
-                "required": ["type", "name", "price", "stock", "imageFile"]
+                "required": ["type", "name", "price", "stock", "imageFile", "category_id"]
               }
             }
           }
@@ -242,7 +248,13 @@
                     "type": "string",
                     "format": "binary",
                     "description": "New image file for the product (optional)"
-                  }
+                  },
+		  "category_id": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "ID of product catalog",
+                    "example": 2
+                  }      
                 }
               }
             }
@@ -1140,6 +1152,18 @@
           "price": { "type": "number", "format": "float", "example": 699.99 },
           "available": { "type": "boolean", "example": true },
           "image_url": { "type": "string", "example": "/public/img/products/product-12345.jpg" },
+	  "category_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "ID of product catalog which products belong to",
+            "example": 1
+          },
+	  "category_name": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Description of the product category (read-only, returned from join)",
+            "example": "High-performance computing devices."
+          },
           "created_at": { "type": "string", "format": "date-time" },
           "updated_at": { "type": "string", "format": "date-time" }
         }
