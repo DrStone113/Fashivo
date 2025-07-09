@@ -1,7 +1,7 @@
 // ct313hm02-project-DrStone113/backend-api/src/routes/product.router.js
 const express = require("express");
 const productController = require("../controllers/product.controller");
-const productSchemas = require("../schema/product.schemas");
+const productSchemas = require("../schema/product.schemas"); // Correct path
 const { validate } = require("../middlewares/validator.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require("multer");
@@ -9,10 +9,10 @@ const ApiError = require("../api-error");
 
 const router = express.Router();
 
-// Multer setup
+// Multer setup for product images
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/img/products');
+    cb(null, 'public/img/products'); 
   },
   filename: (req, file, cb) => {
     const ext = file.mimetype.split("/")[1];
@@ -32,7 +32,7 @@ const multerFilter = (req, file, cb) => {
 const upload = multer({
   storage: multerStorage,
   fileFilter: multerFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
 // ROUTES
@@ -42,22 +42,21 @@ module.exports.setup = (app) => {
   router.route("/")
     .get(validate(productSchemas.getProductQuerySchema), productController.getAllProducts)
     .post(
-      upload.single("imageFile"),
-      validate(productSchemas.productSchema),
+      upload.single("imageFile"), 
+      validate(productSchemas.createProductSchema), // Use create schema
       productController.createProduct
     )
     .delete(productController.deleteAllProducts);
 
   router.route("/:id")
     .get(validate(productSchemas.productIdParamSchema), productController.getProductById)
-    .put(
-      validate(productSchemas.productIdParamSchema),
-      upload.single("imageFile"),
-      validate(productSchemas.productSchema),
+    .put( // Or PATCH, depending on your API design for partial updates
+      upload.single("imageFile"), // Allow image update
+      validate(productSchemas.updateProductSchema), // Use update schema
       productController.updateProduct
     )
     .delete(validate(productSchemas.productIdParamSchema), productController.deleteProduct);
 
   router.all("/", methodNotAllowed);
   router.all("/:id", methodNotAllowed);
-};
+}
