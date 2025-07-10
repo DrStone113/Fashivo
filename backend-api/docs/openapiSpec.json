@@ -19,7 +19,7 @@
     "/api/v1/product": {
       "get": {
         "summary": "Get products by filter",
-        "description": "Get products by filter",
+        "description": "Retrieve a list of products based on various filters like name, type, price range, and category.",
         "operationId": "getProductsByFilter",
         "parameters": [
           {
@@ -28,7 +28,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Filter by product name"
+            "description": "Filter by product name (case-insensitive partial match)."
           },
           {
             "in": "query",
@@ -36,23 +36,27 @@
             "schema": {
               "type": "string"
             },
-            "description": "Filter by product type"
+            "description": "Filter by product type (e.g., 'Electronics', 'Books')."
           },
           {
             "in": "query",
             "name": "minPrice",
             "schema": {
-              "type": "number"
+              "type": "number",
+              "format": "float",
+              "minimum": 0
             },
-            "description": "Filter by minimum price"
+            "description": "Filter by minimum product price."
           },
           {
             "in": "query",
             "name": "maxPrice",
             "schema": {
-              "type": "number"
+              "type": "number",
+              "format": "float",
+              "minimum": 0
             },
-            "description": "Filter by maximum price"
+            "description": "Filter by maximum product price."
           },
           {
             "in": "query",
@@ -62,7 +66,7 @@
               "format": "int32",
               "minimum": 1
             },
-            "description": "Filter by product availability stock (true/false)"
+            "description": "Filter by product category ID."
           },
           {
             "$ref": "#/components/parameters/pageParam"
@@ -73,13 +77,16 @@
         ],
         "responses": {
           "200": {
-            "description": "A list of products.",
+            "description": "A paginated list of products matching the criteria.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -99,14 +106,20 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Product"]
+        "tags": [
+          "Product"
+        ]
       },
       "post": {
         "summary": "Create a new product",
-        "description": "Create a new product with image upload.",
+        "description": "Adds a new product to the inventory, including uploading an image file.",
         "operationId": "createProduct",
         "requestBody": {
           "required": true,
@@ -115,24 +128,65 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "description": "Product type" },
-                  "name": { "type": "string", "description": "Product name" },
-                  "description": { "type": "string", "description": "Product description" },
-                  "price": { "type": "number", "format": "float", "description": "Product price" },
-                  "stock": { "type": "boolean", "description": "Product stock availability" },
+                  "type": {
+                    "type": "string",
+                    "example": "Electronics",
+                    "minLength": 1,
+                    "description": "The general type or category of the product (e.g., 'Electronics', 'Books')."
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "New Smartphone Model",
+                    "minLength": 1,
+                    "description": "The name of the new product."
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "A brand new, powerful smartphone with advanced features.",
+                    "nullable": true,
+                    "maxLength": 1000,
+                    "description": "A detailed description of the product."
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 799.99,
+                    "minimum": 0.01,
+                    "description": "The selling price of the product."
+                  },
+                  "stock": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 50,
+                    "minimum": 0,
+                    "description": "The current quantity of the product available in stock."
+                  },
+                  "category_id": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 1,
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "The ID of the category this product belongs to. Optional if a default is used."
+                  },
                   "imageFile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Image file for the product"
-                  },
-		  "category_id": {
-                    "type": "integer",
-                    "format": "int32",
-                    "description": "ID of product catalog",
-                    "example": 1
+                    "description": "The image file (e.g., PNG, JPEG) for the product. Max size 5MB."
                   }
                 },
-                "required": ["type", "name", "price", "stock", "imageFile", "category_id"]
+                "required": [
+                  "type",
+                  "name",
+                  "price",
+                  "stock",
+                  "imageFile"
+                ]
+              },
+              "encoding": {
+                "imageFile": {
+                  "contentType": "image/png, image/jpeg, image/gif"
+                }
               }
             }
           }
@@ -145,7 +199,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Product created successfully."
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -159,39 +220,38 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Product"]
+        "tags": [
+          "Product"
+        ]
       },
       "delete": {
         "summary": "Delete all products",
-        "description": "Deletes all products. (Use with caution)",
+        "description": "Deletes all products from the inventory. **Use with extreme caution!** This action cannot be undone.",
         "operationId": "deleteAllProducts",
         "responses": {
           "204": {
-            "description": "All products deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "success" },
-                    "data": { "type": "object", "nullable": true }
-                  }
-                }
-              }
-            }
+            "description": "All products deleted successfully. (No content returned)"
           },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Product"]
+        "tags": [
+          "Product"
+        ]
       }
     },
     "/api/v1/product/{id}": {
       "get": {
         "summary": "Get product by ID",
-        "description": "Retrieve a single product by its ID.",
+        "description": "Retrieves detailed information about a single product using its unique ID.",
         "operationId": "getProductById",
         "parameters": [
           {
@@ -200,13 +260,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Product data.",
+            "description": "Product data retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -220,14 +283,20 @@
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Product"]
+        "tags": [
+          "Product"
+        ]
       },
       "put": {
         "summary": "Update an existing product",
-        "description": "Updates an existing product's information, including optional image upload.",
+        "description": "Updates one or more fields of an existing product, including an optional new image upload.",
         "operationId": "updateProduct",
         "parameters": [
           {
@@ -241,22 +310,68 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "description": "Product type" },
-                  "name": { "type": "string", "description": "Product name" },
-                  "description": { "type": "string", "description": "Product description" },
-                  "price": { "type": "number", "format": "float", "description": "Product price" },
-                  "stock": { "type": "boolean", "description": "Product stock availability" },
+                  "type": {
+                    "type": "string",
+                    "example": "Electronics",
+                    "minLength": 1,
+                    "nullable": true,
+                    "description": "Optional: Update the product type."
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Updated Smartphone Name",
+                    "minLength": 1,
+                    "nullable": true,
+                    "description": "Optional: Update the product name."
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Description changed to reflect new features.",
+                    "nullable": true,
+                    "maxLength": 1000,
+                    "description": "Optional: Update the product description."
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 750,
+                    "minimum": 0.01,
+                    "nullable": true,
+                    "description": "Optional: Update the product price."
+                  },
+                  "stock": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 20,
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Optional: Update the current quantity in stock."
+                  },
+                  "available": {
+                    "type": "boolean",
+                    "example": false,
+                    "nullable": true,
+                    "description": "Optional: Explicitly set product availability (True if stock > 0)."
+                  },
+                  "category_id": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 2,
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Optional: Update the category ID this product belongs to."
+                  },
                   "imageFile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "New image file for the product (optional)"
-                  },
-		  "category_id": {
-                    "type": "integer",
-                    "format": "int32",
-                    "description": "ID of product catalog",
-                    "example": 2
-                  }      
+                    "description": "Optional: Provide a new image file to replace the existing one."
+                  }
+                },
+                "minProperties": 1
+              },
+              "encoding": {
+                "imageFile": {
+                  "contentType": "image/png, image/jpeg, image/gif"
                 }
               }
             }
@@ -270,7 +385,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Product updated successfully."
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -284,15 +406,23 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Product"]
+        "tags": [
+          "Product"
+        ]
       },
       "delete": {
         "summary": "Delete a product by ID",
-        "description": "Deletes a specific product by its ID.",
+        "description": "Deletes a specific product from the inventory using its unique ID.",
         "operationId": "deleteProduct",
         "parameters": [
           {
@@ -301,23 +431,18 @@
         ],
         "responses": {
           "204": {
-            "description": "Product deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "success" },
-                    "data": { "type": "object", "nullable": true }
-                  }
-                }
-              }
-            }
+            "description": "Product deleted successfully. (No content returned)"
           },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Product"]
+        "tags": [
+          "Product"
+        ]
       }
     },
     "/api/v1/categories": {
@@ -349,7 +474,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -369,21 +497,27 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Category"]
+        "tags": [
+          "Category"
+        ]
       },
       "post": {
         "summary": "Create a new category",
-        "description": "Creates a new product category.",
+        "description": "Adds a new category to the database.",
         "operationId": "createCategory",
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CategoryInput"
+                "$ref": "#/components/schemas/CategoryCreateRequest"
               }
             }
           }
@@ -396,7 +530,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Category created successfully."
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -410,33 +551,32 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Category"]
+        "tags": [
+          "Category"
+        ]
       },
       "delete": {
         "summary": "Delete all categories",
-        "description": "Deletes all product categories. (Use with caution)",
+        "description": "Deletes all product categories. **Use with extreme caution!** This action cannot be undone.",
         "operationId": "deleteAllCategories",
         "responses": {
           "204": {
-            "description": "All categories deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "success" },
-                    "data": { "type": "object", "nullable": true }
-                  }
-                }
-              }
-            }
+            "description": "All categories deleted successfully. (No content returned)"
           },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Category"]
+        "tags": [
+          "Category"
+        ]
       }
     },
     "/api/v1/categories/{id}": {
@@ -457,7 +597,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -471,10 +614,16 @@
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Category"]
+        "tags": [
+          "Category"
+        ]
       },
       "put": {
         "summary": "Update an existing category",
@@ -488,9 +637,9 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CategoryInput"
+                "$ref": "#/components/schemas/CategoryUpdateRequest"
               }
             }
           }
@@ -503,7 +652,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "success" },
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Category updated successfully."
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -517,11 +673,19 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Category"]
+        "tags": [
+          "Category"
+        ]
       },
       "delete": {
         "summary": "Delete a category by ID",
@@ -534,23 +698,18 @@
         ],
         "responses": {
           "204": {
-            "description": "Category deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "success" },
-                    "data": { "type": "object", "nullable": true }
-                  }
-                }
-              }
-            }
+            "description": "Category deleted successfully. (No content returned)"
           },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
-        "tags": ["Category"]
+        "tags": [
+          "Category"
+        ]
       }
     },
     "/api/v1/users": {
@@ -561,30 +720,24 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "A list of users.",
+            "description": "List of users retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "success" },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "users": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/User"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/UserListSuccessResponse"
                 }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/InternalServerError" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
         },
         "tags": ["User"]
       },
@@ -644,7 +797,7 @@
         "tags": ["User"]
       }
     },
-    "/api/v1/users/{id}": {
+    "/api/v1/users/{userId}": {
       "get": {
         "summary": "Get user by ID",
         "description": "Retrieve a single user by their ID.",
@@ -1144,211 +1297,441 @@
   },
   "components": {
     "schemas": {
-      "Product": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int32", "example": 1 },
-          "type": { "type": "string", "example": "Electronics" },
-          "name": { "type": "string", "example": "Smartphone" },
-          "description": { "type": "string", "example": "Latest model smartphone" },
-          "price": { "type": "number", "format": "float", "example": 699.99 },
-          "available": { "type": "boolean", "example": true },
-          "image_url": { "type": "string", "example": "/public/img/products/product-12345.jpg" },
-	  "category_id": {
+        "Product": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "integer", "format": "int32", "example": 1 },
+            "type": { "type": "string", "example": "Electronics" },
+            "name": { "type": "string", "example": "Smartphone" },
+            "description": { "type": "string", "example": "Latest model smartphone", "nullable": true, "maxLength": 1000 }, 
+            "price": { "type": "number", "format": "float", "example": 699.99 },
+            "stock": { "type": "integer", "format": "int32", "example": 100 }, 
+            "available": { "type": "boolean", "example": true, "description": "True if stock > 0 or explicitly set" }, 
+            "image_url": { "type": "string", "example": "/public/img/products/product-12345.jpg" },
+            "category_id": {
+              "type": "integer",
+              "format": "int32",
+              "description": "ID of product catalog which products belong to",
+              "example": 1,
+              "nullable": true 
+            },
+            "category_name": {
+              "type": "string",
+              "readOnly": true,
+              "description": "Description of the product category (read-only, returned from join)",
+              "example": "High-performance computing devices."
+            },
+            "created_at": { "type": "string", "format": "date-time" },
+            "updated_at": { "type": "string", "format": "date-time" }
+          },
+          "required": ["id", "type", "name", "price", "stock", "available", "image_url", "created_at", "updated_at"] 
+        },
+
+        "ProductCreateRequest": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "example": "Electronics", "minLength": 1 },
+            "name": { "type": "string", "example": "New Smartphone Model", "minLength": 1 },
+            "description": { "type": "string", "example": "A brand new, powerful smartphone.", "nullable": true, "maxLength": 1000 },
+            "price": { "type": "number", "format": "float", "example": 799.99, "minimum": 0.01 },
+            "stock": { "type": "integer", "format": "int32", "example": 50, "minimum": 0 },
+            "category_id": { "type": "integer", "format": "int32", "example": 1, "nullable": true, "minimum": 1 }
+          },
+          "required": ["type", "name", "price", "stock"]
+        },
+
+        "ProductUpdateRequest": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "example": "Electronics", "minLength": 1, "nullable": true },
+            "name": { "type": "string", "example": "Updated Smartphone Name", "minLength": 1, "nullable": true },
+            "description": { "type": "string", "example": "Description changed.", "nullable": true, "maxLength": 1000 },
+            "price": { "type": "number", "format": "float", "example": 750.00, "minimum": 0.01, "nullable": true },
+            "stock": { "type": "integer", "format": "int32", "example": 20, "minimum": 0, "nullable": true },
+            "available": { "type": "boolean", "example": false, "nullable": true }, 
+            "category_id": { "type": "integer", "format": "int32", "example": 2, "nullable": true, "minimum": 1 }
+          },
+          "minProperties": 1 
+        },
+        "Category": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int32",
+              "example": 1
+            },
+            "name": {
+              "type": "string",
+              "example": "Áo Khoác"
+            },
+            "url_path": {
+              "type": "string",
+              "example": "ao-khoac",
+              "nullable": true
+            },
+            "description": {
+              "type": "string",
+              "example": "Các loại áo khoác nam nữ",
+              "nullable": true
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": ["id", "name", "created_at", "updated_at"]
+        },
+        "CategoryCreateRequest": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "example": "New Category Name",
+              "description": "Category name (required)."
+            },
+            "url_path": {
+              "type": "string",
+              "maxLength": 100,
+              "nullable": true,
+              "example": "new-category-name",
+              "description": "URL-friendly path for the category. Optional, auto-generated if not provided, or can be null."
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 500,
+              "nullable": true,
+              "example": "Description for the new category.",
+              "description": "Optional: A brief description of the category."
+            }
+          },
+          "required": ["name"]
+        },
+        "CategoryUpdateRequest": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "nullable": true,
+              "example": "Updated Category Name",
+              "description": "Optional: Update the name of the category."
+            },
+            "url_path": {
+              "type": "string",
+              "maxLength": 100,
+              "nullable": true,
+              "example": "updated-category-path",
+              "description": "Optional: Update the URL path for the category. Can be set to null."
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 500,
+              "nullable": true,
+              "example": "Updated description for the category.",
+              "description": "Optional: Update the description of the category. Can be set to null."
+            }
+          },
+          "minProperties": 1
+        },
+        "User": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "integer", "format": "int32", "example": 1 },
+            "name": { "type": "string", "example": "John Doe" },
+            "email": { "type": "string", "format": "email", "example": "john.doe@example.com" },
+            "address": { "type": "string", "example": "123 Main St" },
+            "phone": { "type": "string", "example": "123-456-7890" },
+            "role": { "type": "string", "enum": ["customer", "admin"], "example": "customer" },
+            "avatar_url": { "type": "string", "example": "/public/avatars/user-avatar.jpg" },
+            "created_at": { "type": "string", "format": "date-time" },
+            "updated_at": { "type": "string", "format": "date-time" }
+          }
+        },
+        "UserCreateRequest": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "minLength": 3, "maxLength": 255, "example": "Jane Doe" },
+            "email": { "type": "string", "format": "email", "example": "jane.doe@example.com" },
+            "password": { "type": "string", "minLength": 8, "example": "securePassword123", "description": "User's password" },
+            "address": { "type": "string", "maxLength": 255, "nullable": true, "example": "456 Oak Ave" },
+            "phone": { "type": "string", "pattern": "^\\+?\\d{9,15}$", "nullable": true, "example": "0987654321" },
+            "role": { "type": "string", "enum": ["admin", "user"], "default": "user", "example": "user" }
+          },
+          "required": ["name", "email", "password"]
+        },
+        "UserUpdateRequest": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "minLength": 3, "maxLength": 255, "example": "John Doe" },
+            "email": { "type": "string", "format": "email", "example": "john.doe@example.com" },
+            "password": { "type": "string", "minLength": 8, "example": "newsecurepassword" },
+            "address": { "type": "string", "maxLength": 255, "nullable": true, "example": "789 Pine Rd" },
+            "phone": { "type": "string", "pattern": "^\\+?\\d{9,15}$", "nullable": true, "example": "0123456789" },
+            "role": { "type": "string", "enum": ["admin", "user"], "example": "admin" }
+          },
+          "minProperties": 1
+        },
+        "UserListSuccessResponse": {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string", "example": "success" },
+            "data": {
+              "type": "object",
+              "properties": {
+                "users": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                },
+                "metadata": {
+                  "$ref": "#/components/schemas/PaginationMetadata"
+                }
+              },
+              "required": ["users", "metadata"]
+            }
+          },
+          "required": ["status", "data"]
+        },
+        "UserSuccessResponse": {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string", "example": "success" },
+            "data": {
+              "type": "object",
+              "properties": {
+                "user": { "$ref": "#/components/schemas/User" }
+              },
+              "required": ["user"]
+            }
+          },
+          "required": ["status", "data"]
+        },
+        "EmptySuccessResponse": {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string", "example": "success" },
+            "data": { "type": "object", "nullable": true }
+          },
+          "required": ["status", "data"]
+        },
+        "CartItem": {
+          "type": "object",
+          "properties": {
+            "product_id": { "type": "integer", "format": "int32", "example": 1 },
+            "quantity": { "type": "integer", "example": 2 }
+          },
+          "required": ["product_id", "quantity"]
+        },
+        "CartItemDetailed": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "integer", "format": "int32", "example": 1 },
+            "cart_id": { "type": "integer", "format": "int32", "example": 1 },
+            "product_id": { "type": "integer", "format": "int32", "example": 1 },
+            "quantity": { "type": "integer", "example": 2 },
+            "item_price": { "type": "number", "format": "float", "example": 699.99 },
+            "product_name": { "type": "string", "example": "Smartphone" },
+            "product_description": { "type": "string", "example": "Latest model smartphone" },
+            "current_product_price": { "type": "number", "format": "float", "example": 729.99 },
+            "product_image_url": { "type": "string", "example": "/public/img/products/product-12345.jpg" },
+            "product_available": { "type": "boolean", "example": true },
+            "created_at": { "type": "string", "format": "date-time" }
+          }
+        },
+        "Cart": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "integer", "format": "int32", "example": 1 },
+            "user_id": { "type": "integer", "format": "int32", "example": 1 },
+            "created_at": { "type": "string", "format": "date-time" },
+            "updated_at": { "type": "string", "format": "date-time" }
+          }
+        },
+        "CartWithItems": {
+          "type": "object",
+          "allOf": [
+            { "$ref": "#/components/schemas/Cart" },
+            {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/CartItemDetailed" }
+                }
+              }
+            }
+          ]
+        },
+        "PaginationMetadata": {
+          "type": "object",
+          "properties": {
+            "totalRecords": { "type": "integer", "example": 50 },
+            "currentPage": { "type": "integer", "example": 1 },
+            "totalPages": { "type": "integer", "example": 5 },
+            "firstPage": { "type": "integer", "example": 1 },
+            "lastPage": { "type": "integer", "example": 5 },
+            "limit": { "type": "integer", "example": 10 }
+          }
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string", "example": "error" },
+            "message": { "type": "string", "example": "Something went wrong" },
+            "statusCode": { "type": "integer", "example": 500 }
+          }
+        }
+      },
+      "parameters": {
+        "productIdParam": {
+          "name": "id",
+          "description": "Product ID",
+          "required": true,
+          "in": "path",
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "limitParam": {
+          "name": "limit",
+          "description": "Number of records per page",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "required": false
+        },
+        "pageParam": {
+          "name": "page",
+          "description": "Page number of records",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "default": 1,
+            "minimum": 1
+          },
+          "required": false
+        },
+        "categoryIdParam": {
+          "name": "id",
+          "description": "Category ID",
+          "required": true,
+          "in": "path",
+          "schema": {
             "type": "integer",
             "format": "int32",
-            "description": "ID of product catalog which products belong to",
-            "example": 1
-          },
-	  "category_name": {
-            "type": "string",
-            "readOnly": true,
-            "description": "Description of the product category (read-only, returned from join)",
-            "example": "High-performance computing devices."
-          },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
-        }
-      },
-      "Category": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int32", "example": 1 },
-          "name": { "type": "string", "example": "Áo Khoác" },
-          "url_path": { "type": "string", "example": "ao-khoac" },
-          "description": { "type": "string", "example": "Các loại áo khoác nam nữ" },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
-        }
-      },
-      "CategoryInput": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string", "example": "Áo Khoác", "description": "Category name" },
-          "url_path": { "type": "string", "example": "ao-khoac", "description": "URL friendly path (optional)" },
-          "description": { "type": "string", "example": "Các loại áo khoác nam nữ", "description": "Category description (optional)" }
+            "minimum": 1
+          }
         },
-        "required": ["name"]
-      },
-      "User": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int32", "example": 1 },
-          "name": { "type": "string", "example": "John Doe" },
-          "email": { "type": "string", "format": "email", "example": "john.doe@example.com" },
-          "address": { "type": "string", "example": "123 Main St" },
-          "phone": { "type": "string", "example": "123-456-7890" },
-          "role": { "type": "string", "enum": ["customer", "admin"], "example": "customer" },
-          "avatar_url": { "type": "string", "example": "/public/avatars/user-avatar.jpg" },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
-        }
-      },
-      "CartItem": {
-        "type": "object",
-        "properties": {
-          "product_id": { "type": "integer", "format": "int32", "example": 1 },
-          "quantity": { "type": "integer", "example": 2 }
+        "userIdParam": {
+          "name": "userId",
+          "description": "User ID",
+          "required": true,
+          "in": "path",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          }
         },
-        "required": ["product_id", "quantity"]
-      },
-      "CartItemDetailed": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int32", "example": 1 },
-          "cart_id": { "type": "integer", "format": "int32", "example": 1 },
-          "product_id": { "type": "integer", "format": "int32", "example": 1 },
-          "quantity": { "type": "integer", "example": 2 },
-          "item_price": { "type": "number", "format": "float", "example": 699.99, "description": "Price of the product when it was added to the cart" },
-          "product_name": { "type": "string", "example": "Smartphone" },
-          "product_description": { "type": "string", "example": "Latest model smartphone" },
-          "current_product_price": { "type": "number", "format": "float", "example": 729.99, "description": "Current price of the product" },
-          "product_image_url": { "type": "string", "example": "/public/img/products/product-12345.jpg" },
-          "product_available": { "type": "boolean", "example": true },
-          "created_at": { "type": "string", "format": "date-time" }
+        "cartIdParam": {
+          "name": "id",
+          "description": "Cart ID",
+          "required": true,
+          "in": "path",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          }
         }
       },
-      "Cart": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int32", "example": 1 },
-          "user_id": { "type": "integer", "format": "int32", "example": 1 },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
-        }
-      },
-      "CartWithItems": {
-        "type": "object",
-        "allOf": [
-          { "$ref": "#/components/schemas/Cart" },
-          {
-            "type": "object",
-            "properties": {
-              "items": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/CartItemDetailed"
+      "responses": {
+      "BadRequest": {
+        "description": "Invalid request syntax or data.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "MissingUserFields": {
+                "summary": "Missing required fields in user data",
+                "value": {
+                  "status": "error",
+                  "message": "Missing required fields: name, email.",
+                  "statusCode": 400
+                }
+              },
+              "InvalidCategoryName": {
+                "summary": "Invalid category name",
+                "value": {
+                  "status": "error",
+                  "message": "Category name must be at least 3 characters long.",
+                  "statusCode": 400
+                }
+              },
+              "MalformedProductData": {
+                "summary": "Malformed product payload",
+                "value": {
+                  "status": "error",
+                  "message": "Price must be a number and greater than 0.",
+                  "statusCode": 400
+                }
+              },
+              "InvalidCartFormat": {
+                "summary": "Invalid cart JSON string",
+                "value": {
+                  "status": "error",
+                  "message": "Items field must be a valid JSON array.",
+                  "statusCode": 400
                 }
               }
             }
           }
-        ]
-      },
-      "PaginationMetadata": {
-        "type": "object",
-        "properties": {
-          "totalRecords": { "type": "integer", "example": 50 },
-          "currentPage": { "type": "integer", "example": 1 },
-          "totalPages": { "type": "integer", "example": 5 },
-          "firstPage": { "type": "integer", "example": 1 },
-          "lastPage": { "type": "integer", "example": 5 },
-          "limit": { "type": "integer", "example": 10 }
         }
       },
-      "ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "status": { "type": "string", "example": "error" },
-          "message": { "type": "string", "example": "Something went wrong" },
-          "statusCode": { "type": "integer", "example": 500 }
-        }
-      }
-    },
-    "parameters": {
-      "productIdParam": {
-        "name": "id",
-        "description": "Product ID",
-        "required": true,
-        "in": "path",
-        "schema": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "limitParam": {
-        "name": "limit",
-        "description": "Number of records per page",
-        "in": "query",
-        "schema": {
-          "type": "integer",
-          "default": 10,
-          "minimum": 1,
-          "maximum": 100
-        },
-        "required": false
-      },
-      "pageParam": {
-        "name": "page",
-        "description": "Page number of records",
-        "in": "query",
-        "schema": {
-          "type": "integer",
-          "default": 1,
-          "minimum": 1
-        },
-        "required": false
-      },
-      "categoryIdParam": {
-        "name": "id",
-        "description": "Category ID",
-        "required": true,
-        "in": "path",
-        "schema": {
-          "type": "integer",
-          "format": "int32",
-          "minimum": 1
-        }
-      },
-      "userIdParam": {
-        "name": "userId",
-        "description": "User ID",
-        "required": true,
-        "in": "path",
-        "schema": {
-          "type": "integer",
-          "format": "int32",
-          "minimum": 1
-        }
-      },
-      "cartIdParam": {
-        "name": "id",
-        "description": "Cart ID",
-        "required": true,
-        "in": "path",
-        "schema": {
-          "type": "integer",
-          "format": "int32",
-          "minimum": 1
-        }
-      }
-    },
-    "responses": {
-      "BadRequest": {
-        "description": "Invalid input data.",
+      "Unauthorized": {
+        "description": "Authentication is required.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponse"
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "MissingToken": {
+                "summary": "Token not provided",
+                "value": {
+                  "status": "error",
+                  "message": "Access token is missing or invalid.",
+                  "statusCode": 401
+                }
+              }
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Authenticated but no permission.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "NoPermission": {
+                "summary": "Permission denied",
+                "value": {
+                  "status": "error",
+                  "message": "You do not have permission to perform this action.",
+                  "statusCode": 403
+                }
+              }
             }
           }
         }
@@ -1357,18 +1740,142 @@
         "description": "Resource not found.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponse"
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "UserNotFound": {
+                "summary": "User ID not found",
+                "value": {
+                  "status": "error",
+                  "message": "User with ID 123 was not found.",
+                  "statusCode": 404
+                }
+              },
+              "ProductNotFound": {
+                "summary": "Product not found",
+                "value": {
+                  "status": "error",
+                  "message": "Product with ID 5 does not exist.",
+                  "statusCode": 404
+                }
+              },
+              "CategoryNotFound": {
+                "summary": "Category not found",
+                "value": {
+                  "status": "error",
+                  "message": "No category found with ID 2.",
+                  "statusCode": 404
+                }
+              },
+              "CartNotFound": {
+                "summary": "Cart for user not found",
+                "value": {
+                  "status": "error",
+                  "message": "Cart for user ID 7 not found.",
+                  "statusCode": 404
+                }
+              }
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict with existing data (e.g., duplicate entry).",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "EmailExists": {
+                "summary": "Duplicate email",
+                "value": {
+                  "status": "error",
+                  "message": "Email already exists.",
+                  "statusCode": 409
+                }
+              },
+              "DuplicateCategory": {
+                "summary": "Category already exists",
+                "value": {
+                  "status": "error",
+                  "message": "Category 'Shoes' already exists.",
+                  "statusCode": 409
+                }
+              },
+              "ProductNameExists": {
+                "summary": "Product name already exists",
+                "value": {
+                  "status": "error",
+                  "message": "Product with the same name already exists.",
+                  "statusCode": 409
+                }
+              }
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Validation failed or semantic error in the input.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "WeakPassword": {
+                "summary": "Password does not meet requirements",
+                "value": {
+                  "status": "error",
+                  "message": "Password must be at least 8 characters.",
+                  "statusCode": 422
+                }
+              },
+              "InvalidEmailFormat": {
+                "summary": "Invalid email input",
+                "value": {
+                  "status": "error",
+                  "message": "Provided email is not a valid format.",
+                  "statusCode": 422
+                }
+              },
+              "InvalidProductEnum": {
+                "summary": "Product status not valid",
+                "value": {
+                  "status": "error",
+                  "message": "Product status must be 'active' or 'inactive'.",
+                  "statusCode": 422
+                }
+              }
             }
           }
         }
       },
       "InternalServerError": {
-        "description": "Server error.",
+        "description": "Unexpected server error.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponse"
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "DatabaseError": {
+                "summary": "Database connection issue",
+                "value": {
+                  "status": "error",
+                  "message": "Database connection failed.",
+                  "statusCode": 500
+                }
+              },
+              "ProductCreationFailed": {
+                "summary": "Error while saving product",
+                "value": {
+                  "status": "error",
+                  "message": "Failed to save the product due to internal error.",
+                  "statusCode": 500
+                }
+              },
+              "CartUpdateError": {
+                "summary": "Failed to update cart",
+                "value": {
+                  "status": "error",
+                  "message": "Unable to update cart due to server issue.",
+                  "statusCode": 500
+                }
+              }
             }
           }
         }
@@ -1376,21 +1883,21 @@
     }
   },
   "tags": [
-    {
-      "name": "Product",
-      "description": "Operations related to products"
-    },
-    {
-      "name": "Category",
-      "description": "Operations related to categories"
-    },
-    {
-      "name": "User",
-      "description": "Operations related to users"
-    },
-    {
-      "name": "Cart",
-      "description": "Operations related to shopping carts"
-    }
+      {
+        "name": "Product",
+        "description": "Operations related to products"
+      },
+      {
+        "name": "Category",
+        "description": "Operations related to categories"
+      },
+      {
+        "name": "User",
+        "description": "Operations related to users"
+      },
+      {
+        "name": "Cart",
+        "description": "Operations related to shopping carts"
+      }
   ]
 }
