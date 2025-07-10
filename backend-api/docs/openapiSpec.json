@@ -126,62 +126,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "example": "Electronics",
-                    "minLength": 1,
-                    "description": "The general type or category of the product (e.g., 'Electronics', 'Books')."
-                  },
-                  "name": {
-                    "type": "string",
-                    "example": "New Smartphone Model",
-                    "minLength": 1,
-                    "description": "The name of the new product."
-                  },
-                  "description": {
-                    "type": "string",
-                    "example": "A brand new, powerful smartphone with advanced features.",
-                    "nullable": true,
-                    "maxLength": 1000,
-                    "description": "A detailed description of the product."
-                  },
-                  "price": {
-                    "type": "number",
-                    "format": "float",
-                    "example": 799.99,
-                    "minimum": 0.01,
-                    "description": "The selling price of the product."
-                  },
-                  "stock": {
-                    "type": "integer",
-                    "format": "int32",
-                    "example": 50,
-                    "minimum": 0,
-                    "description": "The current quantity of the product available in stock."
-                  },
-                  "category_id": {
-                    "type": "integer",
-                    "format": "int32",
-                    "example": 1,
-                    "nullable": true,
-                    "minimum": 1,
-                    "description": "The ID of the category this product belongs to. Optional if a default is used."
-                  },
-                  "imageFile": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "The image file (e.g., PNG, JPEG) for the product. Max size 5MB."
-                  }
-                },
-                "required": [
-                  "type",
-                  "name",
-                  "price",
-                  "stock",
-                  "imageFile"
-                ]
+                "$ref": "#/components/schemas/ProductCreateRequest"
               },
               "encoding": {
                 "imageFile": {
@@ -308,66 +253,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "example": "Electronics",
-                    "minLength": 1,
-                    "nullable": true,
-                    "description": "Optional: Update the product type."
-                  },
-                  "name": {
-                    "type": "string",
-                    "example": "Updated Smartphone Name",
-                    "minLength": 1,
-                    "nullable": true,
-                    "description": "Optional: Update the product name."
-                  },
-                  "description": {
-                    "type": "string",
-                    "example": "Description changed to reflect new features.",
-                    "nullable": true,
-                    "maxLength": 1000,
-                    "description": "Optional: Update the product description."
-                  },
-                  "price": {
-                    "type": "number",
-                    "format": "float",
-                    "example": 750,
-                    "minimum": 0.01,
-                    "nullable": true,
-                    "description": "Optional: Update the product price."
-                  },
-                  "stock": {
-                    "type": "integer",
-                    "format": "int32",
-                    "example": 20,
-                    "minimum": 0,
-                    "nullable": true,
-                    "description": "Optional: Update the current quantity in stock."
-                  },
-                  "available": {
-                    "type": "boolean",
-                    "example": false,
-                    "nullable": true,
-                    "description": "Optional: Explicitly set product availability (True if stock > 0)."
-                  },
-                  "category_id": {
-                    "type": "integer",
-                    "format": "int32",
-                    "example": 2,
-                    "nullable": true,
-                    "minimum": 1,
-                    "description": "Optional: Update the category ID this product belongs to."
-                  },
-                  "imageFile": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Optional: Provide a new image file to replace the existing one."
-                  }
-                },
-                "minProperties": 1
+                "$ref": "#/components/schemas/ProductUpdateRequest"
               },
               "encoding": {
                 "imageFile": {
@@ -750,20 +636,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": { "type": "string", "description": "User's name" },
-                  "email": { "type": "string", "format": "email", "description": "User's email" },
-                  "address": { "type": "string", "description": "User's address (optional)" },
-                  "phone": { "type": "string", "description": "User's phone number (optional)" },
-                  "role": { "type": "string", "enum": ["customer", "admin"], "default": "customer", "description": "User's role (customer or admin)" },
-                  "avatarFile": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Avatar image file (optional)"
-                  }
-                },
-                "required": ["name", "email"]
+                "$ref": "#/components/schemas/UserCreateRequest"
               }
             }
           }
@@ -848,19 +721,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": { "type": "string", "description": "User's name (optional)" },
-                  "email": { "type": "string", "format": "email", "description": "User's email (optional)" },
-                  "address": { "type": "string", "description": "User's address (optional)" },
-                  "phone": { "type": "string", "description": "User's phone number (optional)" },
-                  "role": { "type": "string", "enum": ["customer", "admin"], "description": "User's role (customer or admin, optional)" },
-                  "avatarFile": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "New avatar image file (optional)"
-                  }
-                }
+                 "$ref": "#/components/schemas/UserUpdateRequest"
               }
             }
           }
@@ -1335,7 +1196,8 @@
             "description": { "type": "string", "example": "A brand new, powerful smartphone.", "nullable": true, "maxLength": 1000 },
             "price": { "type": "number", "format": "float", "example": 799.99, "minimum": 0.01 },
             "stock": { "type": "integer", "format": "int32", "example": 50, "minimum": 0 },
-            "category_id": { "type": "integer", "format": "int32", "example": 1, "nullable": true, "minimum": 1 }
+            "category_id": { "type": "integer", "format": "int32", "example": 1, "nullable": true, "minimum": 1 },
+            "avatarFile": { "type": "string", "format": "binary", "description": "New avatar image file (optional)" }
           },
           "required": ["type", "name", "price", "stock"]
         },
@@ -1349,7 +1211,8 @@
             "price": { "type": "number", "format": "float", "example": 750.00, "minimum": 0.01, "nullable": true },
             "stock": { "type": "integer", "format": "int32", "example": 20, "minimum": 0, "nullable": true },
             "available": { "type": "boolean", "example": false, "nullable": true }, 
-            "category_id": { "type": "integer", "format": "int32", "example": 2, "nullable": true, "minimum": 1 }
+            "category_id": { "type": "integer", "format": "int32", "example": 2, "nullable": true, "minimum": 1 },
+            "avatarFile": { "type": "string", "format": "binary", "description": "New avatar image file (optional)" }
           },
           "minProperties": 1 
         },
@@ -1463,7 +1326,12 @@
             "password": { "type": "string", "minLength": 8, "example": "securePassword123", "description": "User's password" },
             "address": { "type": "string", "maxLength": 255, "nullable": true, "example": "456 Oak Ave" },
             "phone": { "type": "string", "pattern": "^\\+?\\d{9,15}$", "nullable": true, "example": "0987654321" },
-            "role": { "type": "string", "enum": ["admin", "user"], "default": "user", "example": "user" }
+            "role": { "type": "string", "enum": ["admin", "user"], "default": "user", "example": "user" },
+            "avatarFile": { 
+              "type": "string",
+              "format": "binary",
+              "description": "Avatar image file (optional, max 2MB)"
+            }
           },
           "required": ["name", "email", "password"]
         },
@@ -1475,7 +1343,8 @@
             "password": { "type": "string", "minLength": 8, "example": "newsecurepassword" },
             "address": { "type": "string", "maxLength": 255, "nullable": true, "example": "789 Pine Rd" },
             "phone": { "type": "string", "pattern": "^\\+?\\d{9,15}$", "nullable": true, "example": "0123456789" },
-            "role": { "type": "string", "enum": ["admin", "user"], "example": "admin" }
+            "role": { "type": "string", "enum": ["admin", "user"], "example": "admin" },
+            "avatarFile": { "type": "string", "format": "binary", "description": "New avatar image file (optional)" }
           },
           "minProperties": 1
         },

@@ -25,8 +25,9 @@ const updateUserSchema = z.object({
     password: z.string().min(8, 'Password must be at least 8 characters long').optional(),
     address: z.string().max(255, 'Address cannot be more than 255 characters').optional().nullable(),
     phone: z.string().regex(/^\+?\d{9,15}$/, 'Invalid phone number format').optional().nullable(),
-    role: z.enum(['admin', 'user']).optional(), 
-  }).refine((data) => Object.keys(data).length > 0, {
+    role: z.enum(['admin', 'user']).optional(),
+    avatarFile: z.any().optional(), 
+  }).refine((data) => Object.keys(data).length > 0 || data.avatarFile !== undefined, {
     message: "At least one field must be provided for update.",
     path: ["body"],
   }),

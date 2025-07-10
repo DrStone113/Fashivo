@@ -21,7 +21,8 @@ class UserService {
       password: hashedPassword,
       address: userData.address,
       phone: userData.phone, 
-      role: userData.role || 'user', 
+      role: userData.role || 'user',
+      avatar_url: userData.avatar_url, 
     }).returning('*');
     // Remove password from the returned object for security
     delete newUser.password;

@@ -42,7 +42,7 @@ module.exports.setup = (app) => {
   router.route("/")
     .get(validate(userSchemas.getUserQuerySchema), userController.getAllUsers)
     .post(
-      upload.single("avatar"), // Expects field name 'avatar' for file upload
+      upload.single("avatarFile"), // Expects field name 'avatar' for file upload
       validate(userSchemas.createUserSchema),
       userController.createUser
     )
@@ -51,7 +51,7 @@ module.exports.setup = (app) => {
   router.route("/:id")
     .get(validate(userSchemas.userIdParamSchema), userController.getUserById)
     .put( // Changed from PUT to PATCH for partial updates with updateUserSchema
-      upload.single("avatar"), // Allow avatar update
+      upload.single("avatarFile"), // Allow avatar update
       validate(userSchemas.updateUserSchema), // Validate both params (from schema) and body
       userController.updateUser
     )
