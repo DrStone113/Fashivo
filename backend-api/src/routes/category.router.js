@@ -1,12 +1,12 @@
 const express = require("express");
-const multer = require('multer'); // Import multer
+const multer = require('multer');
 const categoryController = require("../controllers/category.controller");
-const categorySchemas = require("../schema/category.schemas"); // Đảm bảo đường dẫn này đúng
+const categorySchemas = require("../schema/category.schemas"); // Correct path
 const { validate } = require("../middlewares/validator.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 
 const router = express.Router();
-const upload = multer(); // Khởi tạo multer instance
+const upload = multer(); // For handling multipart/form-data with only text fields
 
 // ROUTES
 module.exports.setup = (app) => {
@@ -14,32 +14,32 @@ module.exports.setup = (app) => {
 
   router.route("/")
     .get(
-      validate({ query: categorySchemas.getCategoryQuerySchema }), // Validate query params
+      validate(categorySchemas.getCategoryQuerySchema),
       categoryController.getAllCategories
     )
     .post(
-      upload.none(), // <-- Quan trọng: xử lý các trường văn bản từ multipart/form-data
-      validate({ body: categorySchemas.categorySchema }), // Validate request body
+      upload.none(), // Process text fields from multipart/form-data
+      validate(categorySchemas.createCategorySchema), // Use create schema
       categoryController.createCategory
     )
-    .delete(categoryController.deleteAllCategories); // Xóa tất cả (endpoint này có thể không cần validate body)
+    .delete(categoryController.deleteAllCategories);
 
   router.route("/:id")
     .get(
-      validate({ params: categorySchemas.categoryIdParamSchema }), // Validate URL params
+      validate({ params: categorySchemas.categoryIdParamSchema }),
       categoryController.getCategoryById
     )
-    .put(
-      upload.none(), // <-- Quan trọng: xử lý các trường văn bản từ multipart/form-data
-      validate({ params: categorySchemas.categoryIdParamSchema, body: categorySchemas.categorySchema }), // Validate params và body
+    .put( // Or PATCH
+      upload.none(), // Process text fields from multipart/form-data
+      validate(categorySchemas.updateCategorySchema), // Use update schema
       categoryController.updateCategory
     )
     .delete(
-      validate({ params: categorySchemas.categoryIdParamSchema }), // Validate URL params
+      validate({ params: categorySchemas.categoryIdParamSchema }),
       categoryController.deleteCategory
     );
 
-  // Xử lý các method không được phép trên các route này
+  // Handle methods not allowed
   router.all("/", methodNotAllowed);
   router.all("/:id", methodNotAllowed);
 };
