@@ -2,6 +2,8 @@
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
+const { apiLimiter, authLimiter } = require('./middlewares/rateLimit.middleware');
+
 // Đảm bảo dotenv được load sớm nhất để các biến môi trường có sẵn
 require('dotenv').config();
 
@@ -200,6 +202,8 @@ const swaggerOptions = {
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
 console.log('Swagger UI setup line executed.');
+
+app.use('/api/', apiLimiter);
 
 // Serve static files (e.g., product images)
 app.use("/public", express.static("public"));

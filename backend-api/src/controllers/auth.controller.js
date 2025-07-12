@@ -35,6 +35,7 @@ const login = catchAsync(async (req, res, _next) => {
   const { email, password } = req.body;
 
   const { user, token } = await authService.loginUser(email, password);
+  console.log('Generated Token:', token);
 
   res.status(200).json(JSend.success({
     user,

@@ -5,6 +5,7 @@ const { validate } = require("../middlewares/validator.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require("multer");
 const ApiError = require("../api-error");
+const { authenticate, restrictTo } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
@@ -40,23 +41,44 @@ module.exports.setup = (app) => {
   app.use("/api/v1/users", router);
 
   router.route("/")
-    .get(validate(userSchemas.getUserQuerySchema), userController.getAllUsers)
+    .get(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xem tất cả user
+      validate(userSchemas.getUserQuerySchema), userController.getAllUsers
+    )
     .post(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được tạo user (nếu đây là endpoint tạo user bởi admin)
       upload.single("avatarFile"), // Expects field name 'avatar' for file upload
       validate(userSchemas.createUserSchema),
       userController.createUser
     )
-    .delete(userController.deleteAllUsers);
+    .delete(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xóa tất cả user
+      userController.deleteAllUsers
+    );
 
   router.route("/:id")
-    .get(validate(userSchemas.userIdParamSchema), userController.getUserById)
+    .get(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xem user theo ID
+      validate(userSchemas.userIdParamSchema), userController.getUserById
+    )
     .put( // Changed from PUT to PATCH for partial updates with updateUserSchema
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được cập nhật user
       upload.single("avatarFile"), // Allow avatar update
       validate(userSchemas.updateUserSchema), // Validate both params (from schema) and body
       userController.updateUser
     )
-    .delete(validate(userSchemas.userIdParamSchema), userController.deleteUser);
+    .delete(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xóa user
+      validate(userSchemas.userIdParamSchema), userController.deleteUser
+    );
 
   router.all("/", methodNotAllowed);
   router.all("/:id", methodNotAllowed);
+  router.all("/*", methodNotAllowed);
 };

@@ -7,6 +7,7 @@ const { validate } = require('../middlewares/validator.middleware');
 const { authenticate, restrictTo } = require('../middlewares/auth.middleware'); // <-- Đổi tên authenticate
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require('multer');
+const { authLimiter } = require('../middlewares/rateLimit.middleware');
 
 const router = express.Router();
 const upload = multer(); // Khởi tạo multer để xử lý các trường text từ form-data
@@ -16,6 +17,7 @@ module.exports.setup = (app) => {
 
   router.route('/signup')
     .post(
+      authLimiter,
       upload.none(), // Chỉ xử lý các trường text, không có file
       validate(authSchemas.signupSchema),
       authController.signup
@@ -24,6 +26,7 @@ module.exports.setup = (app) => {
 
   router.route('/login')
     .post(
+      authLimiter,
       upload.none(),
       validate(authSchemas.loginSchema),
       authController.login
