@@ -1,3 +1,4 @@
+//C:\DVWEB\mergre\ct313hm02-project-DrStone113\backend-api\src\schema\cart.schemas.js
 const { z } = require('zod');
 
 // Schema cho một mục trong giỏ hàng (khi nhận từ request body)

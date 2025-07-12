@@ -6,6 +6,7 @@ const { validate } = require("../middlewares/validator.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require("multer");
 const ApiError = require("../api-error");
+const { authenticate, restrictTo } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
@@ -36,26 +37,48 @@ const upload = multer({
 });
 
 // ROUTES
+// ROUTES
 module.exports.setup = (app) => {
   app.use("/api/v1/product", router);
 
   router.route("/")
-    .get(validate(productSchemas.getProductQuerySchema), productController.getAllProducts)
+    .get(
+      authenticate, // Cả user và admin đều được GET
+      validate(productSchemas.getProductQuerySchema),
+      productController.getAllProducts
+    )
     .post(
-      upload.single("imageFile"), 
-      validate(productSchemas.createProductSchema), // Use create schema
+      authenticate, // Yêu cầu xác thực
+      restrictTo('admin'), // Chỉ admin mới được POST
+      upload.single("imageFile"),
+      validate(productSchemas.createProductSchema),
       productController.createProduct
     )
-    .delete(productController.deleteAllProducts);
+    .delete(
+      authenticate, // Yêu cầu xác thực
+      restrictTo('admin'), // Chỉ admin mới được DELETE ALL
+      productController.deleteAllProducts
+    );
 
   router.route("/:id")
-    .get(validate(productSchemas.productIdParamSchema), productController.getProductById)
-    .put( // Or PATCH, depending on your API design for partial updates
-      upload.single("imageFile"), // Allow image update
-      validate(productSchemas.updateProductSchema), // Use update schema
+    .get(
+      authenticate, // Cả user và admin đều được GET theo ID
+      validate(productSchemas.productIdParamSchema),
+      productController.getProductById
+    )
+    .put(
+      authenticate, // Yêu cầu xác thực
+      restrictTo('admin'), // Chỉ admin mới được PUT
+      upload.single("imageFile"), // Cho phép cập nhật ảnh
+      validate(productSchemas.updateProductSchema),
       productController.updateProduct
     )
-    .delete(validate(productSchemas.productIdParamSchema), productController.deleteProduct);
+    .delete(
+      authenticate, // Yêu cầu xác thực
+      restrictTo('admin'), // Chỉ admin mới được DELETE theo ID
+      validate(productSchemas.productIdParamSchema),
+      productController.deleteProduct
+    );
 
   router.all("/", methodNotAllowed);
   router.all("/:id", methodNotAllowed);

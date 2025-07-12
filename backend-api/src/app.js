@@ -1,16 +1,24 @@
+//backend-api\src\app.js
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
+// Đảm bảo dotenv được load sớm nhất để các biến môi trường có sẵn
+require('dotenv').config();
 
 const JSend = require("./jsend");
+
+// Import tất cả các router
 const productRouter = require("./routes/product.router");
-const userRouter = require("./routes/user.router");
-const categoryRouter = require("./routes/category.router"); 
+const userRouter = require("./routes/user.router"); // Lưu ý: `user.router` thường là để CRUD user bởi admin, còn auth.route.js là cho người dùng tự quản lý tài khoản của họ (signup, login, getMe, updateMe, updatePassword)
+const categoryRouter = require("./routes/category.router");
+const cartRouter = require("./routes/cart.router"); // Import cartRouter
+const authRouter = require("./routes/auth.route"); // Import authRouter MỚI
 
 const {
-  resourceNotFound,
-  handleError,
+  resourceNotFound, // Middleware xử lý 404 (chưa tìm thấy tài nguyên)
+  handleError,      // Middleware xử lý lỗi tập trung
 } = require("./controllers/errors.controller");
+
 let swaggerDocument;
 try {
   swaggerDocument = require("../docs/openapiSpec.json");
@@ -23,18 +31,21 @@ try {
 
 const app = express();
 
+// Các Middlewares toàn cục
 app.use(cors());
-app.use(express.json()); // Để xử lý application/json (cho các route khác không dùng multipart)
-app.use(express.urlencoded({ extended: true })); // Để xử lý application/x-www-form-urlencoded (cho các route khác không dùng multipart)
+app.use(express.json()); // Để xử lý application/json
+app.use(express.urlencoded({ extended: true })); // Để xử lý application/x-www-form-urlencoded
 
-// Multer xử lý multipart/form-data, nên không cần express.json() hay urlencoded cho loại này TRÊN CÁC ROUTE CÓ MULTER
+// Multer xử lý multipart/form-data, nên không cần express.json() hay urlencoded cho loại này
+// trên các ROUTE CÓ MULTER. Với các route khác, express.json() và urlencoded vẫn cần.
 
+// Route gốc
 app.get("/", (req, res) => {
   return res.json(JSend.success({ message: "Welcome to Fashivo API!" }));
 });
 
+// Setup Swagger UI
 console.log('Attempting to setup Swagger UI for /api-docs...');
-//app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 const swaggerOptions = {
   customCss: `
     body {
@@ -102,6 +113,10 @@ const swaggerOptions = {
 
     .swagger-ui .opblock-tag-section[data-tag="user"] {
       border-left-color: #2196f3;
+    }
+    
+    .swagger-ui .opblock-tag-section[data-tag="auth"] { /* NEW: For Auth group */
+      border-left-color: #7B1FA2; /* A nice purple for auth */
     }
 
     .swagger-ui .opblock-tag-section[data-tag="cart"] {
@@ -184,20 +199,23 @@ const swaggerOptions = {
 };
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
-
 console.log('Swagger UI setup line executed.');
 
-app.use("/public", express.static("public")); // Để phục vụ ảnh đã upload
+// Serve static files (e.g., product images)
+app.use("/public", express.static("public"));
 
-productRouter.setup(app); // Gọi hàm setup của router
-userRouter.setup(app);
-categoryRouter.setup(app); 
+// Đăng ký các router
+// Quan trọng: Auth router nên được đăng ký đầu tiên nếu bạn muốn xác thực hoạt động trước các route khác
+authRouter.setup(app); // Setup Auth routes
+productRouter.setup(app);
+categoryRouter.setup(app);
+cartRouter.setup(app); // Setup Cart routes
 
 // Handle 404 error for unknown URL paths
 app.use(resourceNotFound);
 
 // Define the centralized error handling middleware, after all routes
-// and middleware have been defined
+// and middleware have been defined. This should be the LAST middleware.
 app.use(handleError);
 
 module.exports = app;

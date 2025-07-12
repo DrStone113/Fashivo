@@ -1,3 +1,4 @@
+//C:\DVWEB\mergre\ct313hm02-project-DrStone113\backend-api\src\services\cart.service.js
 const knex = require('../config/db'); // Đảm bảo đường dẫn đúng đến file cấu hình Knex của bạn
 const ApiError = require('../api-error'); // Import ApiError để ném lỗi nghiệp vụ
 
