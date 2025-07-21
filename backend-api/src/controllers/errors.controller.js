@@ -27,32 +27,26 @@ function handleError(error, req, res, next) {
   const statusCode = error.statusCode || 500;
   const message = error.message || "Internal Server Error";
 
-  // Khai báo biến để chứa dữ liệu bổ sung, ví dụ validationErrors
   let responseData = null;
 
-  // Nếu lỗi là ApiError và có thuộc tính 'headers' chứa validationErrors
   if (error instanceof ApiError && error.headers && error.headers.validationErrors) {
     responseData = error.headers.validationErrors;
   }
 
-  // Đặt các HTTP headers nếu có, nhưng chỉ những cái hợp lệ (ví dụ: 'Allow' cho 405)
   if (error.headers) {
     for (const headerKey in error.headers) {
-      // Chỉ đặt các headers hợp lệ, không phải validationErrors
       if (headerKey !== 'validationErrors') {
         res.set(headerKey, error.headers[headerKey]);
       }
     }
   }
 
-
-  // Dùng JSend.fail và truyền responseData vào tham số thứ hai (data)
-  // nếu statusCode là lỗi client (4xx)
   if (statusCode >= 400 && statusCode < 500) {
+    // Đối với lỗi client (4xx), sử dụng JSend.fail
     return res.status(statusCode).json(JSend.fail(message, responseData));
   } else {
-    // Dùng JSend.error cho lỗi server (5xx)
-    return res.status(statusCode).json(JSend.error(message, null, responseData)); // Giả định JSend.error có tham số 'data' thứ 3
+    // Đối với lỗi server (5xx), sử dụng JSend.error
+    return res.status(statusCode).json(JSend.error(message, responseData));
   }
 }
 

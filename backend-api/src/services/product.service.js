@@ -13,7 +13,7 @@ class ProductService {
       name: productData.name,
       description: productData.description,
       price: productData.price,
-      stock: productData.stock, 
+      stock: productData.stock,
       available: productData.available,
       image_url: productData.image_url,
       category_id: productData.category_id,
@@ -23,37 +23,44 @@ class ProductService {
 
   // READ (Get all with filters and pagination)
   async getAllProducts(filters) {
-    let query = this.knex('products')
-      .select('products.*', 'categories.name as category_name') 
-      .leftJoin('categories', 'products.category_id', 'categories.id'); 
+    let baseQuery = this.knex('products')
+      .leftJoin('categories', 'products.category_id', 'categories.id');
 
+    // Apply filters to the base query
     if (filters.type) {
-      query = query.where('type', 'ilike', `%${filters.type}%`);
+      baseQuery = baseQuery.where('type', 'ilike', `%${filters.type}%`);
     }
     if (filters.name) {
-      query = query.where('products.name', 'ilike', `%${filters.name}%`); 
+      baseQuery = baseQuery.where('products.name', 'ilike', `%${filters.name}%`);
     }
     if (filters.minPrice) {
-      query = query.where('price', '>=', filters.minPrice);
+      baseQuery = baseQuery.where('price', '>=', filters.minPrice);
     }
     if (filters.maxPrice) {
-      query = query.where('price', '<=', filters.maxPrice);
+      baseQuery = baseQuery.where('price', '<=', filters.maxPrice);
     }
-    if (filters.available !== undefined) {
-      query = query.where('available', filters.available);
+    if (filters.available !== undefined && filters.available !== null) {
+      baseQuery = baseQuery.where('available', filters.available);
     }
     if (filters.category_id) {
-      query = query.where('category_id', filters.category_id);
+      baseQuery = baseQuery.where('category_id', filters.category_id);
     }
 
-    const totalItems = await query.clone().count('* as count').first();
-    const totalRecords = parseInt(totalItems.count, 10);
+    // 1. Get total items (count)
+    // Clone the base query and apply count without select specific columns
+    const totalItemsResult = await baseQuery.clone().count('* as count').first();
+    const totalRecords = parseInt(totalItemsResult.count, 10);
 
     const page = parseInt(filters.page, 10) || 1;
     const limit = parseInt(filters.limit, 10) || 10;
     const offset = (page - 1) * limit;
 
-    const products = await query.offset(offset).limit(limit);
+    // 2. Get products with pagination
+    // Select specific columns only for the product fetching query
+    const products = await baseQuery
+      .select('products.*', 'categories.name as category_name')
+      .offset(offset)
+      .limit(limit);
 
     const totalPages = Math.ceil(totalRecords / limit);
 
@@ -97,4 +104,5 @@ class ProductService {
   }
 }
 
+// Export an instance of the ProductService class
 module.exports = new ProductService(knex);

@@ -1,7 +1,7 @@
 // ct313hm02-project-DrStone113/backend-api/src/routes/product.router.js
 const express = require("express");
 const productController = require("../controllers/product.controller");
-const productSchemas = require("../schema/product.schemas"); // Correct path
+const productSchemas = require("../schema/product.schemas");
 const { validate } = require("../middlewares/validator.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require("multer");
@@ -37,13 +37,12 @@ const upload = multer({
 });
 
 // ROUTES
-// ROUTES
 module.exports.setup = (app) => {
   app.use("/api/v1/product", router);
 
   router.route("/")
     .get(
-      authenticate, // Cả user và admin đều được GET
+      // BỎ DÒNG 'authenticate' ĐỂ CHO PHÉP TRUY CẬP CÔNG KHAI VÀO DANH SÁCH SẢN PHẨM
       validate(productSchemas.getProductQuerySchema),
       productController.getAllProducts
     )
@@ -62,7 +61,7 @@ module.exports.setup = (app) => {
 
   router.route("/:id")
     .get(
-      authenticate, // Cả user và admin đều được GET theo ID
+      // BỎ DÒNG 'authenticate' ĐỂ CHO PHÉP TRUY CẬP CÔNG KHAI VÀO SẢN PHẨM THEO ID
       validate(productSchemas.productIdParamSchema),
       productController.getProductById
     )
@@ -75,7 +74,7 @@ module.exports.setup = (app) => {
     )
     .delete(
       authenticate, // Yêu cầu xác thực
-      restrictTo('admin'), // Chỉ admin mới được DELETE theo ID
+      restrictTo('admin'), // Chỉ admin mới được DELETE
       validate(productSchemas.productIdParamSchema),
       productController.deleteProduct
     );
