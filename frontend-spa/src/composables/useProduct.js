@@ -8,23 +8,21 @@ import productService from '@/services/product.service';
 export default function useProduct() {
   function fetchProducts(page, filters = {}) {
     const queryResult = useQuery({
-      queryKey: ['products', page, filters],
+      queryKey: computed(() => ['products', page.value, { ...filters.value }]),
       queryFn: async () => {
         try {
-          return await productService.fetchProducts(page.value, 8, filters);
+          return await productService.fetchProducts(page.value, 8, filters.value);
         } catch (err) {
           console.error('Fetch products failed:', err);
           throw err;
         }
       },
       staleTime: 1000 * 60 * 5,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: false
     });
 
     const products = computed(() => queryResult.data.value?.products ?? []);
-    // FIX: Access totalPages directly from queryResult.data.value, assuming backend returns it directly
-    const totalPages = computed(() => queryResult.data.value?.totalPages ?? 1);
-
+    const totalPages = computed(() => queryResult.data.value?.metadata?.totalPages ?? 1);
 
     return { products, totalPages, ...queryResult };
   }
@@ -52,7 +50,7 @@ export default function useProduct() {
       },
       enabled: computed(() => productId.value !== null),
       staleTime: 1000 * 60 * 5,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: false
     });
 
     const product = computed(() => queryResult.data.value ?? null);
@@ -62,6 +60,6 @@ export default function useProduct() {
 
   return {
     fetchProducts,
-    fetchProduct,
+    fetchProduct
   };
 }
