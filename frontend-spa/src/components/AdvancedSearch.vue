@@ -1,10 +1,12 @@
 <template>
   <div class="advanced-search">
-    <div class="search-header">
-      <h3>Advanced Search</h3>
-      <button @click="toggleFilters" class="toggle-btn">
+    <div class="search-header" @click="toggleFilters">
+      <h3>
+        <i class="fas fa-filter"></i>
+        Search Filters
+      </h3>
+      <button class="toggle-btn">
         <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-        {{ showFilters ? 'Hide' : 'Show' }} Filters
       </button>
     </div>
 
@@ -12,11 +14,11 @@
       <div v-if="showFilters" class="filters-container">
         <!-- Search Input -->
         <div class="filter-group">
-          <label>Search Products</label>
+          <label>Product Name</label>
           <input 
             type="text" 
-            v-model="filters.search" 
-            placeholder="Search by name..."
+            v-model.lazy="filters.search" 
+            placeholder="Enter name..."
             class="form-input"
           >
         </div>
@@ -24,72 +26,67 @@
         <!-- Categories -->
         <div class="filter-group">
           <label>Categories</label>
-          <div class="category-chips">
+          <div v-if="categories.length > 0" class="category-chips">
             <button 
               v-for="category in categories" 
-              :key="category"
-              :class="['category-chip', { active: filters.categories.includes(category) }]"
-              @click="toggleCategory(category)"
+              :key="category.id"
+              :class="['category-chip', { active: filters.categories.includes(category.id) }]"
+              @click="toggleCategory(category.id)"
             >
-              {{ category }}
+              {{ category.name }}
             </button>
           </div>
+           <div v-else class="text-muted small">Loading categories...</div>
         </div>
 
         <!-- Price Range -->
         <div class="filter-group">
           <label>Price Range</label>
-          <div class="price-range">
-            <div class="price-inputs">
-              <input 
-                type="number" 
-                v-model.number="filters.minPrice" 
-                placeholder="Min"
-                min="0"
-                class="price-input"
-              >
-              <span>-</span>
-              <input 
-                type="number" 
-                v-model.number="filters.maxPrice" 
-                placeholder="Max"
-                min="0"
-                class="price-input"
-              >
-            </div>
+          <div class="price-inputs">
+            <input 
+              type="number" 
+              v-model.number.lazy="filters.minPrice" 
+              placeholder="Lowest"
+              min="0"
+              class="price-input"
+            >
+            <input 
+              type="number" 
+              v-model.number.lazy="filters.maxPrice" 
+              placeholder="Highest"
+              min="0"
+              class="price-input"
+            >
           </div>
         </div>
 
         <!-- Stock Filter -->
         <div class="filter-group">
-          <label>Availability</label>
-          <div class="checkbox-group">
-            <label class="checkbox-label">
-              <input 
-                type="checkbox" 
-                v-model="filters.inStock"
-              >
-              <span>In Stock Only</span>
-            </label>
-          </div>
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              v-model="filters.inStock"
+            >
+            <span>In Stock</span>
+          </label>
         </div>
 
         <!-- Sort Options -->
         <div class="filter-group">
           <label>Sort By</label>
           <select v-model="filters.sortBy" class="form-select">
-            <option value="name">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-            <option value="price-low">Price (Low to High)</option>
-            <option value="price-high">Price (High to Low)</option>
-            <option value="newest">Newest First</option>
+            <option value="name,asc">Name: A-Z</option>
+            <option value="name,desc">Name: Z-A</option>
+            <option value="price,asc">Price: Low to High</option>
+            <option value="price,desc">Price: High to Low</option>
+            <option value="createdAt,desc">Newest</option>
           </select>
         </div>
 
         <!-- Action Buttons -->
         <div class="filter-actions">
           <button @click="clearFilters" class="btn-clear">
-            <i class="fas fa-times"></i> Clear All
+            Clear Filters
           </button>
         </div>
       </div>
@@ -98,34 +95,52 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue';
+import { reactive, watch, ref, onMounted } from 'vue';
 import categoryService from '@/services/category.service';
 
 const emit = defineEmits(['filter-change']);
 
+const props = defineProps({
+  initialFilters: {
+    type: Object,
+    required: true,
+  }
+});
+
 const showFilters = ref(true);
 const categories = ref([]);
-const maxPrice = ref(1000000);
+const defaultMaxPrice = 10000000;
 
+// Khởi tạo một đối tượng reactive rỗng ban đầu
 const filters = reactive({
   search: '',
   categories: [],
   minPrice: 0,
-  maxPrice: 1000000,
+  maxPrice: defaultMaxPrice,
   inStock: false,
-  sortBy: 'name'
+  sortBy: 'name,asc'
 });
+
+// SỬA LỖI: Sử dụng watch với `immediate: true` để đảm bảo
+// trạng thái local (`filters`) luôn được đồng bộ với prop (`initialFilters`)
+// ngay khi component được tạo và mỗi khi prop thay đổi.
+watch(() => props.initialFilters, (newFilters) => {
+  if (newFilters) {
+    Object.assign(filters, newFilters);
+  }
+}, { deep: true, immediate: true });
+
 
 const toggleFilters = () => {
   showFilters.value = !showFilters.value;
 };
 
-const toggleCategory = (category) => {
-  const index = filters.categories.indexOf(category);
+const toggleCategory = (categoryId) => {
+  const index = filters.categories.indexOf(categoryId);
   if (index > -1) {
     filters.categories.splice(index, 1);
   } else {
-    filters.categories.push(category);
+    filters.categories.push(categoryId);
   }
 };
 
@@ -133,18 +148,18 @@ const clearFilters = () => {
   filters.search = '';
   filters.categories = [];
   filters.minPrice = 0;
-  filters.maxPrice = maxPrice.value;
+  filters.maxPrice = defaultMaxPrice;
   filters.inStock = false;
-  filters.sortBy = 'name';
+  filters.sortBy = 'name,asc';
 };
 
 const loadCategories = async () => {
   try {
-    const data = await categoryService.getAllCategories();
-    categories.value = data.categories.map(cat => cat.name);
+    const data = await categoryService.fetchCategories(1, 100);
+    categories.value = data.categories;
   } catch (error) {
     console.error('Error loading categories:', error);
-    categories.value = ['Tops', 'Bottoms', 'Dresses', 'Shoes', 'Accessories'];
+    categories.value = [];
   }
 };
 
@@ -152,130 +167,108 @@ onMounted(() => {
   loadCategories();
 });
 
-// Watch for changes and emit
-watch(filters, () => {
-  emit('filter-change', { ...filters });
+// Gửi sự kiện 'filter-change' lên component cha khi người dùng thay đổi bộ lọc
+watch(filters, (newFilters) => {
+  emit('filter-change', newFilters);
 }, { deep: true });
 </script>
 
 <style scoped>
+/* Giữ nguyên các style đã có */
 .advanced-search {
   background: white;
-  border-radius: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
   overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+.advanced-search:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
 
 .search-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
 }
-
 .search-header h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #343a40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-
 .toggle-btn {
-  background: rgba(255,255,255,0.2);
+  background: transparent;
   border: none;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
+  color: #6c757d;
   cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.toggle-btn:hover {
-  background: rgba(255,255,255,0.3);
+  padding: 4px;
 }
 
 .filters-container {
-  padding: 30px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
+  padding: 0 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
-
 .filter-group label {
-  font-weight: 600;
-  margin-bottom: 10px;
-  color: #2c3e50;
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.8rem;
 }
 
-.form-input, .form-select {
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
+.form-input, .form-select, .price-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #f8f9fa;
 }
-
-.form-input:focus, .form-select:focus {
+.form-input:focus, .form-select:focus, .price-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #80bdff;
+  background-color: white;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
 }
 
 .category-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
-
 .category-chip {
-  padding: 8px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 20px;
+  padding: 4px 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 15px;
   background: white;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  color: #495057;
 }
-
 .category-chip.active {
-  background: #667eea;
+  background: var(--primary-color, #667eea);
   color: white;
-  border-color: #667eea;
-}
-
-.category-chip:hover {
-  border-color: #667eea;
-}
-
-.price-range {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  border-color: var(--primary-color, #667eea);
 }
 
 .price-inputs {
   display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.price-input {
-  flex: 1;
-  padding: 8px;
-  border: 2px solid #e0e0e0;
-  border-radius: 5px;
-  text-align: center;
-}
-
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .checkbox-label {
@@ -283,50 +276,47 @@ watch(filters, () => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #495057;
 }
-
 .checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color, #667eea);
 }
 
 .filter-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
+  margin-top: 4px;
 }
-
 .btn-clear {
-  background: #e74c3c;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 25px;
+  width: 100%;
+  background: #f1f3f5;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  padding: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.3s ease;
-  font-size: 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
-
 .btn-clear:hover {
-  background: #c0392b;
+  background: var(--danger-color, #e74c3c);
+  color: white;
+  border-color: var(--danger-color, #e74c3c);
 }
 
 .slide-enter-active, .slide-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.25s ease-out;
+  overflow: hidden;
 }
-
 .slide-enter-from, .slide-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
-}
-
-@media (max-width: 768px) {
-  .filters-container {
-    grid-template-columns: 1fr;
-    padding: 20px;
-  }
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 </style>

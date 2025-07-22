@@ -15,8 +15,6 @@
 </template>
 
 <script setup>
-//import { defineProps, defineEmits } from 'vue';
-
 const props = defineProps({
   currentPage: {
     type: Number,
@@ -28,15 +26,28 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['page-changed']);
+// Sử dụng 'update:currentPage' để tương thích với v-model
+const emit = defineEmits(['update:currentPage']);
 
 const changePage = (page) => {
   if (page >= 1 && page <= props.totalPages) {
-    emit('page-changed', page);
+    // Gửi sự kiện đã được cập nhật
+    emit('update:currentPage', page);
   }
 };
 </script>
 
 <style scoped>
-/* Add any specific styles for pagination here */
+/* Thêm kiểu dáng tùy chỉnh cho phân trang tại đây */
+.page-link {
+  color: #667eea;
+}
+.page-item.active .page-link {
+  background-color: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+.page-item.disabled .page-link {
+  color: #6c757d;
+}
 </style>
