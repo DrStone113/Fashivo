@@ -30,7 +30,7 @@ const updateQuantity = async (productId, newQuantity) => {
     try {
       successMessage.value = '';
       errorMessage.value = '';
-      await cartStore.updateItemQuantity(productId, newQuantity);
+      await cartStore.updateCartItem(productId, newQuantity);
     } catch (error) {
       errorMessage.value = error.message || 'Failed to update quantity.';
       console.error('Error updating quantity:', error);
@@ -43,7 +43,7 @@ const removeItem = async (productId) => {
   try {
     successMessage.value = '';
     errorMessage.value = '';
-    await cartStore.removeItem(productId);
+    await cartStore.removeCartItem(productId);
   } catch (error) {
     errorMessage.value = error.message || 'Failed to remove item.';
     console.error('Error removing item:', error);
@@ -62,7 +62,7 @@ const confirmCheckout = async () => {
   try {
     successMessage.value = '';
     errorMessage.value = '';
-    await cartStore.clearMyCart(); // Gọi API để xóa giỏ hàng trên backend
+    await cartStore.clearCart(); // Gọi API để xóa giỏ hàng trên backend
     
     successMessage.value = 'Bạn đã thanh toán thành công! Giỏ hàng của bạn đã được xóa.';
     // Tùy chọn: Chuyển hướng người dùng đến trang chủ hoặc trang xác nhận đơn giản
@@ -90,7 +90,7 @@ const handleClearCart = async () => {
     try {
       successMessage.value = '';
       errorMessage.value = '';
-      await cartStore.clearMyCart(); // Gọi API để xóa giỏ hàng trên backend
+      await cartStore.clearCart(); // Gọi API để xóa giỏ hàng trên backend
       successMessage.value = 'Giỏ hàng của bạn đã được xóa sạch.';
       console.log('Cart cleared via "Clear Cart" button.');
     } catch (error) {

@@ -30,7 +30,7 @@
     "eslint-plugin-vue": "^9.28.0",
     "pinia-plugin-persistedstate": "^2.4.0",
     "prettier": "^3.3.3",
-    "vite": "^5.4.3",
+    "vite": "^5.4.19",
     "vite-plugin-vue-devtools": "^7.7.7"
   }
 }

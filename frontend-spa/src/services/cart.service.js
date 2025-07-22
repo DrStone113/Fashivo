@@ -9,7 +9,7 @@ async function efetch(url, options = {}) {
   const token = localStorage.getItem('jwtToken');
   const headers = {
     ...options.headers,
-    'Content-Type': options.body instanceof FormData ? undefined : 'application/json',
+    'Content-Type': options.body instanceof FormData ? undefined : 'application/json'
   };
 
   if (token) {
@@ -61,18 +61,18 @@ function makeCartService() {
   }
 
   async function addItemToCart(productId, quantity) {
-    return efetch(`${baseUrl}/addItem`, {
+    return efetch(`${baseUrl}/myCart`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId, quantity }),
+      body: JSON.stringify({ product_id: productId, quantity })
     });
   }
 
   async function updateItemQuantity(productId, quantity) {
-    return efetch(`${baseUrl}/updateItemQuantity`, {
+    return efetch(`${baseUrl}/myCart`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId, quantity }),
+      body: JSON.stringify({ product_id: productId, quantity })
     });
   }
 
@@ -80,23 +80,21 @@ function makeCartService() {
     return efetch(`${baseUrl}/removeItem`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId }),
+      body: JSON.stringify({ product_id: productId })
     });
   }
 
-  // CHỨC NĂNG XÓA GIỎ HÀNG NÀY ĐÃ ĐÚNG VÀ SẼ ĐƯỢC SỬ DỤNG CHO CẢ "CLEAR CART" VÀ "PROCEED TO CHECKOUT"
   async function clearMyCart() {
-    return efetch(`${baseUrl}/clearMyCart`, {
-      method: 'DELETE',
+    return efetch(`${baseUrl}/myCart`, {
+      method: 'DELETE'
     });
   }
 
-  // ... (Các hàm khác không đổi nếu không liên quan trực tiếp đến vấn đề này)
   async function createCart(userId) {
     return efetch(baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId }),
+      body: JSON.stringify({ user_id: userId })
     });
   }
 
@@ -109,13 +107,13 @@ function makeCartService() {
     return efetch(`${baseUrl}/${cart.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cart),
+      body: JSON.stringify(cart)
     });
   }
 
   async function deleteCart(cartId) {
     return efetch(`${baseUrl}/${cartId}`, {
-      method: 'DELETE',
+      method: 'DELETE'
     });
   }
 
@@ -128,7 +126,7 @@ function makeCartService() {
     createCart,
     fetchCartInformation,
     updateCartInformation,
-    deleteCart,
+    deleteCart
   };
 }
 
