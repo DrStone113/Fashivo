@@ -1,24 +1,14 @@
 // src/services/product.service.js
-import { BASE_URL_API, DEFAULT_IMAGE } from '../constants'; // Đảm bảo đúng tên biến BASE_URL_API
+import { BASE_URL_API, DEFAULT_IMAGE } from '../constants';
 
-/**
- * Hàm trợ giúp để fetch API và xử lý phản hồi JSend.
- * Hàm này có thể được chuyển thành một file tiện ích riêng nếu nhiều service sử dụng.
- * @param {string} url
- * @param {RequestInit} options
- * @returns {Promise<any>}
- */
+// Hàm efetch không thay đổi, giữ nguyên như cũ
 async function efetch(url, options = {}) {
   let result = {};
   let json = {};
-
-  // Lấy token từ localStorage
   const token = localStorage.getItem('jwtToken');
-
-  // Thêm header Authorization nếu có token
   const headers = {
     ...options.headers,
-    'Content-Type': options.body instanceof FormData ? undefined : 'application/json',
+    'Content-Type': options.body instanceof FormData ? undefined : 'application/json'
   };
 
   if (token) {
@@ -33,15 +23,13 @@ async function efetch(url, options = {}) {
     throw new Error(`Network or parsing error: ${error.message}`);
   }
 
-  console.log('API Response Status:', result.status);
-  console.log('API Response JSON:', json);
+  // Bỏ console.log ở đây để không làm nhiễu console trong môi trường production
+  // console.log('API Response Status:', result.status);
+  // console.log('API Response JSON:', json);
 
   if (!result.ok || json.status !== 'success') {
     if (result.status === 401) {
       localStorage.removeItem('jwtToken');
-      // Tùy chọn: chuyển hướng đến trang đăng nhập nếu đây là một ứng dụng SPA
-      // import router from '@/router';
-      // router.push('/login');
       throw new Error(json.message || 'Unauthorized: Vui lòng đăng nhập lại.');
     }
     throw new Error(json.message || `API request failed with status ${result.status}`);
@@ -49,76 +37,87 @@ async function efetch(url, options = {}) {
   return json.data;
 }
 
-
 function makeProductService() {
-  // SỬ DỤNG ĐÚNG TÊN BIẾN BASE_URL_API
-  const baseUrl = `${BASE_URL_API}/product`; // URL cơ sở cho các API sản phẩm
+  const baseUrl = `${BASE_URL_API}/product`;
 
-  /**
-   * Lấy danh sách sản phẩm với phân trang và bộ lọc.
-   * @param {number} page - Trang hiện tại.
-   * @param {number} limit - Số lượng sản phẩm trên mỗi trang.
-   * @param {object} filters - Các bộ lọc sản phẩm (ví dụ: name, categoryId, minPrice, maxPrice, etc.)
-   * @returns {Promise<{products: Array, metadata: object}>}
-   */
   async function fetchProducts(page = 1, limit = 8, filters = {}) {
+    // Khởi tạo URLSearchParams để xây dựng query string
     const queryParams = new URLSearchParams({
-      page: page,
-      limit: limit,
-      ...filters, // Thêm các bộ lọc vào query params
-    }).toString();
+      page,
+      limit
+    });
 
-    // API: GET /api/v1/product?page=...&limit=...&filterKey=...
-    const data = await efetch(`${baseUrl}?${queryParams}`);
-    // Giả sử `data` ở đây là `{ products: [...], metadata: {...} }` từ phản hồi JSend
-    
-    // Xử lý image_url cho mỗi sản phẩm
-    data.products = data.products.map(product => ({
+    // 1. Giữ nguyên các bộ lọc đã hoạt động
+    if (filters.search) {
+      queryParams.append('search', filters.search);
+    }
+    if (filters.minPrice > 0) {
+      queryParams.append('minPrice', filters.minPrice);
+    }
+    if (filters.maxPrice < 10000000) {
+      queryParams.append('maxPrice', filters.maxPrice);
+    }
+    if (filters.inStock) {
+      queryParams.append('inStock', 'true');
+    }
+
+    // 2. SỬA LỖI CUỐI CÙNG CHO CATEGORIES:
+    // Lặp qua mảng ID và thêm từng cái vào query dưới dạng tham số riêng biệt
+    // URL sẽ có dạng: ...&category_id=3&category_id=4
+    if (filters.categories && filters.categories.length > 0) {
+      filters.categories.forEach((id) => {
+        queryParams.append('category_id', id);
+      });
+    }
+
+    // 3. Giữ nguyên logic cho Sắp xếp
+    if (filters.sortBy) {
+      const [sortField, sortOrder] = filters.sortBy.split(',');
+      if (sortField) {
+        queryParams.append('sort', sortField);
+        queryParams.append('order', sortOrder);
+      }
+    }
+
+    const queryString = queryParams.toString();
+
+    const data = await efetch(`${baseUrl}?${queryString}`);
+
+    data.products = data.products.map((product) => ({
       ...product,
-      image_url: product.image_url ?? DEFAULT_IMAGE // Sử dụng DEFAULT_IMAGE nếu không có
+      image_url: product.image_url ?? DEFAULT_IMAGE
     }));
 
     return data;
   }
 
-  /**
-   * Lấy thông tin chi tiết của một sản phẩm theo ID.
-   * @param {number} productId - ID của sản phẩm.
-   * @returns {Promise<object>} - Thông tin chi tiết sản phẩm.
-   */
+  // Các hàm còn lại không thay đổi
   async function fetchProduct(productId) {
-    // efetch trả về `json.data`, mà trong trường hợp này là `{ product: { ... } }`
     const dataFromApi = await efetch(`${baseUrl}/${productId}`);
-
-    // BƯỚC SỬA LỖI QUAN TRỌNG: Lấy đối tượng sản phẩm thực sự từ `dataFromApi.product`
-    const actualProduct = dataFromApi.product; 
-
-    // Trả về đối tượng sản phẩm đã được làm phẳng và bổ sung image_url
+    const actualProduct = dataFromApi.product;
     return {
-      ...actualProduct, // Spread các thuộc tính của đối tượng sản phẩm thực sự
-      image_url: actualProduct.image_url ?? DEFAULT_IMAGE, // Sử dụng `actualProduct.image_url`
+      ...actualProduct,
+      image_url: actualProduct.image_url ?? DEFAULT_IMAGE
     };
   }
 
-  // Các API khác liên quan đến sản phẩm (ví dụ: tạo, cập nhật, xóa, tìm kiếm nâng cao)
-  // có thể được thêm vào đây
   async function createProduct(productData) {
     return efetch(baseUrl, {
       method: 'POST',
-      body: JSON.stringify(productData),
+      body: JSON.stringify(productData)
     });
   }
 
   async function updateProduct(productId, productData) {
     return efetch(`${baseUrl}/${productId}`, {
       method: 'PATCH',
-      body: JSON.stringify(productData),
+      body: JSON.stringify(productData)
     });
   }
 
   async function deleteProduct(productId) {
     return efetch(`${baseUrl}/${productId}`, {
-      method: 'DELETE',
+      method: 'DELETE'
     });
   }
 
@@ -127,7 +126,7 @@ function makeProductService() {
     fetchProduct,
     createProduct,
     updateProduct,
-    deleteProduct,
+    deleteProduct
   };
 }
 
