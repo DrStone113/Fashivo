@@ -1,9 +1,11 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue';
 import { useCartStore } from '@/store/cartStore'; // Đảm bảo đường dẫn đúng
+import { useAuthStore } from '@/store/authStore'; // Import auth store
 import { useRouter } from 'vue-router'; // Import useRouter để chuyển hướng
 
 const cartStore = useCartStore();
+const authStore = useAuthStore();
 const router = useRouter();
 
 const successMessage = ref('');
@@ -51,9 +53,19 @@ const removeItem = async (productId) => {
 };
 
 // Hàm xử lý khi nhấn "Proceed to Checkout"
-// Vì không có bảng orders, chúng ta chỉ coi đây là việc xác nhận và xóa giỏ hàng
+// Kiểm tra đăng nhập trước khi cho phép thanh toán
 const handleProceedToCheckout = async () => {
-  // Hiển thị popup xác nhận trước
+  // Kiểm tra trạng thái đăng nhập
+  if (!authStore.isAuthenticated) {
+    // Lưu đường dẫn hiện tại để quay lại sau khi đăng nhập
+        router.push({
+          path: '/login',
+          query: { redirect: router.currentRoute.value.fullPath }
+        });
+    return;
+  }
+  
+  // Nếu đã đăng nhập, hiển thị popup xác nhận
   showConfirmation.value = true;
 };
 
@@ -166,9 +178,17 @@ const handleClearCart = async () => {
         <button @click="handleClearCart" class="btn btn-outline-danger me-2">
           <i class="fas fa-trash-alt"></i> Xóa giỏ hàng
         </button>
-        <button @click="handleProceedToCheckout" class="btn btn-primary">
-          <i class="fas fa-money-check-alt"></i> Tiến hành thanh toán
+        <button @click="handleProceedToCheckout" class="btn btn-primary" :disabled="isEmpty">
+          <i class="fas fa-money-check-alt"></i> 
+          {{ authStore.isAuthenticated ? 'Tiến hành thanh toán' : 'Đăng nhập để thanh toán' }}
         </button>
+      </div>
+      
+      <!-- Thông báo yêu cầu đăng nhập -->
+      <div v-if="!authStore.isAuthenticated && !isEmpty" class="alert alert-warning mt-3 text-end">
+        <i class="fas fa-info-circle"></i> 
+        Vui lòng <router-link :to="{ path: '/login', query: { redirect: router.currentRoute.value.fullPath } }" class="alert-link">đăng nhập</router-link> 
+        để tiến hành thanh toán.
       </div>
     </div>
 

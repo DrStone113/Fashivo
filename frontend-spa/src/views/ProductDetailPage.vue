@@ -12,8 +12,21 @@
     </div>
     <div v-else-if="product" class="row">
       <div class="col-md-6 mb-4">
-        <img :src="product.image_url || '/public/image/BLANK.jpg'" class="img-fluid rounded shadow-sm"
-          alt="Product Image">
+        <!-- Fixed size image container -->
+        <div class="product-image-container">
+          <img 
+            :src="product.image_url || '/public/image/BLANK.jpg'" 
+            class="product-detail-image"
+            alt="Product Image"
+            @load="onImageLoad"
+            @error="onImageError"
+          >
+          <div v-if="imageLoading" class="image-loading-overlay">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading image...</span>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="col-md-6">
         <h1 class="display-5 fw-bold mb-3">{{ product.name }}</h1>
@@ -78,6 +91,7 @@ const { product, isLoading, isError, error } = useProduct().fetchProduct(product
 const quantity = ref(1);
 const successMessage = ref('');
 const errorMessage = ref('');
+const imageLoading = ref(true);
 
 // Watch for product changes to reset quantity and messages
 watch(product, (newProduct) => {
@@ -85,8 +99,18 @@ watch(product, (newProduct) => {
     quantity.value = 1;
     successMessage.value = '';
     errorMessage.value = '';
+    imageLoading.value = true;
   }
 }, { immediate: true });
+
+const onImageLoad = () => {
+  imageLoading.value = false;
+};
+
+const onImageError = () => {
+  imageLoading.value = false;
+  console.error('Failed to load product image');
+};
 
 const addToCart = async () => {
   if (!product.value) {
@@ -114,8 +138,61 @@ const addToCart = async () => {
 </script>
 
 <style scoped>
-.img-fluid {
-  max-width: 100%;
-  height: auto;
+.product-image-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 500px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background-color: #f8f9fa;
+}
+
+.product-detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.3s ease;
+}
+
+.product-detail-image:hover {
+  transform: scale(1.05);
+}
+
+.image-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .product-image-container {
+    max-width: 400px;
+    height: 400px;
+  }
+}
+
+@media (max-width: 576px) {
+  .product-image-container {
+    max-width: 100%;
+    height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-image-container {
+    height: 300px;
+  }
 }
 </style>

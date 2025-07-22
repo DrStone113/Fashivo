@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 
 const email = ref('');
@@ -45,6 +45,7 @@ const password = ref('');
 const errorMessage = ref('');
 const isLoading = ref(false);
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const handleLogin = async () => {
@@ -52,7 +53,10 @@ const handleLogin = async () => {
   isLoading.value = true;
   try {
     await authStore.login(email.value, password.value);
-    router.push('/'); // Chuyển hướng về trang chủ sau khi đăng nhập thành công
+    
+    // Kiểm tra xem có redirect parameter không
+    const redirectPath = route.query.redirect || '/';
+    router.push(redirectPath); // Chuyển hướng về trang trước đó hoặc trang chủ
   } catch (error) {
     errorMessage.value = error.message || 'Login failed. Please check your credentials.';
   } finally {

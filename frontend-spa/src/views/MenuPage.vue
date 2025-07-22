@@ -1,6 +1,5 @@
 <template>
   <div class="menu-page">
-    <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-content">
         <h1 class="hero-title">Discover Our Collection</h1>
@@ -8,101 +7,59 @@
       </div>
     </section>
 
-    <!-- Search and Filter Section -->
-    <section class="search-section">
-      <div class="container">
-        <div class="search-wrapper">
-          <SearchBar v-model="searchText" @search="performSearch" />
-        </div>
-      </div>
-    </section>
+    <div class="container main-content">
+      <aside class="filters-column">
+        <AdvancedSearch 
+          :initial-filters="filters"
+          @filter-change="updateFilters" 
+        />
+      </aside>
 
-    <!-- Products Section -->
-    <section class="products-section">
-      <div class="container">
-        <!-- Loading State -->
-        <div v-if="isLoading" class="loading-state">
+      <main class="products-column">
+        <div v-if="isLoading" class="state-container">
           <div class="spinner"></div>
           <p>Loading amazing products...</p>
         </div>
 
-        <!-- Error State -->
-        <div v-else-if="isError" class="error-state">
+        <div v-else-if="isError" class="state-container error-state">
           <i class="fas fa-exclamation-triangle"></i>
           <p>{{ error?.message || 'Failed to load products' }}</p>
-          <button @click="reloadProducts" class="btn-retry">Try Again</button>
+          <button @click="reloadPage" class="btn-retry">Try Again</button>
         </div>
 
-        <!-- Empty State -->
-        <div v-else-if="!filteredProducts || filteredProducts.length === 0" class="empty-state">
-          <i class="fas fa-search"></i>
-          <h3>No products found</h3>
-          <p>{{ searchText ? 'Try adjusting your search' : 'Check back later for new arrivals' }}</p>
+        <div v-else-if="!products || products.length === 0" class="state-container empty-state">
+          <i class="fas fa-tshirt"></i>
+          <h3>No Products Found</h3>
+          <p>Try adjusting your filters or check back later for new arrivals!</p>
         </div>
 
-        <!-- Products Grid -->
         <div v-else class="products-grid">
-          <div class="product-card" 
-               v-for="(product, index) in filteredProducts" 
-               :key="product.id"
-               :class="{ 'selected': selectedIndex === index }"
-               @click="selectProduct(index)">
-            
-            <div class="product-image">
-              <img :src="product.image_url || '/public/image/BLANK.jpg'" 
-                   :alt="product.name"
-                   loading="lazy">
-              <div class="product-overlay">
-                <button @click.stop="addToCart(product)" 
-                        class="add-to-cart-btn"
-                        :disabled="product.stock === 0">
-                  <i class="fas fa-shopping-cart"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="product-info">
-              <h3 class="product-name">{{ product.name }}</h3>
-              <p class="product-type">{{ product.type }}</p>
-              <p class="product-price">{{ Number(product.price || 0).toLocaleString() }} VND</p>
-              
-              <div class="product-actions">
-                <button @click.stop="addToCart(product)" 
-                        class="btn-primary"
-                        :disabled="product.stock === 0">
-                  <i class="fas fa-shopping-cart"></i>
-                  {{ product.stock === 0 ? 'Out of Stock' : 'Add to Cart' }}
-                </button>
-                <router-link :to="`/product/${product.id}`" 
-                             class="btn-secondary">
-                  <i class="fas fa-eye"></i>
-                  View Details
-                </router-link>
-              </div>
-            </div>
-
-            <div v-if="product.stock === 0" class="out-of-stock-badge">
-              Out of Stock
-            </div>
-          </div>
+          <ProductCard 
+            v-for="product in products" 
+            :key="product.id" 
+            :product="product"
+            @add-to-cart="handleAddToCart"
+            @buy-now="handleBuyNow"
+          />
         </div>
 
-        <!-- Pagination -->
         <div v-if="totalPages > 1" class="pagination-wrapper">
           <MainPagination 
             :total-pages="totalPages" 
             :current-page="currentPage"
-            @update:current-page="changeCurrentPage" />
+            @update:current-page="changeCurrentPage" 
+          />
         </div>
-      </div>
-    </section>
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import SearchBar from '@/components/SearchBar.vue';
+import AdvancedSearch from '@/components/AdvancedSearch.vue';
+import ProductCard from '@/components/ProductCard.vue';
 import MainPagination from '@/components/MainPagination.vue';
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import useProduct from '@/composables/useProduct';
 import { useCartStore } from '@/store/cartStore';
@@ -111,123 +68,142 @@ const router = useRouter();
 const route = useRoute();
 const cartStore = useCartStore();
 
-// Current page from query string
+// Khởi tạo bộ lọc từ URL query
+const filters = ref({
+  search: route.query.search || '',
+  categories: (route.query.category_id || '').split(',').filter(Boolean).map(id => parseInt(id.trim())),
+  minPrice: Number(route.query.minPrice) || 0,
+  maxPrice: Number(route.query.maxPrice) || 10000000,
+  inStock: route.query.inStock === 'true',
+  sortBy: route.query.sortBy || 'name,asc'
+});
+
 const currentPage = computed(() => {
   const page = Number(route.query?.page);
-  if (Number.isNaN(page) || page < 1) return 1;
-  return page;
+  return !Number.isNaN(page) && page > 0 ? page : 1;
 });
 
-const selectedIndex = ref(-1);
-const searchText = ref('');
+const { fetchProducts } = useProduct();
+const { products, totalPages, isLoading, isError, error } = fetchProducts(currentPage, filters);
 
-// Get products from composable
-const { products, totalPages, isLoading, isError, error } = useProduct().fetchProducts(currentPage);
-
-// Filter products based on search
-const filteredProducts = computed(() => {
-  if (!searchText.value) return products.value;
-  return products.value.filter(product => 
-    product.name.toLowerCase().includes(searchText.value.toLowerCase()) ||
-    product.type.toLowerCase().includes(searchText.value.toLowerCase())
-  );
-});
-
-const selectedProduct = computed(() => {
-  if (selectedIndex.value < 0 || !filteredProducts.value.length) return null;
-  return filteredProducts.value[selectedIndex.value];
-});
+function updateFilters(newFilters) {
+  Object.assign(filters.value, newFilters);
+  changeCurrentPage(1);
+}
 
 function changeCurrentPage(page) {
-  router.push({ name: 'MenuPage', query: { page } });
+  // Tạo query object từ state hiện tại của filters và trang mới
+  const query = {
+    page: page > 1 ? page : undefined,
+    search: filters.value.search || undefined,
+    category_id: filters.value.categories.length > 0 ? filters.value.categories.join(',') : undefined,
+    minPrice: filters.value.minPrice > 0 ? filters.value.minPrice : undefined,
+    maxPrice: filters.value.maxPrice < 10000000 ? filters.value.maxPrice : undefined,
+    inStock: filters.value.inStock ? 'true' : undefined,
+    sortBy: filters.value.sortBy !== 'name,asc' ? filters.value.sortBy : undefined,
+  };
+
+  // Loại bỏ các key có giá trị là undefined để giữ URL sạch sẽ
+  Object.keys(query).forEach(key => query[key] === undefined && delete query[key]);
+  
+  router.push({ query });
 }
 
-function performSearch(searchTerm) {
-  searchText.value = searchTerm;
-}
-
-function reloadProducts() {
-  window.location.reload();
-}
-
-function selectProduct(index) {
-  selectedIndex.value = index;
-}
-
-function addToCart(product) {
+function handleAddToCart(product) {
   if (product.stock > 0) {
     cartStore.addItem(product, 1);
   }
 }
 
-// Reset selection when search or page changes
-watch([searchText, currentPage], () => {
-  selectedIndex.value = -1;
-});
+function handleBuyNow(product) {
+  if (product.stock > 0) {
+    cartStore.addItem(product, 1);
+    router.push('/cart');
+  }
+}
 
-onMounted(() => {
-  console.log('MenuPage mounted with beautiful design');
-});
+function reloadPage() {
+  window.location.reload();
+}
 </script>
 
 <style scoped>
+/* Giữ nguyên các style đã có */
 .menu-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #f8f9fa;
 }
 
 /* Hero Section */
 .hero-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 80px 0;
+  padding: 60px 20px;
   text-align: center;
-}
-
-.hero-content {
-  max-width: 800px;
-  margin: 0 auto;
+  margin-bottom: 40px;
 }
 
 .hero-title {
-  font-size: 3rem;
+  font-size: 2.8rem;
   font-weight: 700;
-  margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   opacity: 0.9;
-}
-
-/* Search Section */
-.search-section {
-  padding: 40px 0;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.search-wrapper {
   max-width: 600px;
-  margin: 0 auto;
+  margin: 10px auto 0;
 }
 
-/* Products Section */
-.products-section {
-  padding: 60px 0;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
+/* Main Content Layout */
+.container.main-content {
+  max-width: 1400px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 30px;
+  align-items: flex-start;
   padding: 0 20px;
 }
 
-/* Loading State */
-.loading-state {
+.filters-column {
+  flex: 0 0 250px;
+  position: sticky;
+  top: 20px;
+}
+
+.products-column {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
   text-align: center;
-  padding: 100px 0;
+  background: white;
+  border-radius: 15px;
+  min-height: 400px;
+  color: #555;
+}
+
+.state-container i {
+  font-size: 4rem;
+  color: #764ba2;
+  margin-bottom: 1.5rem;
+}
+
+.error-state i {
+  color: #e74c3c;
 }
 
 .spinner {
@@ -237,7 +213,7 @@ onMounted(() => {
   border-top: 5px solid #667eea;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
+  margin-bottom: 20px;
 }
 
 @keyframes spin {
@@ -245,220 +221,44 @@ onMounted(() => {
   100% { transform: rotate(360deg); }
 }
 
-/* Error State */
-.error-state {
-  text-align: center;
-  padding: 100px 0;
-  color: #e74c3c;
-}
-
-.error-state i {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
 .btn-retry {
   background: #667eea;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 12px 25px;
+  border-radius: 8px;
   cursor: pointer;
   margin-top: 1rem;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 100px 0;
-  color: #7f8c8d;
-}
-
-.empty-state i {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-}
-
-/* Products Grid */
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
-  margin: 40px 0;
-}
-
-.product-card {
-  background: white;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  position: relative;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
-
-.product-card.selected {
-  border: 2px solid #667eea;
-}
-
-.product-image {
-  position: relative;
-  height: 250px;
-  overflow: hidden;
-}
-
-.product-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.product-card:hover .product-image img {
-  transform: scale(1.05);
-}
-
-.product-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.product-card:hover .product-overlay {
-  opacity: 1;
-}
-
-.add-to-cart-btn {
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
   transition: background 0.3s ease;
 }
 
-.add-to-cart-btn:hover {
+.btn-retry:hover {
   background: #5a6fd8;
 }
 
-.product-info {
-  padding: 20px;
-}
-
-.product-name {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-}
-
-.product-type {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-.product-price {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #667eea;
-  margin-bottom: 1rem;
-}
-
-.product-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.btn-primary, .btn-secondary {
-  flex: 1;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  text-decoration: none;
-  text-align: center;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #5a6fd8;
-}
-
-.btn-secondary {
-  background: #ecf0f1;
-  color: #2c3e50;
-}
-
-.btn-secondary:hover {
-  background: #bdc3c7;
-}
-
-.out-of-stock-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #e74c3c;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.8rem;
-}
-
-/* Pagination */
 .pagination-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 60px;
+  margin: 50px 0;
 }
 
-/* Responsive Design */
+@media (max-width: 992px) {
+  .container.main-content {
+    flex-direction: column;
+  }
+  .filters-column {
+    width: 100%;
+    position: static;
+    flex-basis: auto;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
-  
   .products-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .product-card {
-    margin: 0 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-section {
-    padding: 40px 20px;
-  }
-  
-  .hero-title {
-    font-size: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   }
 }
 </style>
