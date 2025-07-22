@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'; // Ensure 'computed' is imported
+import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import useProduct from '@/composables/useProduct';
 import { useCartStore } from '@/store/cartStore';
@@ -64,34 +64,29 @@ const route = useRoute();
 const cartStore = useCartStore();
 
 // Create a computed property for the product ID from the route params
-// This computed property will react to changes in route.params.id
 const productIdFromRoute = computed(() => {
-  // Ensure route.params.id exists and is not empty before converting to Number
   const id = route.params.id;
   if (id && typeof id === 'string' && id.trim() !== '') {
     const numId = Number(id);
-    return isNaN(numId) ? null : numId; // Return null if not a valid number
+    return isNaN(numId) ? null : numId;
   }
-  return null; // Return null if id is undefined, null, or empty string
+  return null;
 });
 
-// Pass the computed productIdFromRoute to useProduct().fetchProduct
-// The `useProduct` composable is now responsible for using this computed ref
-// with the `enabled` option in `useQuery`.
 const { product, isLoading, isError, error } = useProduct().fetchProduct(productIdFromRoute);
 
 const quantity = ref(1);
 const successMessage = ref('');
 const errorMessage = ref('');
 
-// Watch for product changes (when data arrives) to reset quantity and messages
+// Watch for product changes to reset quantity and messages
 watch(product, (newProduct) => {
   if (newProduct) {
     quantity.value = 1;
     successMessage.value = '';
     errorMessage.value = '';
   }
-}, { immediate: true }); // Run immediately on component mount, if product is already available from cache
+}, { immediate: true });
 
 const addToCart = async () => {
   if (!product.value) {
@@ -106,13 +101,8 @@ const addToCart = async () => {
   }
 
   try {
-    await cartStore.addItem({
-      product_id: product.value.id,
-      quantity: quantity.value,
-      name: product.value.name,
-      price: product.value.price,
-      image_url: product.value.image_url,
-    });
+    // Pass the actual product object with quantity
+    await cartStore.addItem(product.value, quantity.value);
     successMessage.value = `${quantity.value} x ${product.value.name} added to cart!`;
     errorMessage.value = '';
   } catch (err) {
@@ -124,7 +114,6 @@ const addToCart = async () => {
 </script>
 
 <style scoped>
-/* Add any specific styles for the product detail page here */
 .img-fluid {
   max-width: 100%;
   height: auto;
