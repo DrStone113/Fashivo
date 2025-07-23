@@ -12,15 +12,13 @@ const { authLimiter } = require('../middlewares/rateLimit.middleware');
 const router = express.Router();
 
 // Cấu hình Multer cho việc upload file avatar
-// Đảm bảo thư mục public/img/users tồn tại
+// Đảm bảo thư mục public/avatars tồn tại
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/img/users'); 
+    cb(null, 'public/avatars'); // Đã thay đổi thư mục lưu trữ thành 'public/avatars'
   },
   filename: (req, file, cb) => {
-    // req.user.id sẽ có sẵn nếu middleware authenticate được áp dụng trước Multer
-    // Nếu không có authenticate, bạn cần một cách khác để tạo tên file duy nhất
-    const userId = req.user ? req.user.id : 'unknown'; // Fallback nếu không có user
+    const userId = req.user ? req.user.id : 'unknown';
     const ext = file.mimetype.split('/')[1];
     cb(null, `user-${userId}-${Date.now()}.${ext}`);
   }
@@ -82,11 +80,10 @@ module.exports.setup = (app) => {
 
   // Route logout không cần xác thực (thường là vậy)
   router.route('/logout')
-    .post(authController.logout) // Không cần authenticate ở đây
+    .post(authController.logout) 
     .all(methodNotAllowed);
 
   // Routes cần bảo vệ (authenticate middleware sẽ được áp dụng cho tất cả các route bên dưới)
-  // Đặt authenticate ở đây để nó chỉ áp dụng cho các route sau nó
   router.use(authenticate); 
 
   // Route để lấy thông tin của chính mình và CẬP NHẬT (PATCH)

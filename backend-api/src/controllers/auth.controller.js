@@ -6,21 +6,17 @@ const authService = require("../services/auth.service");
 
 // Đăng ký người dùng mới
 const signup = catchAsync(async (req, res, _next) => {
-  // Dữ liệu đã được Zod validate bởi signupSchema
-  // Đã đổi từ username, email, password, fullname... thành name, email, password...
   const { name, email, password, address, phone, role } = req.body;
 
-  // Gọi service để tạo người dùng
   const newUserWithoutPassword = await authService.registerUser({
-    name, // Sử dụng 'name' để phù hợp với CSDL
+    name,
     email,
     password,
     address,
     phone,
-    role, // Vai trò sẽ được Zod schema mặc định là 'user' nếu không được cung cấp
+    role,
   });
 
-  // Tạo token cho người dùng mới đăng ký
   const token = authService.signToken(newUserWithoutPassword.id);
 
   res.status(201).json(JSend.success({
@@ -30,7 +26,7 @@ const signup = catchAsync(async (req, res, _next) => {
   }));
 });
 
-// Đăng nhập người dùng (Không đổi)
+// Đăng nhập người dùng
 const login = catchAsync(async (req, res, _next) => {
   const { email, password } = req.body;
 
@@ -44,7 +40,7 @@ const login = catchAsync(async (req, res, _next) => {
   }));
 });
 
-// Lấy thông tin profile của người dùng hiện tại (đã được xác thực) (Không đổi)
+// Lấy thông tin profile của người dùng hiện tại
 const getMe = catchAsync(async (req, res, _next) => {
   const user = req.user;
   if (!user) {
@@ -53,10 +49,28 @@ const getMe = catchAsync(async (req, res, _next) => {
   res.status(200).json(JSend.success({ user }));
 });
 
-// Cập nhật thông tin profile của người dùng hiện tại (Không đổi, vì updateData đã chứa 'name' từ schema)
+// Cập nhật thông tin profile của người dùng hiện tại
 const updateMe = catchAsync(async (req, res, _next) => {
     const userId = req.user.id;
-    const updateData = req.body; // updateData sẽ chứa 'name' nếu được cung cấp
+    const updateData = { ...req.body }; // Lấy các trường text từ req.body
+
+    // Xóa trường avatarFile khỏi updateData nếu nó tồn tại trong req.body
+    if (updateData.avatarFile) {
+        delete updateData.avatarFile;
+    }
+
+    // Xử lý file avatar nếu có
+    if (req.file) {
+        // req.file.filename được Multer tạo ra
+        updateData.avatar_url = `/public/avatars/${req.file.filename}`; // NEW: Thay đổi đường dẫn
+    } else if (updateData.avatar_url === '/public/image/products/BLANK.jpg.png') {
+        // Nếu frontend gửi avatar_url là BLANK.jpg.png (người dùng đã xóa ảnh hoặc không chọn)
+        // và avatar hiện tại của user không phải là BLANK, thì set avatar_url thành null
+        // để xóa avatar cũ trong DB.
+        if (req.user.avatar_url && req.user.avatar_url !== '/public/image/products/BLANK.jpg.png') {
+            updateData.avatar_url = null;
+        }
+    }
 
     const updatedUser = await authService.updateProfile(userId, updateData);
 
@@ -66,7 +80,7 @@ const updateMe = catchAsync(async (req, res, _next) => {
     }));
 });
 
-// Cập nhật mật khẩu của người dùng hiện tại (Không đổi)
+// Cập nhật mật khẩu của người dùng hiện tại
 const updateMyPassword = catchAsync(async (req, res, _next) => {
     const userId = req.user.id;
     const { currentPassword, newPassword } = req.body;
@@ -79,7 +93,7 @@ const updateMyPassword = catchAsync(async (req, res, _next) => {
     }));
 });
 
-// Quên mật khẩu (Không đổi)
+// Quên mật khẩu
 const forgotPassword = catchAsync(async (req, res, _next) => {
   const { email } = req.body;
 
@@ -87,11 +101,11 @@ const forgotPassword = catchAsync(async (req, res, _next) => {
 
   res.status(200).json(JSend.success({
     message: 'Token đặt lại mật khẩu đã được gửi đến email của bạn!',
-    resetToken // CHỈ NÊN GỬI TRONG DEV ĐỂ TEST, KHÔNG GỬI TRONG PRODUCTION
+    resetToken 
   }));
 });
 
-// Đặt lại mật khẩu (Không đổi)
+// Đặt lại mật khẩu
 const resetPassword = catchAsync(async (req, res, _next) => {
   const { token } = req.params;
   const { newPassword, confirmNewPassword } = req.body;
@@ -110,9 +124,7 @@ const resetPassword = catchAsync(async (req, res, _next) => {
 });
 
 // Đăng xuất người dùng
-const logout = catchAsync(async (req, res, _next) => { // Đảm bảo đây là một hàm async
-  // Logic đăng xuất ở đây
-  // Ví dụ: Xóa cookie hoặc chỉ đơn giản là gửi phản hồi thành công
+const logout = catchAsync(async (req, res, _next) => {
   res.status(200).json(JSend.success({ message: 'Đăng xuất thành công!' }));
 });
 

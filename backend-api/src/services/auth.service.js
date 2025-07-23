@@ -5,10 +5,20 @@ const jwt = require('jsonwebtoken');
 const knex = require('../config/db'); 
 const ApiError = require('../api-error');
 
-const TABLE_NAME = 'users'; // Tên bảng người dùng của bạn
+const TABLE_NAME = 'users'; 
 
 // Hàm trợ giúp để tạo token JWT
 const signToken = (id) => {
+  // Thêm kiểm tra để đảm bảo biến môi trường được tải
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET is not defined!');
+    throw new Error('JWT_SECRET environment variable is missing.');
+  }
+  if (!process.env.JWT_EXPIRES_IN) {
+    console.error('JWT_EXPIRES_IN is not defined!');
+    throw new Error('JWT_EXPIRES_IN environment variable is missing.');
+  }
+
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
@@ -26,8 +36,7 @@ const findUserById = async (id) => {
 
 // Hàm tạo người dùng mới
 const registerUser = async (userData) => {
-  // Hash mật khẩu trước khi lưu
-  const hashedPassword = await bcrypt.hash(userData.password, 12); // Salt round 12 là tốt
+  const hashedPassword = await bcrypt.hash(userData.password, 12); 
   
   try {
     const [newUser] = await knex(TABLE_NAME).insert({
@@ -36,15 +45,14 @@ const registerUser = async (userData) => {
       password: hashedPassword,
       address: userData.address,
       phone: userData.phone,
-      role: userData.role || 'user', // Đảm bảo role được set mặc định nếu không có
-    }).returning('*'); // Trả về tất cả các cột của bản ghi mới tạo
+      role: userData.role || 'user', 
+    }).returning('*'); 
 
-    // Loại bỏ mật khẩu khỏi đối tượng người dùng trước khi trả về
     const { password, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
 
   } catch (error) {
-    if (error.code === '23505') { // Mã lỗi của PostgreSQL cho UNIQUE violation
+    if (error.code === '23505') { 
       throw new ApiError(400, 'Email hoặc username đã tồn tại.');
     }
     throw new ApiError(500, `Không thể đăng ký người dùng: ${error.message}`);
@@ -55,14 +63,22 @@ const registerUser = async (userData) => {
 const loginUser = async (email, candidatePassword) => {
   const user = await findUserByEmail(email);
 
-  if (!user || !(await bcrypt.compare(candidatePassword, user.password))) {
+  if (!user) {
     throw new ApiError(401, 'Email hoặc mật khẩu không đúng!');
   }
 
-  // Loại bỏ mật khẩu khỏi đối tượng người dùng trước khi trả về
+  if (!user.password) {
+    console.error('User found but no password field:', user);
+    throw new ApiError(500, 'Lỗi server: Thông tin người dùng không hợp lệ.');
+  }
+
+  const isPasswordCorrect = await bcrypt.compare(candidatePassword, user.password);
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, 'Email hoặc mật khẩu không đúng!');
+  }
+
   const { password, ...userWithoutPassword } = user;
   
-  // Tạo token ngay tại đây hoặc trong controller nếu bạn muốn
   const token = signToken(user.id); 
 
   return { user: userWithoutPassword, token };
@@ -71,14 +87,22 @@ const loginUser = async (email, candidatePassword) => {
 // Hàm cập nhật thông tin profile của người dùng
 const updateProfile = async (userId, updateData) => {
   try {
-    // Kiểm tra xem có cần hash lại mật khẩu không nếu bạn cho phép cập nhật mật khẩu qua đây
-    // NHƯNG TRONG auth.controller CỦA BẠN ĐÃ CÓ updateMyPassword, nên ở đây không cho update password
-    // const { password, ...dataToUpdate } = updateData; 
-    // if (password) {
-    //   dataToUpdate.password = await bcrypt.hash(password, 12);
-    // }
+    // KHÔNG LỌC EMAIL RA NỮA
+    const { avatarFile, ...dataToUpdate } = updateData; 
+    // `avatarFile` vẫn bị bỏ qua vì nó là đối tượng File từ frontend, không phải cột DB.
 
-    const [updatedUser] = await knex(TABLE_NAME).where({ id: userId }).update(updateData).returning('*');
+    // Nếu email được gửi và khác với email hiện tại của người dùng, kiểm tra trùng lặp
+    if (dataToUpdate.email) {
+      const currentUser = await findUserById(userId);
+      if (currentUser && currentUser.email !== dataToUpdate.email) {
+        const existingUserWithNewEmail = await findUserByEmail(dataToUpdate.email);
+        if (existingUserWithNewEmail) {
+          throw new ApiError(400, 'Email mới đã tồn tại. Vui lòng chọn email khác.');
+        }
+      }
+    }
+
+    const [updatedUser] = await knex(TABLE_NAME).where({ id: userId }).update(dataToUpdate).returning('*');
     
     if (!updatedUser) {
       throw new ApiError(404, 'Người dùng không tìm thấy để cập nhật.');
@@ -87,8 +111,12 @@ const updateProfile = async (userId, updateData) => {
     return userWithoutPassword;
 
   } catch (error) {
-    if (error.code === '23505') { 
-      throw new ApiError(400, 'Email hoặc username đã tồn tại.');
+    if (error.code === '23505' && error.constraint === 'users_email_unique') { // Kiểm tra mã lỗi và tên ràng buộc UNIQUE
+      throw new ApiError(400, 'Email mới đã tồn tại.');
+    }
+    // Đối với các lỗi khác, hoặc lỗi từ ApiError đã chủ động throw
+    if (error instanceof ApiError) {
+      throw error;
     }
     throw new ApiError(500, `Không thể cập nhật profile: ${error.message}`);
   }
@@ -122,56 +150,26 @@ const generatePasswordResetToken = async (email) => {
     throw new ApiError(404, 'Không tìm thấy người dùng với email này.');
   }
 
-  // Tạo token reset và lưu vào DB (ví dụ: cột `passwordResetToken`, `passwordResetExpires`)
   const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET_RESET, {
-    expiresIn: '10m', // Token reset thường có thời hạn ngắn
+    expiresIn: '10m', 
   });
 
-  const hashedResetToken = await bcrypt.hash(resetToken, 10); // Hash token để lưu vào DB
-  const resetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
+  const hashedResetToken = await bcrypt.hash(resetToken, 10); 
+  const resetExpires = new Date(Date.now() + 10 * 60 * 1000); 
 
   await knex(TABLE_NAME).where({ id: user.id }).update({
     passwordResetToken: hashedResetToken,
     passwordResetExpires: resetExpires,
   });
 
-  return resetToken; // Trả về token không hash để gửi email
+  return resetToken; 
 };
 
 // Hàm xử lý reset mật khẩu
 const resetPassword = async (token, newPassword) => {
-  // Hash token để so sánh với cái trong DB
-  // Lưu ý: So sánh token plaintext với hashed token trong DB cần một cách khác
-  // Một cách đơn giản là tạo reset token đủ dài và khó đoán, lưu plaintext vào DB
-  // Hoặc dùng crypto.createHash để hash token nhận được và so sánh với DB
-  // Ví dụ: const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-  // Phương pháp tốt hơn: lưu một hashed token vào DB, và khi nhận được token từ người dùng,
-  // hash nó và so sánh. NHƯNG bcrypt không thể so sánh hai chuỗi đã hash.
-  // CÁCH KHẮC PHỤC: Reset token nên là một chuỗi ngẫu nhiên không phải JWT, được hash bằng bcrypt để lưu.
-  // Khi user gửi token, hash token đó và so sánh với DB.
-
-  // Ví dụ đơn giản (không khuyến khích cho production vì so sánh token đã hash):
-  // Bạn sẽ cần thay đổi logic `generatePasswordResetToken` để hash token bằng một cách đơn giản hơn
-  // hoặc lưu plaintext token và đảm bảo bảo mật.
-  
-  // Với cách hiện tại của bạn:
-  // Nếu `generatePasswordResetToken` dùng `jwt.sign` và lưu `hashedResetToken`
-  // Thì hàm này cần tìm user theo `passwordResetToken` (không phải hash token từ client)
-  // và kiểm tra thời gian hết hạn.
-  
-  // Một cách tiếp cận tốt hơn là tạo một `passwordResetCode` (plain text)
-  // Lưu hash của `passwordResetCode` vào DB
-  // Người dùng nhập `passwordResetCode`, bạn hash nó và so sánh với DB
-  
-  // Giả sử bạn đã cải thiện logic reset token (ví dụ: dùng crypto.randomBytes và hash bằng bcrypt để lưu)
-  // const hashedTokenFromUser = await bcrypt.hash(token, 12); // Không đúng, không thể so sánh
-  
-  // CÁCH ĐÚNG HƠN:
-  // const hashedTokenFromUser = crypto.createHash('sha256').update(token).digest('hex');
   const user = await knex(TABLE_NAME)
     .where('passwordResetExpires', '>', new Date())
-    .andWhere('passwordResetToken', token) // <-- Giả sử bạn lưu plaintext hashable token ở đây
+    .andWhere('passwordResetToken', token) 
     .first();
 
   if (!user) {
@@ -183,10 +181,9 @@ const resetPassword = async (token, newPassword) => {
     password: hashedNewPassword,
     passwordResetToken: null,
     passwordResetExpires: null,
-    // passwordChangedAt: new Date(), // Cập nhật thời gian đổi mật khẩu
   });
 
-  const { password, ...userWithoutPassword } = user; // Lấy user mới mà không có pass
+  const { password, ...userWithoutPassword } = user; 
   return { user: userWithoutPassword, token: signToken(user.id) };
 };
 
