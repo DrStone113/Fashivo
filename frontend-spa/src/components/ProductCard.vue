@@ -13,6 +13,33 @@
       <div v-if="product.stock === 0" class="out-of-stock-badge">
         Out of Stock
       </div>
+      
+      <div v-if="isAdmin" class="admin-actions">
+        <button 
+          @click.stop="editProduct" 
+          class="admin-action-btn edit-product-btn"
+          title="Edit Product"
+        >
+          <!-- Không còn icon Font Awesome, sử dụng background-image -->
+        </button>
+
+        <button 
+          @click.stop="addProduct" 
+          class="admin-action-btn add-product-btn"
+          title="Add New Product"
+        >
+          <!-- Không còn icon Font Awesome, sử dụng background-image -->
+        </button>
+
+        <!-- NEW: Nút xóa sản phẩm -->
+        <button 
+          @click.stop="confirmDeleteProduct" 
+          class="admin-action-btn delete-product-btn"
+          title="Delete Product"
+        >
+          <!-- Không còn icon Font Awesome, sử dụng background-image -->
+        </button>
+      </div>
     </div>
     
     <div class="product-info">
@@ -21,9 +48,7 @@
         <h3 class="product-name">{{ product.name }}</h3>
       </div>
 
-      <!-- This footer section now contains both info and actions, which swap on hover -->
       <div class="product-footer">
-        <!-- Default Info (Price & Stock) -->
         <div class="footer-info">
           <p class="product-price">{{ formatPrice(product.price) }}</p>
           <span class="stock-info" :class="stockClass">
@@ -31,7 +56,6 @@
           </span>
         </div>
 
-        <!-- Hover Actions (Buttons) -->
         <div class="footer-actions">
           <button 
             @click.stop="emitAddToCart" 
@@ -47,7 +71,7 @@
             :disabled="product.stock === 0"
           >
             <i class="fas fa-bolt"></i>
-            <span>Buy Now</span>
+            <span>View Cart</span>
           </button>
         </div>
       </div>
@@ -58,6 +82,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/authStore'; 
+import productService from '@/services/product.service'; 
 
 const props = defineProps({
   product: {
@@ -66,9 +92,15 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['add-to-cart', 'buy-now']);
+// Thêm 'delete-product' vào emits
+const emit = defineEmits(['add-to-cart', 'buy-now', 'delete-product']); 
 
 const router = useRouter();
+const authStore = useAuthStore(); 
+
+const isAdmin = computed(() => {
+  return authStore.user && authStore.user.role === 'admin';
+});
 
 const stockClass = computed(() => ({
   'in-stock': props.product.stock > 0,
@@ -101,6 +133,36 @@ const emitAddToCart = () => {
 const emitBuyNow = () => {
   if (props.product.stock > 0) {
     emit('buy-now', props.product);
+  }
+};
+
+const editProduct = () => {
+  if (props.product && props.product.id) {
+    console.log('Attempting to navigate to Admin Edit Product:', props.product.id);
+    router.push({ name: 'AdminEditProduct', params: { id: props.product.id } }); 
+  } else {
+    console.warn('Product or product ID is missing for edit. Cannot navigate.');
+  }
+};
+
+const addProduct = () => {
+  console.log('Navigating to Add Product Page');
+  router.push({ name: 'AddProduct' }); 
+};
+
+// NEW: Hàm xác nhận và xóa sản phẩm
+const confirmDeleteProduct = async () => {
+  const isConfirmed = window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${props.product.name}" không?`);
+  
+  if (isConfirmed) {
+    try {
+      await productService.deleteProduct(props.product.id);
+      alert('Sản phẩm đã được xóa thành công!');
+      emit('delete-product', props.product.id); 
+    } catch (error) {
+      console.error('Lỗi khi xóa sản phẩm:', error);
+      alert('Không thể xóa sản phẩm: ' + (error.message || 'Lỗi không xác định.'));
+    }
   }
 };
 </script>
@@ -170,7 +232,7 @@ const emitBuyNow = () => {
 /* --- HOVER EFFECT LOGIC --- */
 .product-footer {
   position: relative;
-  min-height: 52px; /* Set a minimum height to prevent layout shifts */
+  min-height: 52px; 
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -195,7 +257,7 @@ const emitBuyNow = () => {
   gap: 8px;
   opacity: 0;
   transform: translateY(10px);
-  pointer-events: none; /* Prevent interaction when hidden */
+  pointer-events: none; 
 }
 
 .product-card-modern:hover .footer-info {
@@ -207,7 +269,7 @@ const emitBuyNow = () => {
 .product-card-modern:hover .footer-actions {
   opacity: 1;
   transform: translateY(0);
-  pointer-events: auto; /* Allow interaction when visible */
+  pointer-events: auto; 
 }
 /* --- END HOVER EFFECT LOGIC --- */
 
@@ -285,5 +347,71 @@ const emitBuyNow = () => {
   color: #adb5bd;
   cursor: not-allowed;
   border-color: #dee2e6;
+}
+
+/* Container cho các nút Admin */
+.admin-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex; 
+  gap: 8px; 
+  z-index: 10;
+}
+
+/* Styles chung cho tất cả các nút hành động của Admin (có ảnh nền) */
+.admin-action-btn {
+  border: none;
+  border-radius: 50%; 
+  width: 36px;
+  height: 36px;
+  
+  background-size: 90%; /* Kích thước của ảnh bên trong nút */
+  background-repeat: no-repeat; 
+  background-position: center; 
+
+  display: flex; 
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  padding: 0; 
+  color: transparent; /* Đảm bảo không có text hiển thị nếu dùng background-image */
+}
+
+.admin-action-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Styles riêng cho nút Edit (sử dụng ảnh "add-product1.png") */
+.edit-product-btn {
+  background-image: url('../assets/add-product1.png'); /* Đường dẫn chính xác */
+  background-color: white; 
+}
+
+.edit-product-btn:hover {
+  background-color: #f0f0f0; 
+}
+
+/* Styles riêng cho nút Add (sử dụng ảnh "textile-printing.png") */
+.add-product-btn {
+  background-image: url('../assets/textile-printing.png'); /* Đường dẫn chính xác */
+  background-color: white; 
+}
+
+.add-product-btn:hover {
+  background-color: #f0f0f0; 
+}
+
+/* NEW: Styles riêng cho nút Delete (sử dụng placeholder image) */
+.delete-product-btn {
+  /* SỬA ĐƯỜNG DẪN NÀY BẰNG HÌNH ẢNH THÙNG RÁC CỦA BẠN */
+  background-image: url('../assets/delete-product.png'); /* Placeholder: Red X */
+  background-color: white; 
+}
+
+.delete-product-btn:hover {
+  background-color: #f0f0f0; 
 }
 </style>
