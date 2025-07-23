@@ -10,8 +10,9 @@
         class="product-image"
         onerror="this.onerror=null;this.src='/public/image/products/BLANK.jpg.png';"
       >
-      <div v-if="product.stock === 0" class="out-of-stock-badge">
-        Out of Stock
+      
+      <div v-if="isProductUnavailable" class="unavailable-overlay">
+        <span class="unavailable-text">Hết hàng</span>
       </div>
       
       <div v-if="isAdmin" class="admin-actions">
@@ -20,7 +21,6 @@
           class="admin-action-btn edit-product-btn"
           title="Edit Product"
         >
-          <!-- Không còn icon Font Awesome, sử dụng background-image -->
         </button>
 
         <button 
@@ -28,16 +28,13 @@
           class="admin-action-btn add-product-btn"
           title="Add New Product"
         >
-          <!-- Không còn icon Font Awesome, sử dụng background-image -->
         </button>
 
-        <!-- NEW: Nút xóa sản phẩm -->
         <button 
           @click.stop="confirmDeleteProduct" 
           class="admin-action-btn delete-product-btn"
           title="Delete Product"
         >
-          <!-- Không còn icon Font Awesome, sử dụng background-image -->
         </button>
       </div>
     </div>
@@ -52,7 +49,7 @@
         <div class="footer-info">
           <p class="product-price">{{ formatPrice(product.price) }}</p>
           <span class="stock-info" :class="stockClass">
-            {{ product.stock > 0 ? `In Stock (${product.stock})` : 'Out of Stock' }}
+            {{ product.stock > 0 && product.available ? `Còn hàng (${product.stock})` : 'Hết hàng' }}
           </span>
         </div>
 
@@ -60,7 +57,7 @@
           <button 
             @click.stop="emitAddToCart" 
             class="action-btn add-to-cart-btn"
-            :disabled="product.stock === 0"
+            :disabled="isProductUnavailable"
           >
             <i class="fas fa-shopping-cart"></i>
             <span>Add to Cart</span>
@@ -68,7 +65,7 @@
           <button 
             @click.stop="emitBuyNow" 
             class="action-btn buy-now-btn"
-            :disabled="product.stock === 0"
+            :disabled="isProductUnavailable"
           >
             <i class="fas fa-bolt"></i>
             <span>View Cart</span>
@@ -92,7 +89,6 @@ const props = defineProps({
   }
 });
 
-// Thêm 'delete-product' vào emits
 const emit = defineEmits(['add-to-cart', 'buy-now', 'delete-product']); 
 
 const router = useRouter();
@@ -102,9 +98,13 @@ const isAdmin = computed(() => {
   return authStore.user && authStore.user.role === 'admin';
 });
 
+const isProductUnavailable = computed(() => {
+  return props.product.stock === 0 || !props.product.available;
+});
+
 const stockClass = computed(() => ({
-  'in-stock': props.product.stock > 0,
-  'out-of-stock': props.product.stock === 0
+  'in-stock': props.product.stock > 0 && props.product.available,
+  'out-of-stock': props.product.stock === 0 || !props.product.available
 }));
 
 const formatPrice = (price) => {
@@ -125,13 +125,13 @@ const goToProductDetails = () => {
 };
 
 const emitAddToCart = () => {
-  if (props.product.stock > 0) {
+  if (!isProductUnavailable.value) {
     emit('add-to-cart', props.product);
   }
 };
 
 const emitBuyNow = () => {
-  if (props.product.stock > 0) {
+  if (!isProductUnavailable.value) {
     emit('buy-now', props.product);
   }
 };
@@ -150,7 +150,6 @@ const addProduct = () => {
   router.push({ name: 'AddProduct' }); 
 };
 
-// NEW: Hàm xác nhận và xóa sản phẩm
 const confirmDeleteProduct = async () => {
   const isConfirmed = window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${props.product.name}" không?`);
   
@@ -202,6 +201,29 @@ const confirmDeleteProduct = async () => {
   transform: scale(1.05);
 }
 
+.unavailable-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.unavailable-text {
+  color: white;
+  font-weight: bold;
+  font-size: 1.5em;
+  padding: 10px 20px;
+  border: 2px solid white;
+  border-radius: 5px;
+  text-transform: uppercase;
+}
+
 .product-info {
   padding: 16px;
   flex-grow: 1;
@@ -229,7 +251,6 @@ const confirmDeleteProduct = async () => {
   margin: 0;
 }
 
-/* --- HOVER EFFECT LOGIC --- */
 .product-footer {
   position: relative;
   min-height: 52px; 
@@ -271,7 +292,6 @@ const confirmDeleteProduct = async () => {
   transform: translateY(0);
   pointer-events: auto; 
 }
-/* --- END HOVER EFFECT LOGIC --- */
 
 .product-price {
   font-size: 1.2rem;
@@ -295,19 +315,6 @@ const confirmDeleteProduct = async () => {
 .out-of-stock {
   background-color: #fde2e4;
   color: #e11d48;
-}
-
-.out-of-stock-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(225, 29, 72, 0.8);
-  backdrop-filter: blur(5px);
-  color: white;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
 }
 
 .action-btn {
@@ -349,7 +356,6 @@ const confirmDeleteProduct = async () => {
   border-color: #dee2e6;
 }
 
-/* Container cho các nút Admin */
 .admin-actions {
   position: absolute;
   top: 10px;
@@ -359,14 +365,13 @@ const confirmDeleteProduct = async () => {
   z-index: 10;
 }
 
-/* Styles chung cho tất cả các nút hành động của Admin (có ảnh nền) */
 .admin-action-btn {
   border: none;
   border-radius: 50%; 
   width: 36px;
   height: 36px;
   
-  background-size: 90%; /* Kích thước của ảnh bên trong nút */
+  background-size: 90%;
   background-repeat: no-repeat; 
   background-position: center; 
 
@@ -377,16 +382,15 @@ const confirmDeleteProduct = async () => {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
   padding: 0; 
-  color: transparent; /* Đảm bảo không có text hiển thị nếu dùng background-image */
+  color: transparent;
 }
 
 .admin-action-btn:hover {
   transform: scale(1.1);
 }
 
-/* Styles riêng cho nút Edit (sử dụng ảnh "add-product1.png") */
 .edit-product-btn {
-  background-image: url('../assets/add-product1.png'); /* Đường dẫn chính xác */
+  background-image: url('../assets/add-product1.png');
   background-color: white; 
 }
 
@@ -394,9 +398,8 @@ const confirmDeleteProduct = async () => {
   background-color: #f0f0f0; 
 }
 
-/* Styles riêng cho nút Add (sử dụng ảnh "textile-printing.png") */
 .add-product-btn {
-  background-image: url('../assets/textile-printing.png'); /* Đường dẫn chính xác */
+  background-image: url('../assets/textile-printing.png');
   background-color: white; 
 }
 
@@ -404,10 +407,8 @@ const confirmDeleteProduct = async () => {
   background-color: #f0f0f0; 
 }
 
-/* NEW: Styles riêng cho nút Delete (sử dụng placeholder image) */
 .delete-product-btn {
-  /* SỬA ĐƯỜNG DẪN NÀY BẰNG HÌNH ẢNH THÙNG RÁC CỦA BẠN */
-  background-image: url('../assets/delete-product.png'); /* Placeholder: Red X */
+  background-image: url('../assets/delete-product.png');
   background-color: white; 
 }
 

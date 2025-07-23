@@ -18,7 +18,7 @@
       <!-- Nội dung giỏ hàng khi có sản phẩm -->
       <div v-else class="cart-content-layout">
         <div class="cart-items-section">
-          <!-- Header cho danh sách sản phẩm (tương tự như CartItems.vue) -->
+          <!-- Header cho danh sách sản phẩm -->
           <div class="cart-item-header">
             <div class="header-col product-col">Sản phẩm</div>
             <div class="header-col price-col">Giá</div>
@@ -43,7 +43,10 @@
                 <div class="item-type">{{ item.product?.type || 'Loại không rõ' }}</div>
               </div>
             </div>
+            
+            <!-- Các cột thông tin được căn chỉnh trực tiếp dưới header -->
             <div class="item-price">{{ formatPrice(item.product?.price || 0) }}</div>
+            
             <div class="item-quantity-control">
               <button @click="updateQuantity(item.product_id, item.quantity - 1)" :disabled="item.quantity <= 1 || isLoadingCart" class="quantity-btn minus-btn">-</button>
               <input
@@ -57,11 +60,12 @@
               >
               <button @click="updateQuantity(item.product_id, item.quantity + 1)" :disabled="item.quantity >= (item.product?.stock || 999) || isLoadingCart" class="quantity-btn plus-btn">+</button>
             </div>
+            
             <div class="item-total">{{ formatPrice(item.quantity * (item.product?.price || 0)) }}</div>
+            
             <div class="item-actions">
-              <!-- NEW: Nút xóa sử dụng background-image -->
               <button @click="removeItem(item.product_id)" class="remove-item-btn" :disabled="isLoadingCart">
-                <!-- Không còn icon Font Awesome, sử dụng background-image -->
+                <!-- Icon hoặc background-image cho nút xóa -->
               </button>
             </div>
           </div>
@@ -187,17 +191,20 @@ const updateQuantity = async (productId, newQuantity) => {
 };
 
 const removeItem = async (productId) => {
+  // Thay thế window.confirm bằng modal tùy chỉnh nếu bạn muốn
   const isConfirmed = window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?');
   if (isConfirmed) {
     try {
       await cartStore.removeCartItem(productId); 
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Error removing item:', error);
     }
   }
 };
 
 const handleClearCart = async () => {
+  // Thay thế window.confirm bằng modal tùy chỉnh nếu bạn muốn
   const isConfirmed = window.confirm('Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?');
   if (isConfirmed) {
     try {
@@ -374,7 +381,8 @@ watch(cartError, (newVal) => {
 /* Header cho danh sách sản phẩm */
 .cart-item-header {
   display: grid;
-  grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; /* Điều chỉnh cột cho phù hợp với item-product-info */
+  /* Cột sản phẩm rộng hơn, các cột còn lại bằng nhau và nhỏ hơn */
+  grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; 
   gap: 15px;
   padding: 15px 25px;
   background-color: #f5f5f5;
@@ -383,11 +391,11 @@ watch(cartError, (newVal) => {
   color: #555;
   font-size: 0.95em;
   text-transform: uppercase;
-  text-align: left; /* Căn trái cho header */
+  text-align: center; 
 }
 .cart-item-header .price-col,
 .cart-item-header .total-col {
-  text-align: right;
+  text-align: center; /* Căn phải cho header Giá và Tổng */
 }
 .cart-item-header .quantity-col,
 .cart-item-header .actions-col {
@@ -398,13 +406,13 @@ watch(cartError, (newVal) => {
 /* Card sản phẩm trong giỏ hàng */
 .cart-item-card {
   display: grid;
-  grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; /* Phải khớp với header */
+  /* Phải khớp với header để căn chỉnh */
+  grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; 
   gap: 15px;
   padding: 15px 25px;
   border-bottom: 1px solid #f0f0f0;
-  align-items: center;
+  align-items: center; /* Căn giữa các item theo chiều dọc */
   transition: background-color 0.2s ease;
-  text-align: left; /* Căn trái cho nội dung item */
 }
 
 .cart-item-card:last-child {
@@ -419,6 +427,7 @@ watch(cartError, (newVal) => {
   display: flex;
   align-items: center;
   gap: 15px;
+  /* Không cần flex: 1 1 250px; ở đây nữa vì đã dùng grid */
 }
 
 .item-image-wrapper {
@@ -455,17 +464,19 @@ watch(cartError, (newVal) => {
   text-transform: capitalize;
 }
 
-.item-price, .item-total {
+/* Căn chỉnh cho Giá */
+.item-price {
   font-weight: 600;
   color: #555;
   font-size: 1em;
-  text-align: right; /* Căn phải giá và tổng */
+  text-align: right; /* Căn phải để khớp với header */
 }
 
+/* Căn chỉnh cho Số lượng */
 .item-quantity-control {
   display: flex;
   align-items: center;
-  justify-content: center; /* Căn giữa control số lượng */
+  justify-content: center; /* Căn giữa để khớp với header */
   gap: 5px;
 }
 
@@ -479,6 +490,7 @@ watch(cartError, (newVal) => {
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
   color: #555;
+  flex-shrink: 0;
 }
 
 .quantity-btn:hover:not(:disabled) {
@@ -499,6 +511,7 @@ watch(cartError, (newVal) => {
   border-radius: 5px;
   font-size: 1em;
   -moz-appearance: textfield; 
+  flex-grow: 1; /* Cho phép input giãn ra */
 }
 .quantity-input::-webkit-outer-spin-button,
 .quantity-input::-webkit-inner-spin-button {
@@ -506,13 +519,29 @@ watch(cartError, (newVal) => {
   margin: 0;
 }
 
-/* NEW: Style cho nút xóa sử dụng background-image */
+/* Căn chỉnh cho Tổng */
+.item-total {
+  font-weight: 600;
+  color: #555;
+  font-size: 1em;
+  text-align: center; /* Căn phải để khớp với header */
+}
+
+/* Căn chỉnh cho Hành động */
+.item-actions {
+  display: flex; /* Dùng flex để căn giữa nút xóa */
+  justify-content: center; /* Căn giữa để khớp với header */
+  align-items: center; /* Căn giữa theo chiều dọc */
+  height: 100%; /* Đảm bảo chiếm hết chiều cao ô grid */
+}
+
+/* Style cho nút xóa sử dụng background-image */
 .remove-item-btn {
-  background-color: white; /* Nền trắng cho nút */
-  border: 1px solid #FF5252; /* Viền đỏ */
+  background-color: white; 
+  border: 1px solid #FF5252; 
   border-radius: 50%;
-  width: 35px;
-  height: 35px;
+  width: 40px; 
+  height: 40px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -520,16 +549,15 @@ watch(cartError, (newVal) => {
   align-items: center;
   justify-content: center;
 
-  /* Thay thế icon Font Awesome bằng hình ảnh nền */
-  background-image: url('../assets/delete-product.png'); /* Đảm bảo đường dẫn chính xác đến ảnh thùng rác của bạn */
-  background-size: 80%; /* Điều chỉnh kích thước icon trong nút */
+  background-image: url('../assets/delete-product.png'); /* Placeholder image for delete */
+  background-size: 70%; 
   background-repeat: no-repeat;
   background-position: center;
-  color: transparent; /* Ẩn text hoặc icon Font Awesome nếu có */
+  color: transparent; 
 }
 
 .remove-item-btn:hover:not(:disabled) {
-  background-color: #FFEBEE; /* Màu nền nhạt hơn khi hover */
+  background-color: #FFEBEE; 
   transform: scale(1.1);
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
@@ -543,7 +571,7 @@ watch(cartError, (newVal) => {
 .cart-actions-bottom {
   display: flex;
   justify-content: flex-end;
-  padding: 20px 25px 0; /* Padding để nút không bị dính vào cạnh dưới */
+  padding: 20px 25px 0; 
 }
 
 .clear-cart-btn {
@@ -820,47 +848,56 @@ watch(cartError, (newVal) => {
     min-width: unset;
     width: 100%;
   }
-  .cart-item-header, .cart-item-card {
-    grid-template-columns: 3fr 1fr 1fr; /* 3 cột: Sản phẩm + Giá + Số lượng/Tổng/Hành động */
-    gap: 10px;
-    padding: 15px;
-  }
-  .cart-item-header .price-col,
-  .cart-item-header .total-col,
-  .cart-item-card .item-price,
-  .cart-item-card .item-total {
-    text-align: left; /* Căn trái trên mobile */
-  }
-  .cart-item-header .quantity-col,
-  .cart-item-header .actions-col,
-  .cart-item-card .item-quantity-control,
-  .cart-item-card .remove-item-btn {
-    text-align: left; /* Căn trái trên mobile */
-    justify-content: flex-start;
+  .cart-item-header {
+    display: none; /* Ẩn header trên tablet và mobile */
   }
   .cart-item-card {
-    grid-template-areas: 
-      "info info info"
-      "price quantity actions"
-      "total . ."; /* Sắp xếp lại trên mobile */
+    /* Thay đổi từ grid sang flex để các phần tử có thể xếp chồng hoặc dàn hàng tùy ý */
+    display: flex; 
+    flex-direction: column; /* Xếp chồng các phần tử trên mobile */
+    align-items: flex-start; /* Căn trái các item */
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
   }
-  .item-product-info { grid-area: info; }
-  .item-price { grid-area: price; }
-  .item-quantity-control { grid-area: quantity; }
-  .item-total { grid-area: total; }
-  .item-actions { grid-area: actions; }
+  .item-product-info {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+  /* Các cột thông tin sẽ hiển thị dạng khối trên mobile */
+  .item-price,
+  .item-quantity-control,
+  .item-total {
+    width: 100%; /* Chiếm toàn bộ chiều rộng */
+    text-align: left; /* Căn trái */
+    margin-bottom: 10px; /* Khoảng cách giữa các khối */
+    padding: 8px 10px; /* Thêm padding cho các khối */
+    background-color: #f8f8f8;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex; /* Dùng flex để căn chỉnh label và value */
+    justify-content: space-between; /* Đẩy label và value ra hai bên */
+    align-items: center;
+  }
 
+  .item-price::before { content: "Giá:"; font-weight: 600; color: #777; margin-right: 10px; }
+  .item-total::before { content: "Tổng:"; font-weight: 600; color: #777; margin-right: 10px; }
+  .item-quantity-control::before { content: "Số lượng:"; font-weight: 600; color: #777; margin-right: 10px; }
+
+  .item-actions {
+    width: 100%;
+    margin-top: 15px;
+    margin-left: 0;
+    display: flex;
+    justify-content: flex-end; /* Căn phải nút xóa */
+  }
   .cart-container {
     padding: 30px;
   }
   .cart-title {
     font-size: 2em;
     margin-bottom: 30px;
-  }
-  .summary-actions {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
   }
   .clear-cart-btn, .checkout-main-btn {
     width: 100%;
@@ -883,13 +920,6 @@ watch(cartError, (newVal) => {
   .empty-cart-message i {
     font-size: 2.5em;
   }
-  .cart-item-header, .cart-item-card {
-    grid-template-columns: 1fr 1fr; /* Đơn giản hơn nữa trên mobile nhỏ */
-    grid-template-areas: 
-      "info info"
-      "price quantity"
-      "total actions";
-  }
   .item-image-wrapper {
     width: 60px;
     height: 60px;
@@ -897,23 +927,29 @@ watch(cartError, (newVal) => {
   .item-name {
     font-size: 1em;
   }
-  .item-price, .item-total {
-    font-size: 0.9em;
+  .item-type {
+    font-size: 0.85em;
+  }
+  /* Căn chỉnh lại cho mobile rất nhỏ */
+  .item-price,
+  .item-quantity-control,
+  .item-total {
+    padding: 6px 8px; /* Giảm padding */
+    font-size: 0.9em; /* Giảm font size */
   }
   .quantity-btn {
-    width: 25px;
-    height: 25px;
+    width: 28px;
+    height: 28px;
     font-size: 1em;
   }
   .quantity-input {
-    width: 40px;
-    padding: 3px;
-    font-size: 0.9em;
+    width: 45px;
+    padding: 4px;
+    font-size: 0.95em;
   }
   .remove-item-btn {
-    width: 30px;
-    height: 30px;
-    font-size: 0.9em;
+    width: 35px;
+    height: 35px;
   }
   .summary-title {
     font-size: 1.6em;
