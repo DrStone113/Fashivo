@@ -109,6 +109,13 @@ const resetPassword = catchAsync(async (req, res, _next) => {
   }));
 });
 
+// Đăng xuất người dùng
+const logout = catchAsync(async (req, res, _next) => { // Đảm bảo đây là một hàm async
+  // Logic đăng xuất ở đây
+  // Ví dụ: Xóa cookie hoặc chỉ đơn giản là gửi phản hồi thành công
+  res.status(200).json(JSend.success({ message: 'Đăng xuất thành công!' }));
+});
+
 module.exports = {
   signup,
   login,
@@ -117,4 +124,5 @@ module.exports = {
   updateMyPassword,
   forgotPassword,
   resetPassword,
+  logout,
 };
