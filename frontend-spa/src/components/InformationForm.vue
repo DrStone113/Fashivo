@@ -18,8 +18,7 @@
             </div>
             <div class="form-group">
               <label for="email" class="form-label">Địa chỉ Email</label>
-              <input type="email" class="form-control" id="email" v-model="userForm.email" required disabled>
-              <small class="help-text">Email không thể thay đổi.</small>
+              <input type="email" class="form-control" id="email" v-model="userForm.email">
             </div>
             <div class="form-group">
               <label for="phone" class="form-label">Số điện thoại</label>
