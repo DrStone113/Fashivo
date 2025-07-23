@@ -8,7 +8,6 @@
       </div>
 
       <div v-else class="profile-forms-layout">
-        <!-- Phần Thông tin cá nhân -->
         <div class="profile-section card-section">
           <h3 class="section-title">Cập Nhật Thông Tin Cá Nhân</h3>
           <form @submit.prevent="updateProfile">
@@ -18,8 +17,8 @@
             </div>
             <div class="form-group">
               <label for="email" class="form-label">Địa chỉ Email</label>
-              <input type="email" class="form-control" id="email" v-model="userForm.email">
-            </div>
+              <input type="email" class="form-control" id="email" v-model="userForm.email" required placeholder="Nhập địa chỉ email mới">
+              </div>
             <div class="form-group">
               <label for="phone" class="form-label">Số điện thoại</label>
               <input type="tel" class="form-control" id="phone" v-model="userForm.phone" placeholder="Nhập số điện thoại">
@@ -48,7 +47,6 @@
           </form>
         </div>
 
-        <!-- Phần Thay đổi mật khẩu -->
         <div class="profile-section card-section">
           <h3 class="section-title">Thay Đổi Mật Khẩu</h3>
           <form @submit.prevent="changePassword">
@@ -87,7 +85,7 @@ const authStore = useAuthStore();
 
 const userForm = reactive({
   name: '',
-  email: '',
+  email: '', // Giữ lại email để bind vào input
   address: '',
   phone: '',
   avatar_url: '',
@@ -120,8 +118,8 @@ watch(() => authStore.user, (newUser) => {
   }
 }, { immediate: true });
 
-// Hàm nén ảnh trước khi upload
-const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.8) => {
+// Hàm nén ảnh trước khi upload (giữ nguyên)
+const compressImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.7) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -150,7 +148,7 @@ const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.8) => 
         ctx.drawImage(img, 0, 0, width, height);
         ctx.canvas.toBlob((blob) => {
           resolve(new File([blob], file.name, {
-            type: 'image/jpeg', // Nén thành JPEG để đảm bảo kích thước nhỏ
+            type: 'image/jpeg', 
             lastModified: Date.now()
           }));
         }, 'image/jpeg', quality);
@@ -164,17 +162,16 @@ const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.8) => 
 const handleAvatarUpload = async (event) => {
   const file = event.target.files[0];
   if (file) {
-    errorMessage.value = ''; // Xóa lỗi cũ
+    errorMessage.value = ''; 
     try {
-      // Nén ảnh trước khi gán vào userForm
-      const compressedFile = await compressImage(file, 400, 400, 0.7); // Giảm max size và quality
+      const compressedFile = await compressImage(file, 400, 400, 0.7); 
       userForm.avatarFile = compressedFile;
-      userForm.avatar_url = URL.createObjectURL(compressedFile); // Cập nhật preview
+      userForm.avatar_url = URL.createObjectURL(compressedFile); 
     } catch (error) {
       errorMessage.value = 'Lỗi khi nén ảnh: ' + error.message;
       console.error('Image compression error:', error);
       userForm.avatarFile = null;
-      userForm.avatar_url = authStore.user?.avatar_url || ''; // Quay về avatar cũ
+      userForm.avatar_url = authStore.user?.avatar_url || ''; 
     }
   } else {
     userForm.avatarFile = null;
@@ -187,13 +184,34 @@ const updateProfile = async () => {
   successMessage.value = '';
   isLoading.value = true;
   try {
-    const dataToUpdate = {
-      name: userForm.name,
-      address: userForm.address,
-      phone: userForm.phone,
-      avatarFile: userForm.avatarFile,
-    };
-    await authStore.updateProfile(dataToUpdate);
+    let dataToSend;
+
+    if (userForm.avatarFile) {
+      dataToSend = new FormData();
+      dataToSend.append('name', userForm.name);
+      dataToSend.append('email', userForm.email); // THÊM EMAIL VÀO FORM DATA
+      dataToSend.append('address', userForm.address);
+      dataToSend.append('phone', userForm.phone);
+      dataToSend.append('avatar', userForm.avatarFile); 
+    } else {
+      dataToSend = {
+        name: userForm.name,
+        email: userForm.email, // THÊM EMAIL VÀO OBJECT
+        address: userForm.address,
+        phone: userForm.phone,
+      };
+      if (userForm.avatar_url === '/public/image/products/BLANK.jpg.png' && authStore.user?.avatar_url !== '/public/image/products/BLANK.jpg.png') {
+        dataToSend.avatar_url = null;
+      } else if (userForm.avatar_url && userForm.avatar_url.startsWith('blob:')) {
+        // Do nothing, this is a temporary URL for preview
+      } else if (authStore.user?.avatar_url && !userForm.avatar_url) {
+        dataToSend.avatar_url = null;
+      } else if (userForm.avatar_url) {
+        dataToSend.avatar_url = userForm.avatar_url; 
+      }
+    }
+    
+    await authStore.updateProfile(dataToSend);
     successMessage.value = 'Hồ sơ đã được cập nhật thành công!';
     userForm.avatarFile = null; 
   } catch (error) {
@@ -302,8 +320,8 @@ const changePassword = async () => {
   color: #D32F2F;
 }
 .success-message {
-  background-color: #e8f5e9;
-  color: #388E3C;
+  background-color: #e8f5f9; /* Màu xanh nhạt hơn */
+  color: #2196F3; /* Màu xanh dương */
 }
 .alert-link {
   color: inherit;
@@ -377,11 +395,12 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.2); /* Bóng đổ khi focus */
 }
 
-input[type="email"]:disabled {
+/* KHÔNG CÒN DISABLED CHO EMAIL */
+/* input[type="email"]:disabled {
   background-color: #f0f0f0;
   cursor: not-allowed;
   color: #777;
-}
+} */
 
 textarea {
   resize: vertical;
