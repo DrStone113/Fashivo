@@ -7,7 +7,11 @@ import InformationPage from '@/views/InformationPage.vue';
 import CartPage from '@/views/CartPage.vue';
 import LoginPage from '@/views/LoginPage.vue';
 import RegisterPage from '@/views/RegisterPage.vue';
+import EditProductPage from '@/views/admin/EditProductPage.vue';
 import ProductDetailPage from '@/views/ProductDetailPage.vue'; // <--- Import component mới
+import AddProductPage from '@/views/admin/AddProductPage.vue';
+
+import { useAuthStore } from '@/store/authStore';
 
 const routes = [
   {
@@ -46,6 +50,19 @@ const routes = [
     name: 'ProductDetail', // Tên của route
     component: ProductDetailPage, // Component sẽ được render
     props: true // Quan trọng: cho phép truyền params thành props vào component
+  },
+  {
+    path: '/admin/products/:id/edit', // Đường dẫn rõ ràng cho trang chỉnh sửa admin
+    name: 'AdminEditProduct', // Tên route độc đáo cho việc chỉnh sửa
+    component: EditProductPage, // Component EditProductPage bạn đã tạo
+    props: true, // Quan trọng: cho phép truyền ID vào component
+    // meta: { requiresAuth: true, requiredRole: 'admin' }, // Kích hoạt bảo vệ route nếu có Auth Store
+  },
+  {
+    path: '/admin/products/add', // URL cho trang thêm sản phẩm
+    name: 'AddProduct', // Tên route để điều hướng đến
+    component: AddProductPage, // Component AddProductPage
+    // meta: { requiresAuth: true, requiredRole: 'admin' }, // Bảo vệ route này nếu cần
   },
   {
     path: '/:pathMatch(.*)*',
