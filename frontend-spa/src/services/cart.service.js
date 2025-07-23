@@ -77,11 +77,25 @@ function makeCartService() {
     }
 
     async function updateItemQuantity(productId, quantity) {
-        return efetch(`${baseUrl}/myCart`, {
-            method: 'PATCH',
-            body: JSON.stringify({ product_id: productId, quantity })
-        });
-    }
+      const url = `${BASE_URL_API}/carts/myCart`; // SỬA ĐỔI: Đây là URL PATCH cho myCart
+      const options = {
+          method: 'PATCH',
+          body: JSON.stringify({ product_id: productId, quantity }), // Đảm bảo đúng key
+      };
+      try {
+          const result = await efetch(url, options);
+          // Kiểm tra xem `result` có dữ liệu `item` không
+          if (!result || !result.item) { // <--- Vấn đề có thể ở đây: `result` không có `item`
+              throw new Error('Không có dữ liệu trả về từ cập nhật giỏ hàng');
+          }
+          return result.item; // Trả về item đã cập nhật
+      } catch (error) {
+          console.error('Error in updateItemQuantity:', error);
+          throw error;
+      }
+
+  return res.data; // hoặc chỉ return nếu không cần sử dụng sau
+}
 
     async function removeItemFromCart(productId) {
         return efetch(`${baseUrl}/removeItem`, {
