@@ -6,7 +6,7 @@ const authSchemas = require('../schema/auth.schemas');
 const { validate } = require('../middlewares/validator.middleware');
 const { authenticate, restrictTo } = require('../middlewares/auth.middleware');
 const { methodNotAllowed } = require("../controllers/errors.controller");
-const multer = require('multer'); // Import multer
+const multer = require('multer'); 
 const { authLimiter } = require('../middlewares/rateLimit.middleware');
 
 const router = express.Router();
@@ -15,12 +15,13 @@ const router = express.Router();
 // Đảm bảo thư mục public/avatars tồn tại
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/avatars'); // Đã thay đổi thư mục lưu trữ thành 'public/avatars'
+    cb(null, 'public/avatars'); 
   },
   filename: (req, file, cb) => {
-    const userId = req.user ? req.user.id : 'unknown';
+    // Dùng ID user nếu có (khi update profile), nếu không thì dùng timestamp (khi đăng ký)
+    const identifier = req.user ? `user-${req.user.id}` : `temp-${Date.now()}`;
     const ext = file.mimetype.split('/')[1];
-    cb(null, `user-${userId}-${Date.now()}.${ext}`);
+    cb(null, `${identifier}-${Date.now()}.${ext}`);
   }
 });
 
@@ -47,8 +48,8 @@ module.exports.setup = (app) => {
   router.route('/signup')
     .post(
       authLimiter,
-      upload.none(), // Chỉ xử lý các trường text, không có file
-      validate(authSchemas.signupSchema),
+      upload.single('avatar'), // CHO PHÉP UPLOAD MỘT FILE AVATAR KHI ĐĂNG KÝ
+      validate(authSchemas.signupSchema), 
       authController.signup
     )
     .all(methodNotAllowed);
@@ -90,8 +91,8 @@ module.exports.setup = (app) => {
   router.route('/me')
     .get(authController.getMe)
     .patch( 
-      upload.single('avatar'), // Xử lý file avatar, tên trường là 'avatar'
-      validate(authSchemas.updateProfileSchema), // Validate body, không bao gồm file
+      upload.single('avatar'), 
+      validate(authSchemas.updateProfileSchema), 
       authController.updateMe
     )
     .all(methodNotAllowed);

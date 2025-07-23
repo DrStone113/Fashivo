@@ -45,6 +45,7 @@ const registerUser = async (userData) => {
       password: hashedPassword,
       address: userData.address,
       phone: userData.phone,
+      avatar_url: userData.avatar_url || null, // Lưu avatar_url nếu có
       role: userData.role || 'user', 
     }).returning('*'); 
 
@@ -87,9 +88,7 @@ const loginUser = async (email, candidatePassword) => {
 // Hàm cập nhật thông tin profile của người dùng
 const updateProfile = async (userId, updateData) => {
   try {
-    // KHÔNG LỌC EMAIL RA NỮA
     const { avatarFile, ...dataToUpdate } = updateData; 
-    // `avatarFile` vẫn bị bỏ qua vì nó là đối tượng File từ frontend, không phải cột DB.
 
     // Nếu email được gửi và khác với email hiện tại của người dùng, kiểm tra trùng lặp
     if (dataToUpdate.email) {
@@ -111,7 +110,8 @@ const updateProfile = async (userId, updateData) => {
     return userWithoutPassword;
 
   } catch (error) {
-    if (error.code === '23505' && error.constraint === 'users_email_unique') { // Kiểm tra mã lỗi và tên ràng buộc UNIQUE
+    // Kiểm tra mã lỗi và tên ràng buộc UNIQUE cho email
+    if (error.code === '23505' && error.constraint === 'users_email_unique') { 
       throw new ApiError(400, 'Email mới đã tồn tại.');
     }
     // Đối với các lỗi khác, hoặc lỗi từ ApiError đã chủ động throw

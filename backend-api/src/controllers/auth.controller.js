@@ -7,15 +7,14 @@ const authService = require("../services/auth.service");
 // Đăng ký người dùng mới
 const signup = catchAsync(async (req, res, _next) => {
   const { name, email, password, address, phone, role } = req.body;
+  const userData = { name, email, password, address, phone, role };
 
-  const newUserWithoutPassword = await authService.registerUser({
-    name,
-    email,
-    password,
-    address,
-    phone,
-    role,
-  });
+  // Xử lý file avatar nếu có khi đăng ký
+  if (req.file) {
+      userData.avatar_url = `/public/avatars/${req.file.filename}`; 
+  }
+
+  const newUserWithoutPassword = await authService.registerUser(userData);
 
   const token = authService.signToken(newUserWithoutPassword.id);
 
@@ -52,7 +51,7 @@ const getMe = catchAsync(async (req, res, _next) => {
 // Cập nhật thông tin profile của người dùng hiện tại
 const updateMe = catchAsync(async (req, res, _next) => {
     const userId = req.user.id;
-    const updateData = { ...req.body }; // Lấy các trường text từ req.body
+    const updateData = { ...req.body }; 
 
     // Xóa trường avatarFile khỏi updateData nếu nó tồn tại trong req.body
     if (updateData.avatarFile) {
@@ -61,8 +60,7 @@ const updateMe = catchAsync(async (req, res, _next) => {
 
     // Xử lý file avatar nếu có
     if (req.file) {
-        // req.file.filename được Multer tạo ra
-        updateData.avatar_url = `/public/avatars/${req.file.filename}`; // NEW: Thay đổi đường dẫn
+        updateData.avatar_url = `/public/avatars/${req.file.filename}`; 
     } else if (updateData.avatar_url === '/public/image/products/BLANK.jpg.png') {
         // Nếu frontend gửi avatar_url là BLANK.jpg.png (người dùng đã xóa ảnh hoặc không chọn)
         // và avatar hiện tại của user không phải là BLANK, thì set avatar_url thành null
