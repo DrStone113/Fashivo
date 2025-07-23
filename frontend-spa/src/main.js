@@ -8,6 +8,9 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import 'bootstrap/dist/css/bootstrap.min.css'; 
 import 'bootstrap'; 
 
+// Import Font Awesome
+import '@fortawesome/fontawesome-free/css/all.css'; // Đảm bảo Font Awesome được import
+
 // Import Vue Query
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query';
 
@@ -42,6 +45,10 @@ app.use(VueQueryPlugin, {
 // Điều này đảm bảo trạng thái xác thực được tải trước khi các component render
 router.isReady().then(() => {
   const authStore = useAuthStore();
-  authStore.fetchUser();
+  authStore.getProfile().catch(error => { // Đã sửa từ fetchUser thành getProfile
+    console.error("Failed to load user profile on startup:", error);
+    // Xử lý lỗi nếu cần, ví dụ: chuyển hướng về trang đăng nhập
+    // router.push('/login'); 
+  });
   app.mount('#app');
 });

@@ -1,127 +1,156 @@
 // src/store/authStore.js
 import { defineStore } from 'pinia';
-import authService from '../services/auth.service';
-import router from '../router'; // Import router để chuyển hướng
+import authService from '@/services/auth.service'; // Đảm bảo import đúng
+import router from '@/router'; // Import router nếu bạn dùng để redirect
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
-    token: null,
     isAuthenticated: false,
+    token: localStorage.getItem('jwtToken') || null,
+    authLoading: false,
+    authError: null,
   }),
   actions: {
     async login(email, password) {
+      this.authLoading = true;
+      this.authError = null;
       try {
         const data = await authService.login(email, password);
         this.user = data.user;
         this.token = data.token;
         this.isAuthenticated = true;
         localStorage.setItem('jwtToken', data.token);
-        console.log('Login successful:', this.user);
-        return true;
+        // console.log('Login successful, user:', this.user);
+        // console.log('Login successful, token:', this.token);
+        return data; // Trả về dữ liệu nếu cần ở component
       } catch (error) {
-        console.error('Login failed:', error);
-        this.user = null;
-        this.token = null;
+        this.authError = error.message || 'Đăng nhập thất bại.';
         this.isAuthenticated = false;
         localStorage.removeItem('jwtToken');
-        throw error;
+        throw error; // Re-throw để component có thể bắt lỗi
+      } finally {
+        this.authLoading = false;
       }
     },
+
     async signup(userData) {
+      this.authLoading = true;
+      this.authError = null;
       try {
-        const data = await authService.signup(userData);
-        console.log('Signup successful:', data);
-        return true;
+        let dataToSend;
+        if (userData.avatarFile) {
+          // Nếu có file avatar, tạo FormData
+          dataToSend = new FormData();
+          for (const key in userData) {
+            // Loại bỏ avatarFile khỏi FormData nếu không muốn gửi lại dưới tên này
+            // Tên trường 'avatar' đã được xử lý bởi input file và @change
+            if (key === 'avatarFile') {
+                dataToSend.append('avatar', userData[key]); // Append file với tên 'avatar'
+            } else if (userData[key] !== null) { 
+              dataToSend.append(key, userData[key]);
+            }
+          }
+        } else {
+          // Nếu không có file avatar, gửi JSON bình thường
+          dataToSend = userData;
+        }
+        
+        const data = await authService.signup(dataToSend); // Gửi dataToSend
+        // Không tự động đăng nhập sau khi đăng ký, chỉ thông báo thành công
+        // và chuyển hướng đến trang login
+        // this.user = data.user;
+        // this.token = data.token;
+        // this.isAuthenticated = true;
+        // localStorage.setItem('jwtToken', data.token);
+        return data;
       } catch (error) {
-        console.error('Signup failed:', error);
+        this.authError = error.message || 'Đăng ký thất bại.';
         throw error;
+      } finally {
+        this.authLoading = false;
       }
     },
+
     async logout() {
+      this.authLoading = true;
+      this.authError = null;
       try {
         await authService.logout();
         this.user = null;
         this.token = null;
         this.isAuthenticated = false;
         localStorage.removeItem('jwtToken');
-        console.log('Logout successful.');
-        router.push('/login'); // Chuyển hướng về trang đăng nhập sau khi đăng xuất
+        // console.log('Logout successful');
+        // router.push('/login'); // Chuyển hướng sau khi đăng xuất
       } catch (error) {
-        console.error('Logout failed:', error);
-        // Nếu logout thất bại (ví dụ: token đã hết hạn trên server), vẫn xóa token và đăng xuất ở client
-        this.user = null;
-        this.token = null;
-        this.isAuthenticated = false;
-        localStorage.removeItem('jwtToken');
-        router.push('/login'); // Vẫn chuyển hướng
+        this.authError = error.message || 'Đăng xuất thất bại.';
         throw error;
+      } finally {
+        this.authLoading = false;
       }
     },
-    async fetchUser() {
+
+    async getProfile() {
+      if (!this.token) {
+        this.isAuthenticated = false;
+        this.user = null;
+        return null;
+      }
       try {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-          this.isAuthenticated = false;
-          this.user = null;
-          return;
-        }
-        const data = await authService.getMe();
-        this.user = data.user;
+        const user = await authService.getMe();
+        this.user = user;
         this.isAuthenticated = true;
-        console.log('User data fetched:', this.user);
+        return user;
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to fetch profile:', error);
+        this.isAuthenticated = false;
         this.user = null;
         this.token = null;
-        this.isAuthenticated = false;
-        localStorage.removeItem('jwtToken'); // Xóa token nếu không hợp lệ
-        // Nếu lỗi là do token hết hạn, chuyển hướng đến trang đăng nhập
-        if (error.message.includes('Unauthorized') || error.message.includes('jwt expired')) {
-          router.push('/login');
-        }
-        // Không throw lỗi ở đây để ứng dụng vẫn chạy nếu người dùng chưa đăng nhập
-      }
-    },
-    async updateProfile(userData) {
-      try {
-        const data = await authService.updateMe(userData);
-        this.user = data.user;
-        console.log('Profile updated:', this.user);
-        return true;
-      } catch (error) {
-        console.error('Failed to update profile:', error);
+        localStorage.removeItem('jwtToken');
         throw error;
       }
     },
+
+    async updateProfile(updateData) {
+      this.authLoading = true;
+      this.authError = null;
+      try {
+        const updatedUser = await authService.updateMe(updateData);
+        this.user = updatedUser; // Cập nhật user trong store
+        return updatedUser;
+      } catch (error) {
+        this.authError = error.message || 'Cập nhật hồ sơ thất bại.';
+        throw error;
+      } finally {
+        this.authLoading = false;
+      }
+    },
+
     async updatePassword(currentPassword, newPassword, newPasswordConfirm) {
+      this.authLoading = true;
+      this.authError = null;
       try {
-        await authService.updateMyPassword(currentPassword, newPassword, newPasswordConfirm);
-        console.log('Password updated successfully.');
-        return true;
+        const updatedUser = await authService.updateMyPassword(currentPassword, newPassword, newPasswordConfirm);
+        this.user = updatedUser; // Cập nhật user trong store
+        return updatedUser;
       } catch (error) {
-        console.error('Failed to update password:', error);
+        this.authError = error.message || 'Cập nhật mật khẩu thất bại.';
         throw error;
+      } finally {
+        this.authLoading = false;
       }
     },
-    async forgotPassword(email) {
-      try {
-        await authService.forgotPassword(email);
-        console.log('Forgot password email sent.');
-        return true;
-      } catch (error) {
-        console.error('Failed to send forgot password email:', error);
-        throw error;
-      }
-    },
-    async resetPassword(token, password, passwordConfirm) {
-      try {
-        await authService.resetPassword(token, password, passwordConfirm);
-        console.log('Password reset successfully.');
-        return true;
-      } catch (error) {
-        console.error('Failed to reset password:', error);
-        throw error;
+
+    // Hàm để kiểm tra trạng thái xác thực khi ứng dụng khởi động
+    async checkAuth() {
+      if (this.token) {
+        try {
+          await this.getProfile();
+        } catch (error) {
+          // Token không hợp lệ hoặc hết hạn, xóa token
+          this.logout();
+        }
       }
     },
   },
