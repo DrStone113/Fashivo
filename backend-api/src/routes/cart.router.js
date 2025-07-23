@@ -1,3 +1,5 @@
+// backend-api/src/routes/cart.router.js
+
 const express = require("express");
 const cartController = require("../controllers/cart.controller");
 const cartSchemas = require("../schema/cart.schemas");
@@ -7,91 +9,111 @@ const multer = require('multer');
 const { authenticate, restrictTo } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
-const upload = multer();
+// Khởi tạo multer instance.
+// Chúng ta sẽ không dùng .none() cho các route nhận JSON,
+// mà sẽ để express.json() đã cấu hình trong app.js xử lý.
+// Multer vẫn cần được khai báo nếu có các route khác xử lý multipart/form-data.
+const upload = multer(); 
 
 module.exports.setup = (app) => {
+  // Gán router này cho đường dẫn /api/v1/carts
   app.use("/api/v1/carts", router);
 
+  // Định nghĩa các route cho /api/v1/carts
   router.route("/")
     .get(
-      authenticate,
-      restrictTo('admin'), // Chỉ admin mới được GET tất cả giỏ hàng
-      validate(cartSchemas.getCartQuerySchema),
-      cartController.getAllCarts
+      authenticate, // Yêu cầu xác thực
+      restrictTo('admin'), // Chỉ admin mới được xem tất cả giỏ hàng
+      validate(cartSchemas.getCartQuerySchema), // Validate các tham số truy vấn
+      cartController.getAllCarts // Controller để lấy tất cả giỏ hàng
     )
     .post(
-      authenticate, // User và admin đều có thể tạo/cập nhật giỏ hàng (logic kiểm tra user_id trong controller)
-      upload.none(),
-      validate(cartSchemas.createCartSchema),
-      cartController.createCart
+      authenticate, // Yêu cầu xác thực (admin hoặc user có thể tạo/cập nhật giỏ hàng)
+      // KHÔNG CẦN upload.none() ở đây vì route này có thể nhận JSON hoặc multipart/form-data
+      // Nếu bạn muốn route này chỉ nhận JSON, hãy bỏ multer đi.
+      // Nếu nó có thể nhận multipart/form-data với trường 'items' là chuỗi JSON, thì giữ nguyên multer và đảm bảo controller xử lý parseCartItems.
+      // Dựa trên cart.schemas.js và cart.controller.js (createCart sử dụng parseCartItems), 
+      // thì route này ĐANG mong đợi multipart/form-data với 'items' là chuỗi JSON.
+      // Nên upload.none() là cần thiết cho route /api/v1/carts (POST)
+      upload.none(), 
+      validate(cartSchemas.createCartSchema), // Validate body theo schema tạo giỏ hàng
+      cartController.createCart // Controller để tạo giỏ hàng
     )
     .delete(
-      authenticate,
-      restrictTo('admin'),
-      cartController.deleteAllCarts
+      authenticate, // Yêu cầu xác thực
+      restrictTo('admin'), // Chỉ admin mới được xóa tất cả giỏ hàng
+      cartController.deleteAllCarts // Controller để xóa tất cả giỏ hàng
     );
 
-  router.route("/myCart") // THÊM ROUTE NÀY CHO GIỎ HÀNG CỦA NGƯỜI DÙNG HIỆN TẠI
+  // Định nghĩa các route cho giỏ hàng của người dùng hiện tại /api/v1/carts/myCart
+  router.route("/myCart") 
     .get(
-      authenticate, // Yêu cầu xác thực, nhưng không cần restrictTo admin
-      cartController.getMyCart // Controller mới sẽ được tạo
+      authenticate, // Yêu cầu xác thực người dùng
+      cartController.getMyCart // Controller để lấy giỏ hàng của người dùng hiện tại
     )
     .post( // Thêm sản phẩm vào giỏ hàng của tôi
-      authenticate,
-      upload.none(),
-      validate(cartSchemas.addItemToCartSchema), // Cần định nghĩa schema này
-      cartController.addItemToMyCart // Controller mới
+      authenticate, // Yêu cầu xác thực người dùng
+      // *** ĐÂY LÀ ĐIỂM CHÍNH CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
+      // Vì frontend gửi `Content-Type: application/json` cho hành động này,
+      // `express.json()` (đã cấu hình trong `app.js`) sẽ xử lý body.
+      // `multer.none()` chỉ cần thiết khi nhận `multipart/form-data` không có file.
+      validate(cartSchemas.addItemToCartSchema), // Validate body theo schema thêm mục vào giỏ
+      cartController.addItemToMyCart // Controller để thêm sản phẩm vào giỏ hàng
     )
     .patch( // Cập nhật số lượng sản phẩm trong giỏ hàng của tôi
-      authenticate,
-      upload.none(),
-      validate(cartSchemas.updateCartItemSchema), // Schema cho quantity trong body
-      cartController.updateMyCartItem // Controller mới
+      authenticate, // Yêu cầu xác thực người dùng
+      // *** ĐÂY LÀ ĐIỂM CHÍNH CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
+      validate(cartSchemas.updateCartItemSchema), // Validate body theo schema cập nhật mục giỏ hàng
+      cartController.updateMyCartItem // Controller để cập nhật mục giỏ hàng
     )
     .delete( // Xóa toàn bộ giỏ hàng của tôi
-      authenticate,
-      cartController.clearMyCart // Controller mới
+      authenticate, // Yêu cầu xác thực người dùng
+      cartController.clearMyCart // Controller để xóa toàn bộ giỏ hàng
     );
 
-  router.route("/removeItem") // Route để xóa một mục cụ thể khỏi giỏ hàng của tôi
+  // Định nghĩa route để xóa một mục cụ thể khỏi giỏ hàng của tôi
+  router.route("/removeItem") 
     .delete(
-      authenticate,
-      upload.none(),
-      validate(cartSchemas.removeItemFromCartSchema), // Cần định nghĩa schema này
-      cartController.removeItemFromMyCart // Controller mới
+      authenticate, // Yêu cầu xác thực người dùng
+      // *** ĐÂY LÀ ĐIỂM CHÍNH CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
+      validate(cartSchemas.removeItemFromCartSchema), // Validate body theo schema xóa mục
+      cartController.removeItemFromMyCart // Controller để xóa một mục cụ thể
     );
 
+  // Định nghĩa route để lấy giỏ hàng theo User ID (chỉ admin)
   router.route("/user/:userId")
     .get(
-      authenticate,
-      restrictTo('admin'), // Chỉ admin mới được GET giỏ hàng theo userId
-      validate({ params: cartSchemas.userIdParamSchema }),
+      authenticate, 
+      restrictTo('admin'), 
+      validate({ params: cartSchemas.userIdParamSchema }), // Validate tham số userId
       cartController.getCartByUserId
     );
 
+  // Định nghĩa route để lấy hoặc xóa giỏ hàng theo Cart ID (chỉ admin)
   router.route("/:id")
     .get(
       authenticate,
-      restrictTo('admin'), // Chỉ admin mới được GET giỏ hàng theo cartId
-      validate({ params: cartSchemas.cartIdParamSchema }),
+      restrictTo('admin'),
+      validate({ params: cartSchemas.cartIdParamSchema }), // Validate tham số cartId
       cartController.getCartById
     )
     .delete(
       authenticate,
-      restrictTo('admin'), // Chỉ admin mới được DELETE giỏ hàng theo cartId
-      validate({ params: cartSchemas.cartIdParamSchema }),
+      restrictTo('admin'),
+      validate({ params: cartSchemas.cartIdParamSchema }), // Validate tham số cartId
       cartController.deleteCart
     );
 
-  router.route("/:id/item/:productId") // Route này có thể bị trùng lặp với /myCart/item/:productId, nên cân nhắc
+  // Định nghĩa route để cập nhật hoặc xóa một mục trong giỏ hàng theo Cart ID và Product ID (chỉ admin)
+  router.route("/:id/item/:productId") 
     .put(
       authenticate,
-      upload.none(),
+      // *** ĐÂY LÀ ĐIỂM CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
       validate({
         params: cartSchemas.cartIdParamSchema.extend({
           productId: cartSchemas.cartItemSchema.shape.product_id,
         }),
-        body: cartSchemas.updateCartItemSchema,
+        body: cartSchemas.updateCartItemSchema, // Validate body (quantity)
       }),
       cartController.updateCartItem
     )
@@ -105,7 +127,10 @@ module.exports.setup = (app) => {
       cartController.deleteCartItem
     );
 
+  // Xử lý các phương thức HTTP không được phép cho các route này
   router.all("/", methodNotAllowed);
+  router.all("/myCart", methodNotAllowed); 
+  router.all("/removeItem", methodNotAllowed);
   router.all("/user/:userId", methodNotAllowed);
   router.all("/:id", methodNotAllowed);
   router.all("/:id/item/:productId", methodNotAllowed);
