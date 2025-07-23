@@ -16,19 +16,19 @@ const addItemToCartSchema = z.object({
   }),
 });
 
-// Schema cho việc cập nhật số lượng của một mục trong giỏ hàng của người dùng hiện tại (PATCH /myCart)
+// SỬA LỖI Ở ĐÂY: Schema cho việc cập nhật số lượng của một mục cụ thể trong giỏ hàng (PATCH /myCart)
 // Frontend gửi { product_id, quantity } trực tiếp trong body JSON
 const updateMyCartItemSchema = z.object({
-  body: z.object({ // <-- Đây là req.body, không phải req.body.body
+  body: z.object({ // <-- Đã sửa để khớp với req.body
     product_id: z.coerce.number().int().positive('Product ID must be a positive integer'),
     quantity: z.coerce.number().int().min(0, 'Quantity must be non-negative. Use 0 to remove item.').optional(), // Có thể là 0 để xóa
   }),
 });
 
-// Schema cho việc xóa một mục khỏi giỏ hàng của người dùng hiện tại (DELETE /removeItem)
+// SỬA LỖI Ở ĐÂY: Schema cho việc xóa một mục khỏi giỏ hàng của người dùng hiện tại (DELETE /removeItem)
 // Frontend gửi { product_id } trực tiếp trong body JSON
 const removeItemFromCartSchema = z.object({
-  body: z.object({ // <-- Đây là req.body, không phải req.body.body
+  body: z.object({ // <-- Đã sửa để khớp với req.body
     product_id: z.coerce.number().int().positive('Product ID must be a positive integer'),
   }),
 });
@@ -105,10 +105,10 @@ const getCartQuerySchema = z.object({
 module.exports = {
   cartItemSchema,
   createCartSchema,
-  addItemToCartSchema, // Đã sửa
-  updateMyCartItemSchema, // Đã sửa
-  removeItemFromCartSchema, // Đã sửa
-  updateCartItemAdminSchema, // Đổi tên để tránh nhầm lẫn
+  addItemToCartSchema,
+  updateMyCartItemSchema, // ĐÃ SỬA LỖI Ở ĐÂY
+  removeItemFromCartSchema, // ĐÃ SỬA LỖI Ở ĐÂY
+  updateCartItemAdminSchema,
   cartIdParamSchema,
   userIdParamSchema,
   getCartQuerySchema,

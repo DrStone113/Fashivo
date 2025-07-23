@@ -29,9 +29,6 @@ module.exports.setup = (app) => {
     )
     .post(
       authenticate, // Yêu cầu xác thực (admin hoặc user có thể tạo/cập nhật giỏ hàng)
-      // KHÔNG CẦN upload.none() ở đây vì route này có thể nhận JSON hoặc multipart/form-data
-      // Nếu bạn muốn route này chỉ nhận JSON, hãy bỏ multer đi.
-      // Nếu nó có thể nhận multipart/form-data với trường 'items' là chuỗi JSON, thì giữ nguyên multer và đảm bảo controller xử lý parseCartItems.
       // Dựa trên cart.schemas.js và cart.controller.js (createCart sử dụng parseCartItems), 
       // thì route này ĐANG mong đợi multipart/form-data với 'items' là chuỗi JSON.
       // Nên upload.none() là cần thiết cho route /api/v1/carts (POST)
@@ -53,8 +50,7 @@ module.exports.setup = (app) => {
     )
     .post( // Thêm sản phẩm vào giỏ hàng của tôi
       authenticate, // Yêu cầu xác thực người dùng
-      // *** ĐÂY LÀ ĐIỂM CHÍNH CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
-      // Vì frontend gửi `Content-Type: application/json` cho hành động này,
+      // Frontend gửi `Content-Type: application/json` cho hành động này,
       // `express.json()` (đã cấu hình trong `app.js`) sẽ xử lý body.
       // `multer.none()` chỉ cần thiết khi nhận `multipart/form-data` không có file.
       validate(cartSchemas.addItemToCartSchema), // Validate body theo schema thêm mục vào giỏ
@@ -62,8 +58,8 @@ module.exports.setup = (app) => {
     )
     .patch( // Cập nhật số lượng sản phẩm trong giỏ hàng của tôi
       authenticate, // Yêu cầu xác thực người dùng
-      // *** ĐÂY LÀ ĐIỂM CHÍNH CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
-      validate(cartSchemas.updateCartItemSchema), // Validate body theo schema cập nhật mục giỏ hàng
+      // ĐÃ SỬA: Dùng updateMyCartItemSchema cho route của người dùng
+      validate(cartSchemas.updateMyCartItemSchema), 
       cartController.updateMyCartItem // Controller để cập nhật mục giỏ hàng
     )
     .delete( // Xóa toàn bộ giỏ hàng của tôi
@@ -75,7 +71,8 @@ module.exports.setup = (app) => {
   router.route("/removeItem") 
     .delete(
       authenticate, // Yêu cầu xác thực người dùng
-      // *** ĐÂY LÀ ĐIỂM CHÍNH CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
+      // Frontend gửi `Content-Type: application/json` cho hành động này,
+      // `express.json()` (đã cấu hình trong `app.js`) sẽ xử lý body.
       validate(cartSchemas.removeItemFromCartSchema), // Validate body theo schema xóa mục
       cartController.removeItemFromMyCart // Controller để xóa một mục cụ thể
     );
@@ -108,12 +105,12 @@ module.exports.setup = (app) => {
   router.route("/:id/item/:productId") 
     .put(
       authenticate,
-      // *** ĐÂY LÀ ĐIỂM CẦN SỬA LỖI: LOẠI BỎ `upload.none()` ***
       validate({
         params: cartSchemas.cartIdParamSchema.extend({
           productId: cartSchemas.cartItemSchema.shape.product_id,
         }),
-        body: cartSchemas.updateCartItemSchema, // Validate body (quantity)
+        // ĐÃ SỬA: Dùng updateCartItemAdminSchema cho route admin
+        body: cartSchemas.updateCartItemAdminSchema, 
       }),
       cartController.updateCartItem
     )
