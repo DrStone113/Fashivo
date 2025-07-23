@@ -64,6 +64,13 @@
           <label for="type">Loại sản phẩm:</label>
           <input type="text" id="type" v-model="productData.type" placeholder="Ví dụ: Áo thun, Quần jean, Giày">
         </div>
+
+        <!-- NEW: Trường available -->
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="available" v-model="productData.available">
+          <label for="available" class="checkbox-label">Sản phẩm có sẵn để bán</label>
+          <small class="help-text">Bỏ chọn nếu bạn muốn ẩn sản phẩm khỏi cửa hàng hoặc tạm ngừng bán.</small>
+        </div>
         
         <div class="form-actions">
           <button type="submit" :disabled="isSubmitting" class="submit-btn">
@@ -91,7 +98,8 @@ const productData = ref({
   price: 0,
   stock: 0,
   type: '',
-  image_url: '' 
+  image_url: '',
+  available: true // NEW: Mặc định là TRUE khi thêm mới
 });
 
 const isSubmitting = ref(false);
@@ -128,14 +136,23 @@ async function submitForm() {
 
     if (selectedFile.value) {
       dataToSend = new FormData();
-      dataToSend.append('image', selectedFile.value); 
+      dataToSend.append('imageFile', selectedFile.value); // Tên field phải khớp với Multer ('imageFile')
       for (const key in productData.value) {
+        // Bỏ qua image_url nếu có file được chọn
+        // Thêm trường 'available' vào FormData, chuyển đổi boolean thành string 'true'/'false'
         if (productData.value[key] !== null && productData.value[key] !== '') {
           if (key === 'image_url' && selectedFile.value) continue; 
-          dataToSend.append(key, productData.value[key]);
+          
+          if (key === 'available') {
+            dataToSend.append(key, productData.value[key] ? 'true' : 'false');
+          } else {
+            dataToSend.append(key, productData.value[key]);
+          }
         }
       }
     } else {
+      // Nếu không có file mới, gửi JSON body
+      // Đảm bảo 'available' là boolean
       dataToSend = productData.value;
     }
     
@@ -318,6 +335,28 @@ textarea {
   margin-top: 5px;
   display: block;
   text-align: left; 
+}
+
+/* NEW: Styles for checkbox group (copied from AdminEditProduct.vue) */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #667eea; /* Màu sắc của checkbox khi được chọn */
+}
+
+.checkbox-group .checkbox-label {
+  margin-bottom: 0; /* Ghi đè margin-bottom mặc định của label */
+  font-weight: normal; /* Không in đậm label của checkbox */
+  cursor: pointer;
 }
 
 .form-actions {

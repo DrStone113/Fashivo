@@ -61,6 +61,13 @@
           <label for="type">Loại sản phẩm:</label>
           <input type="text" id="type" v-model="productData.type">
         </div>
+
+        <!-- NEW: Trường available -->
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="available" v-model="productData.available">
+          <label for="available" class="checkbox-label">Sản phẩm có sẵn để bán</label>
+          <small class="help-text">Bỏ chọn nếu bạn muốn ẩn sản phẩm khỏi cửa hàng hoặc tạm ngừng bán.</small>
+        </div>
         
         <div class="form-actions">
           <button type="submit" :disabled="isSubmitting">{{ isSubmitting ? 'Đang cập nhật...' : 'Cập nhật Sản phẩm' }}</button>
@@ -90,7 +97,8 @@ const { product, isLoading: loading, isError: queryError } = useProduct().fetchP
 
 watch(product, (newProduct) => {
   if (newProduct) {
-    productData.value = { ...newProduct }; 
+    // Đảm bảo productData có thuộc tính 'available'
+    productData.value = { ...newProduct, available: newProduct.available ?? true }; 
     selectedFile.value = null; 
     selectedFilePreviewUrl.value = null; 
   } else {
@@ -117,16 +125,29 @@ async function submitForm() {
   try {
     let dataToSend;
 
+    // Khi gửi FormData, cần đảm bảo trường 'available' được thêm vào
     if (selectedFile.value) {
       dataToSend = new FormData();
-      dataToSend.append('image', selectedFile.value); 
+      dataToSend.append('imageFile', selectedFile.value); // Tên field phải khớp với Multer ('imageFile')
       for (const key in productData.value) {
+        // Bỏ qua image_url vì nó được xử lý bởi file upload
+        // Thêm trường 'available' vào FormData, chuyển đổi boolean thành string 'true'/'false'
         if (key !== 'image_url' && productData.value[key] !== null) { 
-          dataToSend.append(key, productData.value[key]);
+          if (key === 'available') {
+            dataToSend.append(key, productData.value[key] ? 'true' : 'false');
+          } else {
+            dataToSend.append(key, productData.value[key]);
+          }
         }
       }
     } else {
-      dataToSend = productData.value;
+      // Nếu không có file mới, gửi JSON body
+      // Đảm bảo 'available' là boolean
+      dataToSend = { ...productData.value };
+      // Xóa image_url nếu nó rỗng và không có file mới, để tránh gửi URL không hợp lệ
+      if (!dataToSend.image_url) {
+        delete dataToSend.image_url;
+      }
     }
 
     await productService.updateProduct(route.params.id, dataToSend);
@@ -307,6 +328,28 @@ input[type="file"]::file-selector-button:hover {
   margin-top: 5px;
   display: block;
   text-align: left; 
+}
+
+/* NEW: Styles for checkbox group */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #667eea; /* Màu sắc của checkbox khi được chọn */
+}
+
+.checkbox-group .checkbox-label {
+  margin-bottom: 0; /* Ghi đè margin-bottom mặc định của label */
+  font-weight: normal; /* Không in đậm label của checkbox */
+  cursor: pointer;
 }
 
 .form-actions {
