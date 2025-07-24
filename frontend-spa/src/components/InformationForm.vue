@@ -13,19 +13,48 @@
           <form @submit.prevent="updateProfile">
             <div class="form-group">
               <label for="name" class="form-label">Họ và Tên</label>
-              <input type="text" class="form-control" id="name" v-model="userForm.name" required placeholder="Nhập họ và tên của bạn">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="name" 
+                v-model="userForm.name" 
+                required 
+                placeholder="Nhập họ và tên của bạn"
+                autocomplete="name" 
+              >
             </div>
             <div class="form-group">
               <label for="email" class="form-label">Địa chỉ Email</label>
-              <input type="email" class="form-control" id="email" v-model="userForm.email" required placeholder="Nhập địa chỉ email mới">
-              </div>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                v-model="userForm.email" 
+                required 
+                placeholder="Nhập địa chỉ email mới"
+                autocomplete="email" 
+              >
+            </div>
             <div class="form-group">
               <label for="phone" class="form-label">Số điện thoại</label>
-              <input type="tel" class="form-control" id="phone" v-model="userForm.phone" placeholder="Nhập số điện thoại">
+              <input 
+                type="tel" 
+                class="form-control" 
+                id="phone" 
+                v-model="userForm.phone" 
+                placeholder="Nhập số điện thoại"
+                autocomplete="tel" 
+              >
             </div>
             <div class="form-group">
               <label for="address" class="form-label">Địa chỉ</label>
-              <textarea class="form-control" id="address" v-model="userForm.address" placeholder="Nhập địa chỉ của bạn"></textarea>
+              <textarea 
+                class="form-control" 
+                id="address" 
+                v-model="userForm.address" 
+                placeholder="Nhập địa chỉ của bạn"
+                autocomplete="street-address" 
+              ></textarea>
             </div>
             <div class="form-group avatar-upload-group">
               <label for="avatar" class="form-label">Ảnh đại diện</label>
@@ -50,17 +79,51 @@
         <div class="profile-section card-section">
           <h3 class="section-title">Thay Đổi Mật Khẩu</h3>
           <form @submit.prevent="changePassword">
+            <!-- THÊM TRƯỜNG USERNAME/EMAIL ẨN CHO MỤC ĐÍCH AUTOCOMPLETE -->
+            <!-- Trường này sẽ không hiển thị nhưng giúp trình duyệt liên kết mật khẩu -->
+            <input 
+              type="text" 
+              style="display: none;" 
+              id="username-for-password" 
+              :value="authStore.user?.email" 
+              autocomplete="username" 
+            >
+            
             <div class="form-group">
               <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
-              <input type="password" class="form-control" id="currentPassword" v-model="passwordForm.currentPassword" required placeholder="Nhập mật khẩu hiện tại">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="currentPassword" 
+                v-model="passwordForm.currentPassword" 
+                required 
+                placeholder="Nhập mật khẩu hiện tại"
+                autocomplete="current-password" 
+              >
             </div>
             <div class="form-group">
               <label for="newPassword" class="form-label">Mật khẩu mới</label>
-              <input type="password" class="form-control" id="newPassword" v-model="passwordForm.newPassword" required placeholder="Nhập mật khẩu mới">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="newPassword" 
+                v-model="passwordForm.newPassword" 
+                required 
+                placeholder="Nhập mật khẩu mới"
+                autocomplete="new-password" 
+              >
             </div>
             <div class="form-group">
               <label for="newPasswordConfirm" class="form-label">Xác nhận mật khẩu mới</label>
-              <input type="password" class="form-control" id="newPasswordConfirm" v-model="passwordForm.newPasswordConfirm" required placeholder="Xác nhận mật khẩu mới">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="newPasswordConfirm" 
+                v-model="passwordForm.newPasswordConfirm" 
+                required 
+                placeholder="Xác nhận mật khẩu mới"
+                autocomplete="new-password" 
+              >
             </div>
 
             <div v-if="passwordErrorMessage" class="status-message error-message">{{ passwordErrorMessage }}</div>
@@ -85,7 +148,7 @@ const authStore = useAuthStore();
 
 const userForm = reactive({
   name: '',
-  email: '', // Giữ lại email để bind vào input
+  email: '', 
   address: '',
   phone: '',
   avatar_url: '',
@@ -118,7 +181,6 @@ watch(() => authStore.user, (newUser) => {
   }
 }, { immediate: true });
 
-// Hàm nén ảnh trước khi upload (giữ nguyên)
 const compressImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.7) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -189,14 +251,14 @@ const updateProfile = async () => {
     if (userForm.avatarFile) {
       dataToSend = new FormData();
       dataToSend.append('name', userForm.name);
-      dataToSend.append('email', userForm.email); // THÊM EMAIL VÀO FORM DATA
+      dataToSend.append('email', userForm.email); 
       dataToSend.append('address', userForm.address);
       dataToSend.append('phone', userForm.phone);
       dataToSend.append('avatar', userForm.avatarFile); 
     } else {
       dataToSend = {
         name: userForm.name,
-        email: userForm.email, // THÊM EMAIL VÀO OBJECT
+        email: userForm.email, 
         address: userForm.address,
         phone: userForm.phone,
       };
@@ -254,6 +316,7 @@ const changePassword = async () => {
   }
 };
 </script>
+
 
 <style scoped>
 /* Tổng thể trang */
