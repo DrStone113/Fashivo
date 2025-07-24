@@ -1,3 +1,4 @@
+// src/main.js
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router'; // Import router
@@ -45,8 +46,9 @@ app.use(VueQueryPlugin, {
 // Điều này đảm bảo trạng thái xác thực được tải trước khi các component render
 router.isReady().then(() => {
   const authStore = useAuthStore();
-  authStore.getProfile().catch(error => { // Đã sửa từ fetchUser thành getProfile
-    console.error("Failed to load user profile on startup:", error);
+  // ĐÃ SỬA: Gọi initializeAuth() thay vì getProfile()
+  authStore.initializeAuth().catch(error => { 
+    console.error("Failed to initialize auth state on startup:", error);
     // Xử lý lỗi nếu cần, ví dụ: chuyển hướng về trang đăng nhập
     // router.push('/login'); 
   });
