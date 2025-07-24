@@ -13,7 +13,7 @@ const router = express.Router();
 // Multer setup for product images
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/img/products'); 
+    cb(null, 'public/image/products'); // <-- SỬA TỪ 'img' THÀNH 'image'
   },
   filename: (req, file, cb) => {
     const ext = file.mimetype.split("/")[1];
@@ -42,39 +42,37 @@ module.exports.setup = (app) => {
 
   router.route("/")
     .get(
-      // BỎ DÒNG 'authenticate' ĐỂ CHO PHÉP TRUY CẬP CÔNG KHAI VÀO DANH SÁCH SẢN PHẨM
       validate(productSchemas.getProductQuerySchema),
       productController.getAllProducts
     )
     .post(
-      authenticate, // Yêu cầu xác thực
-      restrictTo('admin'), // Chỉ admin mới được POST
+      authenticate,
+      restrictTo('admin'),
       upload.single("imageFile"),
       validate(productSchemas.createProductSchema),
       productController.createProduct
     )
     .delete(
-      authenticate, // Yêu cầu xác thực
-      restrictTo('admin'), // Chỉ admin mới được DELETE ALL
+      authenticate,
+      restrictTo('admin'),
       productController.deleteAllProducts
     );
 
   router.route("/:id")
     .get(
-      // BỎ DÒNG 'authenticate' ĐỂ CHO PHÉP TRUY CẬP CÔNG KHAI VÀO SẢN PHẨM THEO ID
       validate(productSchemas.productIdParamSchema),
       productController.getProductById
     )
     .put(
-      authenticate, // Yêu cầu xác thực
-      restrictTo('admin'), // Chỉ admin mới được PUT
-      upload.single("imageFile"), // Cho phép cập nhật ảnh
+      authenticate,
+      restrictTo('admin'),
+      upload.single("imageFile"),
       validate(productSchemas.updateProductSchema),
       productController.updateProduct
     )
     .delete(
-      authenticate, // Yêu cầu xác thực
-      restrictTo('admin'), // Chỉ admin mới được DELETE
+      authenticate,
+      restrictTo('admin'),
       validate(productSchemas.productIdParamSchema),
       productController.deleteProduct
     );

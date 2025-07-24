@@ -20,6 +20,10 @@ function resourceNotFound(req, res, next) {
 }
 
 function handleError(error, req, res, next) {
+  // THÊM DÒNG LOG NÀY ĐỂ XEM CHI TIẾT LỖI TRONG CONSOLE BACKEND
+  console.error("BACKEND ERROR:", error); 
+  // Bạn có thể log thêm stack trace nếu muốn: console.error("Error Stack:", error.stack);
+
   if (res.headersSent) {
     return next(error);
   }
@@ -46,7 +50,15 @@ function handleError(error, req, res, next) {
     return res.status(statusCode).json(JSend.fail(message, responseData));
   } else {
     // Đối với lỗi server (5xx), sử dụng JSend.error
-    return res.status(statusCode).json(JSend.error(message, responseData));
+    // Trong môi trường phát triển, có thể gửi stack trace về frontend để debug dễ hơn
+    if (process.env.NODE_ENV === 'development') {
+        return res.status(statusCode).json(JSend.error(message, { 
+            details: responseData, 
+            stack: error.stack // Thêm stack trace vào response data
+        }));
+    } else {
+        return res.status(statusCode).json(JSend.error(message, responseData));
+    }
   }
 }
 
