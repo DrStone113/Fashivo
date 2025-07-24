@@ -8,34 +8,69 @@ export const useCartStore = defineStore('cart', {
   state: () => ({
     cartId: null,
     items: [],
-    // Có thể thêm trạng thái loading và error để hiển thị trên UI
     isLoadingCart: false,
     cartError: null,
   }),
   getters: {
     totalItems: (state) => state.items.reduce((acc, item) => acc + item.quantity, 0),
-    totalCartAmount: (state) => state.items.reduce((acc, item) => {
-      // Đảm bảo item.product tồn tại và price là một số
-      const price = Number(item.product?.price || 0);
-      return acc + item.quantity * price;
-    }, 0),
+    totalCartAmount: (state) => {
+      console.log('[totalCartAmount Getter] - Getter is being accessed.'); // Log này sẽ luôn chạy nếu getter được gọi
+      console.log('[totalCartAmount Getter] - Current items in state:', state.items); // Log toàn bộ mảng items
+
+      return state.items.reduce((acc, item) => {
+        let price = 0;
+        if (item.product && item.product.price !== undefined && item.product.price !== null) {
+          // Đảm bảo giá đã được chuẩn hóa trong _normalizeCartItems hoặc là số từ backend
+          price = Number(item.product.price); 
+          if (isNaN(price)) {
+            price = 0; // Đảm bảo giá là số nếu có lỗi parse
+            console.warn(`[totalCartAmount Getter] Price for product '${item.product.name}' is NaN after Number() conversion. Raw: ${item.product.price}`);
+          }
+        }
+        
+        console.log(`[totalCartAmount Getter] Calculating item: ${item.product?.name || 'Unknown Product'}, rawPrice: ${item.product?.price}, parsedPrice: ${price}, quantity: ${item.quantity}, itemTotal: ${price * item.quantity}`);
+        return acc + item.quantity * price;
+      }, 0);
+    },
     totalItemsInCart: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
     isEmpty: (state) => state.items.length === 0,
   },
   actions: {
-    // Hàm trợ giúp để chuẩn hóa dữ liệu item (price thành Number)
+    // Hàm trợ giúp để chuẩn hóa dữ liệu item (price thành Number và loại bỏ ký tự không phải số)
     _normalizeCartItems(rawItems) {
         if (!Array.isArray(rawItems)) {
             console.warn('Expected array for cart items, got:', rawItems);
             return [];
         }
-        return rawItems.map(item => ({
-            ...item,
-            product: {
-                ...item.product,
-                price: Number(item.product?.price || 0) // Chuyển đổi price thành Number
+        return rawItems.map(item => {
+            let normalizedPrice = 0;
+            // Kiểm tra nếu item.product và item.product.price tồn tại
+            if (item.product && item.product.price !== undefined && item.product.price !== null) {
+                // Chuyển đổi giá thành chuỗi để xử lý
+                let priceString = String(item.product.price);
+                
+                // LOẠI BỎ TẤT CẢ DẤU CHẤM (dấu phân cách hàng nghìn)
+                priceString = priceString.replace(/\./g, ''); 
+                
+                // KHÔNG CẦN THAY THẾ DẤU PHẨY BẰNG DẤU CHẤM NẾU KHÔNG CÓ DẤU THẬP PHÂN NÀO
+                // Nếu có dấu phẩy làm dấu thập phân, bạn sẽ cần: priceString = priceString.replace(/,/g, '.'); 
+                
+                normalizedPrice = Number(priceString);
+                // Nếu sau khi làm sạch vẫn không phải số, mặc định là 0
+                if (isNaN(normalizedPrice)) {
+                    normalizedPrice = 0;
+                    console.warn(`Could not parse price for product ${item.product.name}. Raw: '${item.product.price}', Cleaned: '${priceString}'. Setting to 0.`);
+                }
             }
-        }));
+
+            return {
+                ...item,
+                product: {
+                    ...item.product,
+                    price: normalizedPrice // Gán giá đã chuẩn hóa
+                }
+            };
+        });
     },
 
     async fetchUserCart() {
@@ -69,13 +104,11 @@ export const useCartStore = defineStore('cart', {
         const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
         if (guestCart.length > 0) {
           console.log('Synchronizing guest cart with user cart...');
-          // Chuẩn hóa guestCart trước khi xử lý
           const normalizedGuestCart = this._normalizeCartItems(guestCart);
 
           for (const guestItem of normalizedGuestCart) {
             const existingUserItem = this.items.find(item => item.product_id === guestItem.product_id);
             if (existingUserItem) {
-              // Cập nhật số lượng nếu giỏ hàng khách có số lượng lớn hơn
               if (existingUserItem.quantity < guestItem.quantity) {
                 await cartService.updateItemQuantity(guestItem.product_id, guestItem.quantity);
               }
@@ -84,7 +117,6 @@ export const useCartStore = defineStore('cart', {
             }
           }
           localStorage.removeItem('guestCart');
-          // Sau khi đồng bộ, fetch lại giỏ hàng từ backend để có dữ liệu mới nhất
           await this.fetchUserCart();
           console.log('Guest cart synchronized and cleared.');
         }
@@ -93,13 +125,13 @@ export const useCartStore = defineStore('cart', {
         this.cartError = error.message;
         console.error('Error fetching user cart:', error);
         this.cartId = null;
-        this.items = []; // Xóa giỏ hàng nếu có lỗi nghiêm trọng
+        this.items = [];
         const authStore = useAuthStore();
         if (error.message.includes('Unauthorized') || error.message.includes('jwt expired')) {
-          authStore.logout(); // Đăng xuất người dùng nếu token không hợp lệ
-          router.push('/login'); // Chuyển hướng đến trang đăng nhập
+          authStore.logout();
+          router.push('/login');
         }
-        throw error; // Vẫn ném lỗi để component có thể xử lý
+        throw error;
       } finally {
         this.isLoadingCart = false;
       }
@@ -116,13 +148,14 @@ export const useCartStore = defineStore('cart', {
           if (existingItemIndex !== -1) {
             guestCart[existingItemIndex].quantity += quantity;
           } else {
+            // Khi thêm vào guest cart, đảm bảo product.price được chuẩn hóa
             guestCart.push({
               product_id: product.id,
               quantity: quantity,
               product: {
                 id: product.id,
                 name: product.name,
-                price: Number(product.price || 0), // Chuẩn hóa price khi thêm vào guest cart
+                price: Number(String(product.price).replace(/\./g, '') || 0), // Chỉ loại bỏ dấu chấm
                 image_url: product.image_url,
               }
             });
@@ -134,7 +167,7 @@ export const useCartStore = defineStore('cart', {
         }
 
         await cartService.addItemToCart(product.id, quantity);
-        await this.fetchUserCart(); // Fetch lại để cập nhật từ backend
+        await this.fetchUserCart();
         console.log('Item added to user cart via API.');
       } catch (error) {
         this.cartError = error.message;
@@ -164,7 +197,7 @@ export const useCartStore = defineStore('cart', {
         }
 
         await cartService.updateItemQuantity(productId, quantity);
-        await this.fetchUserCart(); // Fetch lại để cập nhật từ backend
+        await this.fetchUserCart();
         console.log('User cart item updated via API.');
       } catch (error) {
         this.cartError = error.message;
@@ -187,7 +220,7 @@ export const useCartStore = defineStore('cart', {
         }
 
         await cartService.removeItemFromCart(productId);
-        await this.fetchUserCart(); // Fetch lại để cập nhật từ backend
+        await this.fetchUserCart();
         console.log('User cart item removed via API.');
       } catch (error) {
         this.cartError = error.message;
@@ -209,10 +242,9 @@ export const useCartStore = defineStore('cart', {
         }
 
         await cartService.clearMyCart();
-        this.items = []; // Xóa hết item trong state sau khi backend báo thành công
-        this.cartId = null; // Reset cartId cho user
+        this.items = [];
+        this.cartId = null;
         console.log('User cart cleared via API.');
-        // Sau khi clear, không cần fetchUserCart vì nó đã trống
       } catch (error) {
         this.cartError = error.message;
         console.error('Error clearing cart:', error);
@@ -220,5 +252,5 @@ export const useCartStore = defineStore('cart', {
       }
     },
   },
-  persist: true // Giữ nguyên persist nếu bạn muốn trạng thái giỏ hàng tồn tại qua các lần refresh
+  persist: true
 });

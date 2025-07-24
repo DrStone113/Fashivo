@@ -30,7 +30,8 @@
 
           <div class="form-group">
             <label for="image_url_text">Hoặc nhập URL Ảnh:</label>
-            <input type="text" id="image_url_text" v-model="productData.image_url" placeholder="Để trống nếu tải lên file">
+            <input type="text" id="image_url_text" v-model="productData.image_url" :disabled="!!selectedFile" placeholder="Để trống nếu tải lên file">
+            <small class="help-text" v-if="selectedFile">URL ảnh bị vô hiệu hóa khi có file được chọn.</small>
           </div>
         </div>
       </div>
@@ -62,7 +63,6 @@
           <input type="text" id="type" v-model="productData.type">
         </div>
 
-        <!-- NEW: Trường available -->
         <div class="form-group checkbox-group">
           <input type="checkbox" id="available" v-model="productData.available">
           <label for="available" class="checkbox-label">Sản phẩm có sẵn để bán</label>
@@ -82,6 +82,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useQueryClient } from '@tanstack/vue-query'; // Import useQueryClient
 import useProduct from '@/composables/useProduct'; 
 import productService from '@/services/product.service'; 
 
@@ -93,11 +94,12 @@ const isSubmitting = ref(false);
 const selectedFile = ref(null); 
 const selectedFilePreviewUrl = ref(null); 
 
+const queryClient = useQueryClient(); // Khởi tạo queryClient
+
 const { product, isLoading: loading, isError: queryError } = useProduct().fetchProduct(ref(route.params.id));
 
 watch(product, (newProduct) => {
   if (newProduct) {
-    // Đảm bảo productData có thuộc tính 'available'
     productData.value = { ...newProduct, available: newProduct.available ?? true }; 
     selectedFile.value = null; 
     selectedFilePreviewUrl.value = null; 
@@ -111,7 +113,6 @@ const handleImageUpload = (event) => {
   if (file) {
     selectedFile.value = file;
     selectedFilePreviewUrl.value = URL.createObjectURL(file);
-    productData.value.image_url = ''; 
   } else {
     selectedFile.value = null;
     selectedFilePreviewUrl.value = null;
@@ -125,13 +126,10 @@ async function submitForm() {
   try {
     let dataToSend;
 
-    // Khi gửi FormData, cần đảm bảo trường 'available' được thêm vào
     if (selectedFile.value) {
       dataToSend = new FormData();
-      dataToSend.append('imageFile', selectedFile.value); // Tên field phải khớp với Multer ('imageFile')
+      dataToSend.append('imageFile', selectedFile.value);
       for (const key in productData.value) {
-        // Bỏ qua image_url vì nó được xử lý bởi file upload
-        // Thêm trường 'available' vào FormData, chuyển đổi boolean thành string 'true'/'false'
         if (key !== 'image_url' && productData.value[key] !== null) { 
           if (key === 'available') {
             dataToSend.append(key, productData.value[key] ? 'true' : 'false');
@@ -141,19 +139,22 @@ async function submitForm() {
         }
       }
     } else {
-      // Nếu không có file mới, gửi JSON body
-      // Đảm bảo 'available' là boolean
       dataToSend = { ...productData.value };
-      // Xóa image_url nếu nó rỗng và không có file mới, để tránh gửi URL không hợp lệ
-      if (!dataToSend.image_url) {
-        delete dataToSend.image_url;
+      if (dataToSend.image_url === '') { 
+        dataToSend.image_url = null; 
+      } else if (dataToSend.image_url === undefined) {
+         delete dataToSend.image_url;
       }
     }
 
     await productService.updateProduct(route.params.id, dataToSend);
     
-    alert('Cập nhật sản phẩm thành công!');
-    router.push('/admin/products'); 
+    // Vô hiệu hóa cache cho query 'products'
+    // Điều này sẽ khiến Vue Query fetch lại danh sách sản phẩm khi trang /menu được hiển thị
+    queryClient.invalidateQueries(['products']); 
+
+    console.log('Cập nhật sản phẩm thành công! Đang điều hướng...'); 
+    router.push('/menu'); 
   } catch (err) {
     console.error('Lỗi khi cập nhật sản phẩm:', err);
     alert('Cập nhật sản phẩm thất bại: ' + (err.message || 'Lỗi không xác định.'));
@@ -166,6 +167,7 @@ function cancelEdit() {
   router.back(); 
 }
 </script>
+
 
 <style scoped>
 .edit-product-page {

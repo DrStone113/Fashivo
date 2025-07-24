@@ -69,12 +69,14 @@
               </button>
             </div>
           </div>
-
+          
+          <!--
           <div class="cart-actions-bottom">
             <button @click="handleClearCart" class="clear-cart-btn" :disabled="isLoadingCart">
               <i class="fas fa-trash-alt"></i> Xóa toàn bộ giỏ hàng
             </button>
           </div>
+          -->
         </div>
 
         <!-- Tóm tắt đơn hàng -->
@@ -110,7 +112,7 @@
             <i class="fas fa-money-check-alt"></i>
             <span v-if="isLoadingCart">Đang xử lý...</span>
             <span v-else-if="!authStore.isAuthenticated">Đăng nhập để thanh toán</span>
-            <span v-else>Tiến hành thanh toán</span>
+            <span v-else>Xóa toàn bộ giỏ hàng</span>
           </button>
 
           <!-- Thông báo yêu cầu đăng nhập -->
@@ -126,11 +128,11 @@
     <!-- Modal xác nhận thanh toán -->
     <div v-if="showConfirmation" class="modal-overlay">
       <div class="modal-content-styled">
-        <h4 class="modal-title">Xác nhận thanh toán</h4>
-        <p class="modal-text">Bạn có chắc chắn muốn tiến hành thanh toán các mặt hàng trong giỏ? Giỏ hàng sẽ được xóa sau khi thanh toán.</p>
+        <h4 class="modal-title">Xác nhận xóa toàn bộ giỏ hàng</h4>
+        <p class="modal-text">Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng? Giỏ hàng sẽ bị xóa hết tất cả.</p>
         <div class="modal-actions">
           <button @click="cancelConfirmation" class="modal-btn cancel-modal-btn" :disabled="isLoadingCart">Hủy</button>
-          <button @click="confirmCheckout" class="modal-btn confirm-modal-btn" :disabled="isLoadingCart">Xác nhận thanh toán</button>
+          <button @click="confirmCheckout" class="modal-btn confirm-modal-btn" :disabled="isLoadingCart">Xác nhận xóa</button>
         </div>
       </div>
     </div>
@@ -153,7 +155,8 @@ const showConfirmation = ref(false);
 
 const cartItems = computed(() => cartStore.items);
 const totalItemsInCart = computed(() => cartStore.totalItemsInCart);
-const totalCartAmount = computed(() => cartStore.totalPrice); 
+// ĐÃ SỬA LỖI Ở ĐÂY: Thay đổi cartStore.totalPrice thành cartStore.totalCartAmount
+const totalCartAmount = computed(() => cartStore.totalCartAmount); 
 const isEmpty = computed(() => cartStore.isEmpty);
 const isLoadingCart = computed(() => cartStore.isLoadingCart);
 const cartError = computed(() => cartStore.cartError);
