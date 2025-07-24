@@ -10,6 +10,7 @@ import MainCarousel from './MainCarousel.vue'
 
 <style scoped>
 .hero-section {
+  margin-top: 2rem;
   margin-bottom: 2rem;
 }
 </style>

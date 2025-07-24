@@ -15,6 +15,9 @@ import '@fortawesome/fontawesome-free/css/all.css'; // Đảm bảo Font Awesome
 // Import Vue Query
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query';
 
+// Import your global animations CSS
+import './assets/animations.css';
+
 // Import authStore để fetch user ngay khi app khởi động
 import { useAuthStore } from './store/authStore';
 
