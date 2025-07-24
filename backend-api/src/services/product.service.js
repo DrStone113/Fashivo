@@ -14,7 +14,7 @@ class ProductService {
     return newProduct;
   }
 
-  // READ (Get all with filters and pagination) - ĐÃ SỬA LỖI
+  // READ (Get all with filters and pagination)
   async getAllProducts(filters) {
     let baseQuery = this.knex("products").leftJoin(
       "categories",
@@ -59,14 +59,18 @@ class ProductService {
     const totalRecords = parseInt(totalItemsResult.count, 10);
 
     // --- BƯỚC 2: ÁP DỤNG SẮP XẾP CHỈ CHO TRUY VẤN LẤY DỮ LIỆU ---
+    // SẮP XẾP MẶC ĐỊNH: Theo ID giảm dần để sản phẩm mới nhất hiện lên đầu
+    // Nếu có yêu cầu sắp xếp từ frontend, thì áp dụng sắp xếp đó
     if (filters.sort && filters.order) {
-      const validSortColumns = ["name", "price", "createdAt", "updatedAt"];
-      // Thêm tiền tố 'products.' để tránh nhầm lẫn cột
+      const validSortColumns = ["name", "price", "createdAt", "updatedAt", "id"]; // Thêm 'id'
       const sortColumn = validSortColumns.includes(filters.sort)
         ? `products.${filters.sort}`
-        : "products.name";
+        : "products.id"; // Mặc định sắp xếp theo ID
       const sortOrder = filters.order.toLowerCase() === "desc" ? "desc" : "asc";
       baseQuery.orderBy(sortColumn, sortOrder);
+    } else {
+      // Mặc định sắp xếp theo ID giảm dần nếu không có yêu cầu sắp xếp cụ thể
+      baseQuery.orderBy("products.id", "desc"); 
     }
 
     const page = parseInt(filters.page, 10) || 1;
