@@ -17,7 +17,7 @@ const apiLimiter = rateLimit({
 
 // 2. Giới hạn nghiêm ngặt hơn cho các route xác thực (login, signup, reset password)
 const authLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 15 phút
+    windowMs: 5 * 60 * 1000, // 15 phút
     max: 5, // Tối đa 5 lần thử đăng nhập thất bại mỗi windowMs từ mỗi IP
     standardHeaders: true,
     legacyHeaders: false,
