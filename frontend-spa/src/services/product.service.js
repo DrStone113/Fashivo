@@ -1,10 +1,10 @@
 // src/services/product.service.js
 import { BASE_URL_API, DEFAULT_IMAGE } from '../constants';
 
-// Hàm efetch không thay đổi, giữ nguyên như cũ
 async function efetch(url, options = {}) {
     let result = {};
     let json = {};
+
     const token = localStorage.getItem('jwtToken');
     const requestHeaders = new Headers(options.headers || {});
 
@@ -12,8 +12,6 @@ async function efetch(url, options = {}) {
         requestHeaders.set('Authorization', `Bearer ${token}`);
     }
 
-    // Nếu body là FormData, fetch API sẽ tự động đặt Content-Type là multipart/form-data
-    // Nếu không phải FormData và có body, đặt Content-Type là application/json
     if (!(options.body instanceof FormData) && options.body) {
         requestHeaders.set('Content-Type', 'application/json');
     }
@@ -25,9 +23,17 @@ async function efetch(url, options = {}) {
 
     try {
         result = await fetch(url, fetchOptions);
-        json = await result.json();
+        // THAY ĐỔI QUAN TRỌNG TẠI ĐÂY:
+        // Kiểm tra status trước khi cố gắng phân tích JSON
+        if (result.status === 204) {
+            console.log('API Response Status: 204 No Content');
+            return null; // Trả về null hoặc undefined cho 204 No Content (không có body)
+        }
+        json = await result.json(); // Chỉ phân tích JSON nếu không phải 204
     } catch (error) {
         console.error('Network or parsing error:', error);
+        // Đây có thể là lỗi parsing nếu backend gửi body với status 204
+        // Hoặc lỗi mạng nếu fetch thất bại hoàn toàn
         throw new Error(`Network or parsing error: ${error.message}`);
     }
 
@@ -84,10 +90,14 @@ function makeProductService() {
 
         const data = await efetch(`${baseUrl}?${queryString}`);
 
-        data.products = data.products.map((product) => ({
-            ...product,
-            image_url: product.image_url ?? DEFAULT_IMAGE
-        }));
+        // Đảm bảo data không phải là null (trường hợp status 204) trước khi truy cập .products
+        if (data && data.products) {
+            data.products = data.products.map((product) => ({
+                ...product,
+                image_url: product.image_url ?? DEFAULT_IMAGE
+            }));
+        }
+
 
         return data;
     }
@@ -102,7 +112,6 @@ function makeProductService() {
     }
 
     async function createProduct(productData) {
-        // productData có thể là FormData hoặc JSON object
         return efetch(baseUrl, {
             method: 'POST',
             body: productData instanceof FormData ? productData : JSON.stringify(productData)
@@ -110,10 +119,8 @@ function makeProductService() {
     }
 
     async function updateProduct(productId, productData) {
-        // SỬA LỖI 405: Thay đổi PATCH thành PUT
-        // SỬA LỖI BODY: Kiểm tra nếu productData là FormData thì gửi trực tiếp, không thì stringify
         return efetch(`${baseUrl}/${productId}`, {
-            method: 'PUT', // <-- ĐÃ SỬA TỪ 'PATCH' THÀNH 'PUT'
+            method: 'PUT',
             body: productData instanceof FormData ? productData : JSON.stringify(productData)
         });
     }

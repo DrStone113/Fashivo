@@ -11,7 +11,7 @@ export default function useProduct() {
       queryKey: computed(() => ['products', page.value, { ...filters.value }]),
       queryFn: async () => {
         try {
-          return await productService.fetchProducts(page.value, 8, filters.value);
+          return await productService.fetchProducts(page.value, 9, filters.value);
         } catch (err) {
           console.error('Fetch products failed:', err);
           throw err;

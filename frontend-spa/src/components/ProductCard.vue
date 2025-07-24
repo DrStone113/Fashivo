@@ -1,6 +1,7 @@
 <template>
   <div 
-    class="product-card" @click="goToProductDetails"
+    class="product-card-modern"
+    @click="goToProductDetails"
   >
     <div class="product-image-container">
       <img 
@@ -83,13 +84,14 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore'; 
 import productService from '@/services/product.service'; 
+import { useQueryClient } from '@tanstack/vue-query'; // IMPORT THÊM useQueryClient
 
 const props = defineProps({
   product: {
     type: Object,
     required: true
   },
-  currentPage: { // THÊM PROP NÀY VÀO PRODUCTCARD.VUE
+  currentPage: {
     type: Number,
     default: 1
   }
@@ -99,6 +101,7 @@ const emit = defineEmits(['add-to-cart', 'buy-now', 'delete-product']);
 
 const router = useRouter();
 const authStore = useAuthStore(); 
+const queryClient = useQueryClient(); // KHỞI TẠO queryClient
 
 const isAdmin = computed(() => {
   return authStore.user && authStore.user.role === 'admin';
@@ -148,7 +151,7 @@ const editProduct = () => {
     router.push({ 
       name: 'AdminEditProduct', 
       params: { id: props.product.id },
-      query: { fromPage: props.currentPage } // TRUYỀN fromPage QUA QUERY PARAMETER
+      query: { fromPage: props.currentPage }
     }); 
   } else {
     console.warn('Product or product ID is missing for edit. Cannot navigate.');
@@ -167,7 +170,13 @@ const confirmDeleteProduct = async () => {
     try {
       await productService.deleteProduct(props.product.id);
       alert('Sản phẩm đã được xóa thành công!');
-      emit('delete-product', props.product.id); 
+      
+      // Vô hiệu hóa cache cho query 'products' để nó fetch lại dữ liệu mới nhất
+      queryClient.invalidateQueries(['products']); 
+
+      // Không cần emit 'delete-product' nếu bạn xử lý invalidate ngay tại đây
+      // emit('delete-product', props.product.id); 
+
     } catch (error) {
       console.error('Lỗi khi xóa sản phẩm:', error);
       alert('Không thể xóa sản phẩm: ' + (error.message || 'Lỗi không xác định.'));
