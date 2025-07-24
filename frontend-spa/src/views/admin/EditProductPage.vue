@@ -82,7 +82,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useQueryClient } from '@tanstack/vue-query'; // Import useQueryClient
+import { useQueryClient } from '@tanstack/vue-query'; 
 import useProduct from '@/composables/useProduct'; 
 import productService from '@/services/product.service'; 
 
@@ -94,9 +94,12 @@ const isSubmitting = ref(false);
 const selectedFile = ref(null); 
 const selectedFilePreviewUrl = ref(null); 
 
-const queryClient = useQueryClient(); // Khởi tạo queryClient
+const queryClient = useQueryClient(); 
 
 const { product, isLoading: loading, isError: queryError } = useProduct().fetchProduct(ref(route.params.id));
+
+// Lấy số trang từ query parameter, mặc định là 1 nếu không có
+const fromPage = ref(parseInt(route.query.fromPage || '1')); // LẤY fromPage TỪ QUERY PARAMETER
 
 watch(product, (newProduct) => {
   if (newProduct) {
@@ -149,12 +152,11 @@ async function submitForm() {
 
     await productService.updateProduct(route.params.id, dataToSend);
     
-    // Vô hiệu hóa cache cho query 'products'
-    // Điều này sẽ khiến Vue Query fetch lại danh sách sản phẩm khi trang /menu được hiển thị
     queryClient.invalidateQueries(['products']); 
 
-    console.log('Cập nhật sản phẩm thành công! Đang điều hướng...'); 
-    router.push('/menu'); 
+    console.log('Cập nhật sản phẩm thành công! Đang điều hướng về trang:', fromPage.value); 
+    // Điều hướng về trang gốc mà sản phẩm được chỉnh sửa
+    router.push({ path: '/menu', query: { page: fromPage.value } }); // SỬ DỤNG fromPage.value
   } catch (err) {
     console.error('Lỗi khi cập nhật sản phẩm:', err);
     alert('Cập nhật sản phẩm thất bại: ' + (err.message || 'Lỗi không xác định.'));

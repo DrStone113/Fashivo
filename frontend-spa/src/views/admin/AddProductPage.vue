@@ -159,7 +159,7 @@ async function submitForm() {
     await productService.createProduct(dataToSend); 
     
     alert('Thêm sản phẩm thành công!');
-    router.push('/admin/products'); 
+    router.push({ path: '/menu', query: { page: 1 } }); 
   } catch (err) {
     console.error('Lỗi khi thêm sản phẩm:', err);
     alert('Thêm sản phẩm thất bại: ' + (err.message || 'Lỗi không xác định.'));

@@ -38,6 +38,7 @@
             v-for="product in products" 
             :key="product.id" 
             :product="product"
+            :current-page="currentPage"  
             @add-to-cart="handleAddToCart"
             @buy-now="handleBuyNow"
           />
@@ -57,7 +58,7 @@
 
 <script setup>
 import AdvancedSearch from '@/components/AdvancedSearch.vue';
-import ProductCard from '@/components/ProductCard.vue';
+import ProductCard from '@/components/ProductCard.vue'; // Đảm bảo đúng component này
 import MainPagination from '@/components/MainPagination.vue';
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -68,7 +69,6 @@ const router = useRouter();
 const route = useRoute();
 const cartStore = useCartStore();
 
-// Khởi tạo bộ lọc từ URL query
 const filters = ref({
   search: route.query.search || '',
   categories: (route.query.category_id || '').split(',').filter(Boolean).map(id => parseInt(id.trim())),
@@ -92,7 +92,6 @@ function updateFilters(newFilters) {
 }
 
 function changeCurrentPage(page) {
-  // Tạo query object từ state hiện tại của filters và trang mới
   const query = {
     page: page > 1 ? page : undefined,
     search: filters.value.search || undefined,
@@ -103,7 +102,6 @@ function changeCurrentPage(page) {
     sortBy: filters.value.sortBy !== 'name,asc' ? filters.value.sortBy : undefined,
   };
 
-  // Loại bỏ các key có giá trị là undefined để giữ URL sạch sẽ
   Object.keys(query).forEach(key => query[key] === undefined && delete query[key]);
   
   router.push({ query });

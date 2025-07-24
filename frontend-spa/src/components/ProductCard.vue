@@ -1,7 +1,6 @@
 <template>
   <div 
-    class="product-card-modern"
-    @click="goToProductDetails"
+    class="product-card" @click="goToProductDetails"
   >
     <div class="product-image-container">
       <img 
@@ -21,6 +20,7 @@
           class="admin-action-btn edit-product-btn"
           title="Edit Product"
         >
+          Edit
         </button>
 
         <button 
@@ -28,6 +28,7 @@
           class="admin-action-btn add-product-btn"
           title="Add New Product"
         >
+          Add
         </button>
 
         <button 
@@ -35,6 +36,7 @@
           class="admin-action-btn delete-product-btn"
           title="Delete Product"
         >
+          Delete
         </button>
       </div>
     </div>
@@ -86,6 +88,10 @@ const props = defineProps({
   product: {
     type: Object,
     required: true
+  },
+  currentPage: { // THÊM PROP NÀY VÀO PRODUCTCARD.VUE
+    type: Number,
+    default: 1
   }
 });
 
@@ -138,8 +144,12 @@ const emitBuyNow = () => {
 
 const editProduct = () => {
   if (props.product && props.product.id) {
-    console.log('Attempting to navigate to Admin Edit Product:', props.product.id);
-    router.push({ name: 'AdminEditProduct', params: { id: props.product.id } }); 
+    console.log('Attempting to navigate to Admin Edit Product:', props.product.id, 'from page:', props.currentPage);
+    router.push({ 
+      name: 'AdminEditProduct', 
+      params: { id: props.product.id },
+      query: { fromPage: props.currentPage } // TRUYỀN fromPage QUA QUERY PARAMETER
+    }); 
   } else {
     console.warn('Product or product ID is missing for edit. Cannot navigate.');
   }
