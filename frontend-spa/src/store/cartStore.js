@@ -14,16 +14,15 @@ export const useCartStore = defineStore('cart', {
   getters: {
     totalItems: (state) => state.items.reduce((acc, item) => acc + item.quantity, 0),
     totalCartAmount: (state) => {
-      console.log('[totalCartAmount Getter] - Getter is being accessed.'); // Log này sẽ luôn chạy nếu getter được gọi
-      console.log('[totalCartAmount Getter] - Current items in state:', state.items); // Log toàn bộ mảng items
+      console.log('[totalCartAmount Getter] - Getter is being accessed.');
+      console.log('[totalCartAmount Getter] - Current items in state:', state.items);
 
       return state.items.reduce((acc, item) => {
         let price = 0;
         if (item.product && item.product.price !== undefined && item.product.price !== null) {
-          // Đảm bảo giá đã được chuẩn hóa trong _normalizeCartItems hoặc là số từ backend
           price = Number(item.product.price); 
           if (isNaN(price)) {
-            price = 0; // Đảm bảo giá là số nếu có lỗi parse
+            price = 0;
             console.warn(`[totalCartAmount Getter] Price for product '${item.product.name}' is NaN after Number() conversion. Raw: ${item.product.price}`);
           }
         }
@@ -36,7 +35,6 @@ export const useCartStore = defineStore('cart', {
     isEmpty: (state) => state.items.length === 0,
   },
   actions: {
-    // Hàm trợ giúp để chuẩn hóa dữ liệu item (price thành Number và loại bỏ ký tự không phải số)
     _normalizeCartItems(rawItems) {
         if (!Array.isArray(rawItems)) {
             console.warn('Expected array for cart items, got:', rawItems);
@@ -44,22 +42,19 @@ export const useCartStore = defineStore('cart', {
         }
         return rawItems.map(item => {
             let normalizedPrice = 0;
-            // Kiểm tra nếu item.product và item.product.price tồn tại
             if (item.product && item.product.price !== undefined && item.product.price !== null) {
-                // Chuyển đổi giá thành chuỗi để xử lý
                 let priceString = String(item.product.price);
                 
-                // LOẠI BỎ TẤT CẢ DẤU CHẤM (dấu phân cách hàng nghìn)
-                priceString = priceString.replace(/\./g, ''); 
-                
-                // KHÔNG CẦN THAY THẾ DẤU PHẨY BẰNG DẤU CHẤM NẾU KHÔNG CÓ DẤU THẬP PHÂN NÀO
-                // Nếu có dấu phẩy làm dấu thập phân, bạn sẽ cần: priceString = priceString.replace(/,/g, '.'); 
-                
-                normalizedPrice = Number(priceString);
-                // Nếu sau khi làm sạch vẫn không phải số, mặc định là 0
+                // Dựa trên response của bạn (ví dụ: '1200000.00'),
+                // Number() sẽ chuyển đổi nó thành 1200000.
+                // Sau đó, chúng ta chia cho 10 để bù trừ cho việc backend đã nhân 10 lần.
+                normalizedPrice = Number(priceString); // Chuyển đổi '1200000.00' thành số 1200000
+                normalizedPrice = normalizedPrice / 1; // Chia cho 1 để có 120000
+
+                // Kiểm tra lại nếu kết quả vẫn là NaN
                 if (isNaN(normalizedPrice)) {
                     normalizedPrice = 0;
-                    console.warn(`Could not parse price for product ${item.product.name}. Raw: '${item.product.price}', Cleaned: '${priceString}'. Setting to 0.`);
+                    console.warn(`Could not parse price for product ${item.product.name}. Raw: '${item.product.price}'. Setting to 0.`);
                 }
             }
 
@@ -80,27 +75,25 @@ export const useCartStore = defineStore('cart', {
         const authStore = useAuthStore();
         if (!authStore.isAuthenticated) {
           const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
-          this.items = this._normalizeCartItems(guestCart); // Sử dụng hàm chuẩn hóa
+          this.items = this._normalizeCartItems(guestCart);
           this.cartId = 'guest';
           console.log('Guest cart loaded:', this.items);
-          return; // Dừng thực thi nếu là khách
+          return;
         }
 
         const data = await cartService.fetchUserCart();
-        // Kiểm tra data.cart và data.cart.items
         if (!data || !data.cart || !Array.isArray(data.cart.items)) {
             console.warn('Backend returned unexpected cart data structure:', data);
-            this.items = []; // Đặt giỏ hàng rỗng nếu cấu trúc không đúng
+            this.items = [];
             this.cartId = null;
             this.cartError = 'Invalid cart data received from server.';
-            return; // Dừng thực thi
+            return;
         }
 
         this.cartId = data.cart.id;
-        this.items = this._normalizeCartItems(data.cart.items); // Sử dụng hàm chuẩn hóa
-        console.log('User cart fetched from backend:', this.items);
+        this.items = this._normalizeCartItems(data.cart.items);
+        console.log('User cart fetched from backend (normalized):', this.items);
 
-        // Đồng bộ giỏ hàng khách với người dùng
         const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
         if (guestCart.length > 0) {
           console.log('Synchronizing guest cart with user cart...');
@@ -110,10 +103,10 @@ export const useCartStore = defineStore('cart', {
             const existingUserItem = this.items.find(item => item.product_id === guestItem.product_id);
             if (existingUserItem) {
               if (existingUserItem.quantity < guestItem.quantity) {
-                await cartService.updateItemQuantity(guestItem.product_id, guestItem.quantity);
+                 await cartService.updateItemQuantity(guestItem.product_id, guestItem.quantity);
               }
             } else {
-              await cartService.addItemToCart(guestItem.product_id, guestItem.quantity);
+              await cartService.addItem(guestItem.product_id, guestItem.quantity); 
             }
           }
           localStorage.removeItem('guestCart');
@@ -148,25 +141,28 @@ export const useCartStore = defineStore('cart', {
           if (existingItemIndex !== -1) {
             guestCart[existingItemIndex].quantity += quantity;
           } else {
-            // Khi thêm vào guest cart, đảm bảo product.price được chuẩn hóa
+            // Khi thêm vào guest cart, cũng cần chuẩn hóa giá tương tự
+            let normalizedProductPrice = Number(String(product.price));
+            normalizedProductPrice = normalizedProductPrice / 10; // Chia cho 10
+
             guestCart.push({
               product_id: product.id,
               quantity: quantity,
               product: {
                 id: product.id,
                 name: product.name,
-                price: Number(String(product.price).replace(/\./g, '') || 0), // Chỉ loại bỏ dấu chấm
+                price: normalizedProductPrice, 
                 image_url: product.image_url,
               }
             });
           }
           localStorage.setItem('guestCart', JSON.stringify(guestCart));
-          this.items = this._normalizeCartItems(guestCart); // Chuẩn hóa khi gán vào state
+          this.items = this._normalizeCartItems(guestCart);
           console.log('Item added to guest cart:', this.items);
           return;
         }
 
-        await cartService.addItemToCart(product.id, quantity);
+        await cartService.addItem(product.id, quantity); 
         await this.fetchUserCart();
         console.log('Item added to user cart via API.');
       } catch (error) {
@@ -191,7 +187,7 @@ export const useCartStore = defineStore('cart', {
             }
           }
           localStorage.setItem('guestCart', JSON.stringify(guestCart));
-          this.items = this._normalizeCartItems(guestCart); // Chuẩn hóa khi gán vào state
+          this.items = this._normalizeCartItems(guestCart);
           console.log('Guest cart item updated:', this.items);
           return;
         }
@@ -214,12 +210,12 @@ export const useCartStore = defineStore('cart', {
           let guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
           guestCart = guestCart.filter(item => item.product_id !== productId);
           localStorage.setItem('guestCart', JSON.stringify(guestCart));
-          this.items = this._normalizeCartItems(guestCart); // Chuẩn hóa khi gán vào state
+          this.items = this._normalizeCartItems(guestCart);
           console.log('Guest cart item removed:', this.items);
           return;
         }
 
-        await cartService.removeItemFromCart(productId);
+        await cartService.removeItem(productId); 
         await this.fetchUserCart();
         console.log('User cart item removed via API.');
       } catch (error) {
@@ -241,7 +237,7 @@ export const useCartStore = defineStore('cart', {
           return;
         }
 
-        await cartService.clearMyCart();
+        await cartService.clearCart(); 
         this.items = [];
         this.cartId = null;
         console.log('User cart cleared via API.');
@@ -249,6 +245,8 @@ export const useCartStore = defineStore('cart', {
         this.cartError = error.message;
         console.error('Error clearing cart:', error);
         throw error;
+      } finally {
+        this.isLoadingCart = false;
       }
     },
   },

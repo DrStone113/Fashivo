@@ -5,7 +5,8 @@ async function efetch(url, options = {}) {
     let result = {};
     let json = {};
 
-    const token = localStorage.getItem('jwtToken');
+    // SỬA LỖI: Lấy token từ key 'jwt' thay vì 'jwtToken'
+    const token = localStorage.getItem('jwt'); 
     const requestHeaders = new Headers(options.headers || {});
 
     if (token) {
@@ -32,8 +33,6 @@ async function efetch(url, options = {}) {
         json = await result.json(); // Chỉ phân tích JSON nếu không phải 204
     } catch (error) {
         console.error('Network or parsing error:', error);
-        // Đây có thể là lỗi parsing nếu backend gửi body với status 204
-        // Hoặc lỗi mạng nếu fetch thất bại hoàn toàn
         throw new Error(`Network or parsing error: ${error.message}`);
     }
 
@@ -42,7 +41,10 @@ async function efetch(url, options = {}) {
 
     if (!result.ok || json.status !== 'success') {
         if (result.status === 401) {
-            localStorage.removeItem('jwtToken');
+            // SỬA LỖI: Xóa token từ key 'jwt'
+            localStorage.removeItem('jwt'); 
+            // Có thể thêm logic để chuyển hướng người dùng về trang đăng nhập
+            // Ví dụ: router.push('/login'); (nếu router có thể truy cập ở đây)
             throw new Error(json.message || 'Unauthorized: Vui lòng đăng nhập lại.');
         }
         throw new Error(json.message || `API request failed with status ${result.status}`);
@@ -90,7 +92,6 @@ function makeProductService() {
 
         const data = await efetch(`${baseUrl}?${queryString}`);
 
-        // Đảm bảo data không phải là null (trường hợp status 204) trước khi truy cập .products
         if (data && data.products) {
             data.products = data.products.map((product) => ({
                 ...product,
@@ -120,7 +121,7 @@ function makeProductService() {
 
     async function updateProduct(productId, productData) {
         return efetch(`${baseUrl}/${productId}`, {
-            method: 'PUT',
+            method: 'PUT', // SỬA ĐỔI: Sử dụng PATCH thay vì PUT nếu backend của bạn dùng PATCH
             body: productData instanceof FormData ? productData : JSON.stringify(productData)
         });
     }

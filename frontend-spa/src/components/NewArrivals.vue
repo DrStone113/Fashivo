@@ -254,7 +254,7 @@ const setDefaultImage = (event) => {
 }
 
 .btn-primary-styled {
-  background: linear-gradient(45deg, #ec4899, #a855f7); /* Pink to Purple Gradient */
+  background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); /* Purple to Blue Gradient */
   color: white;
 }
 

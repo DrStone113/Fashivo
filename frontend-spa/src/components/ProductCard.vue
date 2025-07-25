@@ -21,7 +21,7 @@
           class="admin-action-btn-styled edit-product-btn-styled"
           title="Edit Product"
         >
-          <i class="fas fa-edit"></i> <!-- Changed to Font Awesome icon -->
+          <i class="fas fa-edit"></i> 
         </button>
 
         <button 
@@ -29,7 +29,7 @@
           class="admin-action-btn-styled add-product-btn-styled"
           title="Add New Product"
         >
-          <i class="fas fa-plus"></i> <!-- Changed to Font Awesome icon -->
+          <i class="fas fa-plus"></i> 
         </button>
 
         <button 
@@ -37,7 +37,7 @@
           class="admin-action-btn-styled delete-product-btn-styled"
           title="Delete Product"
         >
-          <i class="fas fa-trash-alt"></i> <!-- Changed to Font Awesome icon -->
+          <i class="fas fa-trash-alt"></i> 
         </button>
       </div>
     </div>
@@ -62,7 +62,7 @@
             class="action-btn-styled add-to-cart-btn-styled"
             :disabled="isProductUnavailable"
           >
-            <i class="fas fa-shopping-cart"></i>
+            <i class="fas fa-shopping-cart me-2"></i>
             <span>Add to Cart</span>
           </button>
           <button 
@@ -70,7 +70,7 @@
             class="action-btn-styled buy-now-btn-styled"
             :disabled="isProductUnavailable"
           >
-            <i class="fas fa-bolt"></i>
+            <i class="fas fa-bolt me-2"></i>
             <span>View Cart</span>
           </button>
         </div>
@@ -164,18 +164,19 @@ const addProduct = () => {
 };
 
 const confirmDeleteProduct = async () => {
+  // Thay thế window.confirm bằng một modal tùy chỉnh nếu có thể
   const isConfirmed = window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${props.product.name}" không?`);
   
   if (isConfirmed) {
     try {
       await productService.deleteProduct(props.product.id);
-      alert('Sản phẩm đã được xóa thành công!');
+      alert('Sản phẩm đã được xóa thành công!'); // Thay bằng modal thông báo
       
       queryClient.invalidateQueries(['products']); 
 
     } catch (error) {
       console.error('Lỗi khi xóa sản phẩm:', error);
-      alert('Không thể xóa sản phẩm: ' + (error.message || 'Lỗi không xác định.'));
+      alert('Không thể xóa sản phẩm: ' + (error.message || 'Lỗi không xác định.')); // Thay bằng modal thông báo lỗi
     }
   }
 };
@@ -276,12 +277,13 @@ const confirmDeleteProduct = async () => {
 .product-name-styled {
   font-size: 1.15rem; /* Larger name */
   font-weight: 700; /* Bolder */
-  color: #333;
+  color: #170f59;
   line-height: 1.4;
   margin: 0;
   text-overflow: ellipsis; /* Add ellipsis for long names */
   white-space: nowrap;
   overflow: hidden;
+  text-align: center;
 }
 
 /* Product Footer (Price & Actions) */
@@ -384,7 +386,7 @@ const confirmDeleteProduct = async () => {
 }
 
 .buy-now-btn-styled {
-  background: linear-gradient(45deg, #ec4899, #a855f7); /* Vibrant Pink to Purple Gradient */
+  background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); /* Purple to Blue Gradient */
   color: white;
   border: none;
 }

@@ -171,6 +171,7 @@ watch(filters, (newFilters) => {
 
 <style scoped>
 /* General Advanced Search Styling */
+/* General Advanced Search Styling */
 .advanced-search-styled {
   background: white;
   border: 1px solid #e0e0e0; /* Lighter border */
@@ -179,6 +180,11 @@ watch(filters, (newFilters) => {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); /* Deeper shadow */
   transition: box-shadow 0.3s ease;
   font-family: 'Poppins', sans-serif; /* Poppins font */
+  /* Add these lines to control the width */
+  width: 300px; /* You can adjust this value as needed */
+  /* Or, if you want it to be responsive but not too small: */
+  /* max-width: 300px; */
+  /* min-width: 250px; */ /* To ensure it doesn't get too small on smaller screens */
 }
 
 .advanced-search-styled:hover {
@@ -193,7 +199,7 @@ watch(filters, (newFilters) => {
   padding: 16px 20px; /* More padding */
   cursor: pointer;
   user-select: none;
-  background: linear-gradient(45deg, #a855f7, #ec4899); /* Vibrant Purple to Pink Gradient */
+  background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); /* Purple to Blue Gradient */
   color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Subtle white border */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);

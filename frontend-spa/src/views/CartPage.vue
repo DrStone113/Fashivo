@@ -1,7 +1,7 @@
 <template>
   <div class="cart-page-wrapper">
     <div class="cart-container">
-      <h2 class="cart-title">Giỏ Hàng Của Bạn</h2>
+      <h2 class="cart-title">GIỎ HÀNG CỦA BẠN</h2>
 
       <!-- Thông báo trạng thái -->
       <div v-if="cartError" class="status-message error-message">
@@ -271,7 +271,8 @@ watch(cartError, (newVal) => {
   align-items: flex-start;
   padding: 40px 20px;
   background: linear-gradient(135deg, #f0f4f8, #e0e7ee);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
+
 }
 
 .cart-container {
@@ -286,12 +287,13 @@ watch(cartError, (newVal) => {
 
 .cart-title {
   text-align: center;
-  color: #333;
+  color: #311994;
   margin-bottom: 40px;
   font-size: 2.5em;
   font-weight: 700;
   position: relative;
   padding-bottom: 15px;
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .cart-title::after {
@@ -371,7 +373,7 @@ watch(cartError, (newVal) => {
 .cart-summary-section {
   flex: 1; /* Chiếm 1 phần */
   min-width: 300px; /* Đảm bảo đủ rộng */
-  background: #fdfdfd;
+  background: #a79adc;
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.08);
   padding: 25px;
@@ -388,13 +390,14 @@ watch(cartError, (newVal) => {
   grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; 
   gap: 15px;
   padding: 15px 25px;
-  background-color: #f5f5f5;
+  background-color: #4b3bff;
   border-bottom: 1px solid #eee;
   font-weight: 600;
-  color: #555;
+  color: #ffffff;
   font-size: 0.95em;
   text-transform: uppercase;
-  text-align: center; 
+  text-align: center;
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif; 
 }
 .cart-item-header .price-col,
 .cart-item-header .total-col {
@@ -412,8 +415,9 @@ watch(cartError, (newVal) => {
   /* Phải khớp với header để căn chỉnh */
   grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; 
   gap: 15px;
+  background: #bebbdb;
   padding: 15px 25px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 2px solid #2631ab;
   align-items: center; /* Căn giữa các item theo chiều dọc */
   transition: background-color 0.2s ease;
 }
@@ -456,13 +460,13 @@ watch(cartError, (newVal) => {
 
 .item-name {
   font-weight: 600;
-  color: #333;
+  color: #241a6d;
   font-size: 1.05em;
   margin-bottom: 5px;
 }
 
 .item-type {
-  color: #777;
+  color: #777777;
   font-size: 0.9em;
   text-transform: capitalize;
 }
@@ -608,12 +612,13 @@ watch(cartError, (newVal) => {
 /* Tóm tắt đơn hàng (summary card) */
 .summary-title {
   text-align: center;
-  color: #333;
+  color: #2b229e;
   margin-bottom: 30px;
   font-size: 1.8em; 
   font-weight: 700;
   position: relative;
   padding-bottom: 15px;
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .summary-title::after {
@@ -632,7 +637,7 @@ watch(cartError, (newVal) => {
   list-style: none;
   padding: 0;
   margin: 0;
-  border-top: 1px solid #f0f0f0; 
+  border-top: 1px solid #3325a0; 
   border-bottom: 1px solid #f0f0f0; 
   margin-bottom: 25px;
 }
@@ -645,7 +650,7 @@ watch(cartError, (newVal) => {
   color: #555;
   font-size: 1.1em;
   font-weight: 500;
-  border-bottom: 1px dashed #e0e0e0; 
+  border-bottom: 1px dashed #29279a; 
 }
 
 .summary-list-item:last-child {

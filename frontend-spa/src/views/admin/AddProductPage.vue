@@ -96,8 +96,10 @@
 import { ref } from 'vue'; 
 import { useRouter } from 'vue-router';
 import productService from '@/services/product.service'; 
+import { useQueryClient } from '@tanstack/vue-query'; // THÊM DÒNG NÀY
 
 const router = useRouter();
+const queryClient = useQueryClient(); // KHỞI TẠO queryClient
 
 const productData = ref({
   name: '',
@@ -162,6 +164,10 @@ async function submitForm() {
     await productService.createProduct(dataToSend); 
     
     alert('Thêm sản phẩm thành công!');
+    
+    // QUAN TRỌNG: Vô hiệu hóa cache của query 'products' để buộc nó fetch lại dữ liệu mới nhất
+    queryClient.invalidateQueries(['products']); 
+
     router.push({ path: '/menu', query: { page: 1 } }); 
   } catch (err) {
     console.error('Lỗi khi thêm sản phẩm:', err);

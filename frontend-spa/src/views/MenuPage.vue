@@ -108,15 +108,37 @@ function changeCurrentPage(page) {
 }
 
 function handleAddToCart(product) {
+  // THÊM DÒNG LOG NÀY NGAY TRƯỚC KHI GỌI cartStore.addItem
+  console.log('--- Debugging Add to Cart (from MenuPage) ---');
+  console.log('Product object being added:', product);
+  console.log('Product ID:', product.id);
+  console.log('Product Name:', product.name);
+  console.log('Product Price BEFORE adding to cart:', product.price); // <--- LOG QUAN TRỌNG NHẤT
+  console.log('Product Type (if any):', product.type);
+  console.log('-------------------------------------------');
+
   if (product.stock > 0) {
     cartStore.addItem(product, 1);
+  } else {
+    alert('Sản phẩm đã hết hàng!'); // Thông báo nếu hết hàng
   }
 }
 
 function handleBuyNow(product) {
+  // THÊM DÒNG LOG NÀY NGAY TRƯỚC KHI GỌI cartStore.addItem
+  console.log('--- Debugging Buy Now (from MenuPage) ---');
+  console.log('Product object being bought:', product);
+  console.log('Product ID:', product.id);
+  console.log('Product Name:', product.name);
+  console.log('Product Price BEFORE buying now:', product.price); // <--- LOG QUAN TRỌNG NHẤT
+  console.log('Product Type (if any):', product.type);
+  console.log('---------------------------------------');
+
   if (product.stock > 0) {
     cartStore.addItem(product, 1);
     router.push('/cart');
+  } else {
+    alert('Sản phẩm đã hết hàng!'); // Thông báo nếu hết hàng
   }
 }
 
@@ -127,13 +149,36 @@ function reloadPage() {
 
 <style scoped>
 /* Giữ nguyên các style đã có */
+.container.main-content {
+  max-width: 1400px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 30px;
+  align-items: flex-start;
+  padding: 0 20px;
+
+  /* THÊM BACKGROUND VÀO ĐÂY */
+  background-color: #ffffff; /* Ví dụ: màu nền trắng */
+  /* Hoặc hình ảnh nền */
+  /* background-image: url('/path/to/your/image.jpg'); */
+  /* background-size: cover; */
+  /* background-position: center; */
+  /* background-repeat: no-repeat; */
+
+  border-radius: 10px; /* Bo góc nhẹ cho đẹp */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Thêm đổ bóng */
+  margin-top: 20px; /* Khoảng cách với hero section */
+  margin-bottom: 40px; /* Khoảng cách với footer (nếu có) */
+}
+
 .menu-page {
   background: #f8f9fa;
 }
 
 /* Hero Section */
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(45deg, #6a11cb, #2575fc); /* Blue-purple gradient */
   color: white;
   padding: 60px 20px;
   text-align: center;

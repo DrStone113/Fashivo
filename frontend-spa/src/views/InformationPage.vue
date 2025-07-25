@@ -48,7 +48,6 @@ async function onEnterInformation(cart) {
 </script>
 <template>
     <div v-if="cart">
-        <h2 class="text-center fw-bold mt-3">CUSTOMER INFORMATION FORM</h2>
         <InfomationForm :cart="cart" @submit:cart="onEnterInformation" />
     </div>
     <div v-else>

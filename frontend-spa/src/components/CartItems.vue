@@ -1,7 +1,7 @@
 <template>
   <div class="cart-page-wrapper">
     <div class="cart-container">
-      <h2 class="cart-title">Giỏ Hàng Của Bạn</h2>
+      <h2 class="cart-title">GIỎ HÀNG CỦA BẠN</h2>
 
       <!-- Thông báo trạng thái -->
       <div v-if="cartError" class="status-message error-message">
@@ -184,7 +184,7 @@ const handleCheckout = () => {
   align-items: flex-start;
   padding: 40px 20px;
   background: linear-gradient(135deg, #f0f4f8, #e0e7ee);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .cart-container {
@@ -205,6 +205,7 @@ const handleCheckout = () => {
   font-weight: 700;
   position: relative;
   padding-bottom: 15px;
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .cart-title::after {

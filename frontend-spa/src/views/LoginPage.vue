@@ -1,32 +1,48 @@
 <template>
-  <div class="login-page-wrapper">
-    <div class="login-container">
-      <h2 class="main-title">Đăng Nhập</h2>
+  <div class="login-page-wrapper-styled">
+    <div class="login-container-styled">
+      <h2 class="main-title-styled">Đăng Nhập</h2>
 
-      <div class="login-form-section card-section">
-        <h3 class="section-title">Chào Mừng Trở Lại!</h3>
+      <div class="login-form-section-styled card-section-styled">
+        <h3 class="section-title-styled">Chào Mừng Trở Lại!</h3>
         <form @submit.prevent="handleLogin">
-          <div class="form-group">
-            <label for="email" class="form-label">Địa chỉ Email</label>
-            <input type="email" class="form-control" id="email" v-model="email" required autocomplete="email" placeholder="Nhập địa chỉ email của bạn">
+          <div class="form-group-styled">
+            <label for="email" class="form-label-styled">Địa chỉ Email</label>
+            <input 
+              type="email" 
+              class="form-control-styled" 
+              id="email" 
+              v-model="email" 
+              required 
+              autocomplete="email" 
+              placeholder="Nhập địa chỉ email của bạn"
+            >
           </div>
-          <div class="form-group">
-            <label for="password" class="form-label">Mật khẩu</label>
-            <input type="password" class="form-control" id="password" v-model="password" required autocomplete="current-password" placeholder="Nhập mật khẩu của bạn">
+          <div class="form-group-styled">
+            <label for="password" class="form-label-styled">Mật khẩu</label>
+            <input 
+              type="password" 
+              class="form-control-styled" 
+              id="password" 
+              v-model="password" 
+              required 
+              autocomplete="current-password" 
+              placeholder="Nhập mật khẩu của bạn"
+            >
           </div>
           
-          <div v-if="errorMessage" class="status-message error-message">{{ errorMessage }}</div>
+          <div v-if="errorMessage" class="status-message-styled error-message-styled">{{ errorMessage }}</div>
           
-          <button type="submit" class="action-button submit-button" :disabled="isLoading">
-            <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <i v-else class="fas fa-sign-in-alt"></i> Đăng Nhập
+          <button type="submit" class="action-button-styled submit-button-styled" :disabled="isLoading">
+            <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <i v-else class="fas fa-sign-in-alt me-2"></i> Đăng Nhập
           </button>
         </form>
-        <p class="mt-4 text-center dont-have-account-text">
-          Chưa có tài khoản? <router-link to="/register" class="register-link">Đăng ký tại đây</router-link>
+        <p class="mt-4 text-center dont-have-account-text-styled">
+          Chưa có tài khoản? <router-link to="/register" class="register-link-styled">Đăng ký tại đây</router-link>
         </p>
-        <p class="text-center forgot-password-text">
-          <router-link to="/forgot-password" class="forgot-password-link">Quên mật khẩu?</router-link>
+        <p class="text-center forgot-password-text-styled">
+          <router-link to="/forgot-password" class="forgot-password-link-styled">Quên mật khẩu?</router-link>
         </p>
       </div>
     </div>
@@ -52,9 +68,8 @@ const handleLogin = async () => {
   try {
     await authStore.login(email.value, password.value);
     
-    // Kiểm tra xem có redirect parameter không
     const redirectPath = route.query.redirect || '/';
-    router.push(redirectPath); // Chuyển hướng về trang trước đó hoặc trang chủ
+    router.push(redirectPath); 
   } catch (error) {
     errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.';
   } finally {
@@ -65,94 +80,94 @@ const handleLogin = async () => {
 
 <style scoped>
 /* Tổng thể trang */
-.login-page-wrapper {
+.login-page-wrapper-styled {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center; /* Căn giữa theo chiều dọc */
   padding: 40px 20px;
   background: linear-gradient(135deg, #f0f4f8, #e0e7ee); /* Nền gradient nhẹ */
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif; /* Poppins font */
 }
 
-.login-container {
+.login-container-styled {
   max-width: 500px; /* Chiều rộng tổng thể */
   width: 100%;
   background: #ffffff;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Bóng đổ mạnh hơn */
+  border-radius: 20px; /* More rounded */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); /* Stronger shadow */
   padding: 40px;
   box-sizing: border-box;
 }
 
-.main-title {
+.main-title-styled {
   text-align: center;
   color: #333;
   margin-bottom: 40px;
   font-size: 2.5em;
-  font-weight: 700;
+  font-weight: 800; /* Bolder */
   position: relative;
   padding-bottom: 15px;
 }
 
-.main-title::after {
+.main-title-styled::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px;
-  height: 4px;
-  background: linear-gradient(to right, #6C63FF, #A044FF); /* Gradient tím */
+  width: 100px; /* Wider underline */
+  height: 5px; /* Thicker underline */
+  background: linear-gradient(to right, #a855f7, #ec4899); /* Vibrant Purple to Pink Gradient */
   border-radius: 2px;
 }
 
 /* Thông báo trạng thái chung */
-.status-message {
-  padding: 15px 20px;
-  border-radius: 10px;
+.status-message-styled {
+  padding: 18px 25px; /* More padding */
+  border-radius: 12px; /* More rounded */
   margin-bottom: 25px;
   font-size: 1.05em;
-  font-weight: 500;
+  font-weight: 600; /* Bolder */
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  gap: 12px; /* More space */
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
-.error-message {
-  background-color: #ffebee;
-  color: #D32F2F;
+.error-message-styled {
+  background-color: #ffe8e8; /* Lighter red */
+  color: #e53935; /* Darker red */
 }
 
 /* Form Section */
-.login-form-section { 
+.login-form-section-styled { 
   background: #fdfdfd;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-  padding: 30px;
+  border-radius: 18px; /* More rounded */
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1); /* Deeper shadow */
+  padding: 35px; /* More padding */
   box-sizing: border-box;
 }
 
-.section-title {
+.section-title-styled {
   color: #333;
   margin-top: 0;
   margin-bottom: 30px;
   font-size: 1.8em;
-  font-weight: 600;
+  font-weight: 700; /* Bolder */
   border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 12px;
+  padding-bottom: 15px; /* More padding */
   text-align: left;
 }
 
 /* Form Group và Input Fields */
-.form-group {
-  margin-bottom: 25px; 
+.form-group-styled {
+  margin-bottom: 28px; /* Tăng khoảng cách giữa các trường */
   width: 100%; 
 }
 
-label.form-label {
+label.form-label-styled {
   display: block;
-  margin-bottom: 10px; 
+  margin-bottom: 12px; /* Tăng khoảng cách giữa label và input */
   font-weight: 600;
   color: #333;
   font-size: 1.05em;
@@ -160,28 +175,30 @@ label.form-label {
 
 input[type="email"],
 input[type="password"] {
-  width: calc(100% - 28px); 
-  padding: 14px; 
-  border: 1px solid #e0e0e0; 
-  border-radius: 10px; 
+  width: calc(100% - 2px); /* Adjust for border */
+  padding: 15px; /* Tăng padding */
+  border: 1px solid #e0e0e0; /* Border mềm hơn */
+  border-radius: 10px; /* Bo góc nhiều hơn */
   font-size: 1.05rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
-  background-color: #fcfcfc; 
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  background-color: #fcfcfc; /* Nền input hơi ngà */
+  color: #333;
 }
 
 input[type="email"]:focus,
 input[type="password"]:focus {
-  border-color: #6C63FF; 
+  border-color: #a855f7; /* Purple border when focus */
   outline: none;
-  box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.2); 
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2); /* Shadow when focus */
+  background-color: white;
 }
 
 /* Nút hành động */
-.action-button {
+.action-button-styled {
   width: 100%;
   padding: 18px 25px;
   border: none;
-  border-radius: 12px;
+  border-radius: 15px; /* More rounded */
   font-size: 1.2em;
   font-weight: 700;
   cursor: pointer;
@@ -190,17 +207,17 @@ input[type="password"]:focus {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25); /* Stronger shadow */
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.action-button:hover:not(:disabled) {
+.action-button-styled:hover:not(:disabled) {
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
 }
 
-.action-button:disabled {
+.action-button-styled:disabled {
   background-color: #ccc;
   cursor: not-allowed;
   box-shadow: none;
@@ -208,34 +225,34 @@ input[type="password"]:focus {
   opacity: 0.7;
 }
 
-.submit-button {
-  background-image: linear-gradient(to right, #007bff, #0056b3); /* Gradient xanh dương */
+.submit-button-styled {
+  background-image: linear-gradient(to right, #6a11cb, #2575fc); /* Blue-Purple Gradient for Login */
   color: white;
 }
 
-.submit-button:hover:not(:disabled) {
-  background-image: linear-gradient(to right, #0056b3, #004085);
+.submit-button-styled:hover:not(:disabled) {
+  background-image: linear-gradient(to right, #2575fc, #6a11cb); /* Reverse gradient on hover */
 }
 
 /* Văn bản "Chưa có tài khoản?" */
-.dont-have-account-text,
-.forgot-password-text {
+.dont-have-account-text-styled,
+.forgot-password-text-styled {
   font-size: 1.05em;
   color: #555;
   margin-top: 20px;
 }
 
-.register-link,
-.forgot-password-link {
-  color: #6C63FF; /* Màu tím/xanh cho link */
-  font-weight: 600;
+.register-link-styled,
+.forgot-password-link-styled {
+  color: #a855f7; /* Purple for links */
+  font-weight: 700; /* Bolder links */
   text-decoration: none;
   transition: color 0.2s;
 }
 
-.register-link:hover,
-.forgot-password-link:hover {
-  color: #5A54D9;
+.register-link-styled:hover,
+.forgot-password-link-styled:hover {
+  color: #ec4899; /* Pink on hover */
   text-decoration: underline;
 }
 
@@ -246,24 +263,30 @@ input[type="password"]:focus {
 
 /* Responsive */
 @media (max-width: 768px) { /* Cho tablet và mobile */
-  .login-container {
+  .login-container-styled {
     padding: 30px;
+    border-radius: 15px;
   }
-  .main-title {
+  .main-title-styled {
     font-size: 2em;
     margin-bottom: 30px;
   }
-  .login-form-section {
-    padding: 25px;
+  .main-title-styled::after {
+    width: 80px;
+    height: 4px;
   }
-  .section-title {
+  .login-form-section-styled {
+    padding: 30px;
+    border-radius: 15px;
+  }
+  .section-title-styled {
     font-size: 1.6em;
     margin-bottom: 25px;
   }
-  .form-group {
+  .form-group-styled {
     margin-bottom: 20px;
   }
-  label.form-label {
+  label.form-label-styled {
     font-size: 1em;
     margin-bottom: 8px;
   }
@@ -272,25 +295,33 @@ input[type="password"]:focus {
     font-size: 1em;
     padding: 12px;
   }
-  .action-button {
+  .action-button-styled {
     font-size: 1.1em;
+    padding: 15px 20px;
+  }
+  .status-message-styled {
+    font-size: 1em;
     padding: 15px 20px;
   }
 }
 
 @media (max-width: 480px) { /* Cho mobile nhỏ hơn */
-  .login-container {
+  .login-container-styled {
     padding: 20px;
   }
-  .main-title {
+  .main-title-styled {
     font-size: 1.8em;
     margin-bottom: 25px;
   }
-  .dont-have-account-text,
-  .forgot-password-text {
+  .main-title-styled::after {
+    width: 60px;
+    height: 3px;
+  }
+  .dont-have-account-text-styled,
+  .forgot-password-text-styled {
     font-size: 0.95em;
   }
-  .action-button {
+  .action-button-styled {
     font-size: 1em;
     padding: 12px 15px;
   }

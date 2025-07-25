@@ -44,7 +44,8 @@
           <li class="nav-item">
             <router-link class="nav-link custom-nav-link position-relative" to="/cart">
               <i class="fas fa-shopping-cart me-2"></i> Cart
-              <span v-if="totalItems > 0" class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle animate-bounce-once-bs">
+              <!-- ĐÃ SỬA: Điều chỉnh vị trí của badge -->
+              <span v-if="totalItems > 0" class="badge bg-danger rounded-pill cart-badge-position animate-bounce-once-bs">
                 {{ totalItems }}
               </span>
             </router-link>
@@ -76,7 +77,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
@@ -85,7 +86,11 @@ const authStore = useAuthStore();
 const cartStore = useCartStore();
 const router = useRouter();
 
-const totalItems = computed(() => cartStore.totalItems);
+const totalItems = computed(() => {
+  const count = cartStore.totalItems;
+  console.log('[TheHeader] Cart total items:', count);
+  return count;
+});
 
 const handleLogout = async () => {
   try {
@@ -96,6 +101,10 @@ const handleLogout = async () => {
     alert('Logout failed. Please try again.');
   }
 };
+
+onMounted(() => {
+  cartStore.fetchUserCart();
+});
 </script>
 
 <style scoped>
@@ -169,16 +178,26 @@ const handleLogout = async () => {
   border-bottom: 3px solid #ff69b4; /* Hot pink for active link */
 }
 
+/* Cart Badge Styling */
+.cart-badge-position {
+  position: absolute;
+  top: -2px; /* Dịch lên trên một chút */
+  right: -2px; /* Dịch sang phải một chút */
+  transform: none; /* Bỏ translate-middle để kiểm soát vị trí bằng top/right */
+  font-size: 0.75em; /* Kích thước chữ nhỏ hơn */
+  padding: 0.2em 0.5em; /* Đệm nhỏ hơn */
+}
+
 /* Cart Badge Animation */
 @keyframes bounce-once-bs {
   0%, 100% {
-    transform: translate(-50%, -50%) translateY(0);
+    transform: translateY(0);
   }
   20%, 80% {
-    transform: translate(-50%, -50%) translateY(-5px);
+    transform: translateY(-5px);
   }
   40%, 60% {
-    transform: translate(-50%, -50%) translateY(-2px);
+    transform: translateY(-2px);
   }
 }
 

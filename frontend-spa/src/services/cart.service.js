@@ -1,151 +1,153 @@
 // src/services/cart.service.js
-import { BASE_URL_API, DEFAULT_IMAGE } from '../constants';
+import axios from 'axios';
+import { DEFAULT_IMAGE } from '../constants'; // Đảm bảo đường dẫn đúng
 
-async function efetch(url, options = {}) {
-    let result = {};
-    let json = {};
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
-    const token = localStorage.getItem('jwtToken');
-    const requestHeaders = new Headers(options.headers || {}); // Use Headers API for better handling
+// Tạo một Axios instance chung để tự động thêm token
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
+// Interceptor để thêm token vào mỗi yêu cầu
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('jwt'); 
     if (token) {
-        requestHeaders.set('Authorization', `Bearer ${token}`);
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-    // Set Content-Type based on body presence and type
-    // Only set application/json if body is present and not FormData
-    if (options.body && !(options.body instanceof FormData)) {
-        requestHeaders.set('Content-Type', 'application/json');
-    } 
-    // If body is FormData, fetch API will automatically set the correct Content-Type with boundary
-    // So we don't need to explicitly set it here for FormData.
-    // If there's no body, no Content-Type is typically needed for GET/DELETE, etc.
+// Interceptor để xử lý lỗi 401 tự động
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('user'); 
+      console.error('Unauthorized: Token invalid or expired. Logging out.');
+    }
+    return Promise.reject(error);
+  }
+);
 
-    const fetchOptions = {
-        ...options, // Keep original options like method, cache, etc.
-        headers: requestHeaders, // Use our constructed Headers object
-    };
 
+class CartService {
+  async fetchUserCart() {
     try {
-        result = await fetch(url, fetchOptions); // Pass the merged options
-        json = await result.json();
-    } catch (error) {
-        console.error('Network or parsing error:', error);
-        throw new Error(`Network or parsing error: ${error.message}`);
-    }
-
-    console.log('API Response Status:', result.status);
-    console.log('API Response JSON:', json);
-
-    if (!result.ok || json.status !== 'success') {
-        if (result.status === 401) {
-            localStorage.removeItem('jwtToken');
-            throw new Error(json.message || 'Unauthorized: Vui lòng đăng nhập lại.');
-        }
-        throw new Error(json.message || `API request failed with status ${result.status}`);
-    }
-    return json.data;
-}
-
-function makeCartService() {
-    const baseUrl = `${BASE_URL_API}/carts`;
-
-    async function fetchUserCart() {
-        const data = await efetch(`${baseUrl}/myCart`);
-        if (data && data.cart && data.cart.items) {
-            data.cart.items = data.cart.items.map((item) => {
-                return {
-                    ...item,
-                    product: {
-                        ...item.product,
-                        image_url: item.product.image_url ?? DEFAULT_IMAGE
-                    }
-                };
-            });
-        } else {
-            return { cart: { items: [] } };
-        }
-        return data;
-    }
-
-    async function addItemToCart(productId, quantity) {
-        // No need to set Content-Type here, efetch will handle it
-        return efetch(`${baseUrl}/myCart`, {
-            method: 'POST',
-            body: JSON.stringify({ product_id: productId, quantity }) // This is correct
-        });
-    }
-
-    async function updateItemQuantity(productId, quantity) {
-      const url = `${BASE_URL_API}/carts/myCart`; // SỬA ĐỔI: Đây là URL PATCH cho myCart
-      const options = {
-          method: 'PATCH',
-          body: JSON.stringify({ product_id: productId, quantity }), // Đảm bảo đúng key
-      };
-      try {
-          const result = await efetch(url, options);
-          // Kiểm tra xem `result` có dữ liệu `item` không
-          if (!result || !result.item) { // <--- Vấn đề có thể ở đây: `result` không có `item`
-              throw new Error('Không có dữ liệu trả về từ cập nhật giỏ hàng');
-          }
-          return result.item; // Trả về item đã cập nhật
-      } catch (error) {
-          console.error('Error in updateItemQuantity:', error);
-          throw error;
+      const response = await apiClient.get('/carts/myCart'); 
+      const data = response.data.data; 
+      
+      if (data && data.cart && data.cart.items) {
+          data.cart.items = data.cart.items.map((item) => {
+              return {
+                  ...item,
+                  product: {
+                      ...item.product,
+                      image_url: item.product.image_url ?? DEFAULT_IMAGE
+                  }
+              };
+          });
+      } else {
+          return { cart: { items: [] } };
       }
+      return data;
+    } catch (error) {
+      console.error('Error fetching user cart:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi lấy giỏ hàng.');
+    }
+  }
 
-  return res.data; // hoặc chỉ return nếu không cần sử dụng sau
+  async addItem(productId, quantity) {
+    try {
+      const response = await apiClient.post('/carts/myCart', { product_id: productId, quantity });
+      return response.data.data; 
+    } catch (error) {
+      console.error('Error adding item to cart:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi thêm sản phẩm vào giỏ hàng.');
+    }
+  }
+
+  async updateItemQuantity(productId, quantity) {
+    try {
+      const response = await apiClient.patch('/carts/myCart', { product_id: productId, quantity });
+      return response.data.data.item; 
+    } catch (error) {
+      console.error('Error updating item quantity:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật số lượng sản phẩm.');
+    }
+  }
+
+  async removeItem(productId) {
+    try {
+      // SỬA LỖI: Gửi DELETE request đến '/carts/removeItem' và truyền product_id trong body
+      // Axios DELETE method có thể nhận data trong config object
+      const response = await apiClient.delete('/carts/removeItem', { data: { product_id: productId } });
+      return response.data.data; 
+    } catch (error) {
+      console.error('Error removing item from cart:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi xóa sản phẩm khỏi giỏ hàng.');
+    }
+  }
+
+  async clearCart() {
+    try {
+      const response = await apiClient.delete('/carts/myCart'); 
+      return response.data.data; 
+    } catch (error) {
+      console.error('Error clearing cart:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi xóa giỏ hàng.');
+    }
+  }
+
+  // Các hàm liên quan đến quản lý cart (nếu có)
+  async createCart(userId) {
+    try {
+      const response = await apiClient.post('/carts', { user_id: userId });
+      return response.data.data;
+    } catch (error) {
+      console.error('Error creating cart:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi tạo giỏ hàng.');
+    }
+  }
+
+  async fetchCartInformation(cartId) {
+    try {
+      const response = await apiClient.get(`/carts/${cartId}`);
+      return response.data.data.cart;
+    } catch (error) {
+      console.error('Error fetching cart information:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi lấy thông tin giỏ hàng.');
+    }
+  }
+
+  async updateCartInformation(cart) {
+    try {
+      const response = await apiClient.put(`/carts/${cart.id}`, cart);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error updating cart information:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật thông tin giỏ hàng.');
+    }
+  }
+
+  async deleteCart(cartId) {
+    try {
+      const response = await apiClient.delete(`/carts/${cartId}`);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error deleting cart:', error.response?.data?.message || error.message);
+      throw new Error(error.response?.data?.message || 'Lỗi khi xóa giỏ hàng.');
+    }
+  }
 }
 
-    async function removeItemFromCart(productId) {
-        return efetch(`${baseUrl}/removeItem`, {
-            method: 'DELETE',
-            body: JSON.stringify({ product_id: productId }) // DELETE can have a body but not always
-        });
-    }
-
-    async function clearMyCart() {
-        return efetch(`${baseUrl}/myCart`, {
-            method: 'DELETE' // No body needed for clearing all, typically
-        });
-    }
-
-    async function createCart(userId) {
-        return efetch(baseUrl, {
-            method: 'POST',
-            body: JSON.stringify({ user_id: userId })
-        });
-    }
-
-    async function fetchCartInformation(cartId) {
-        const { cart } = await efetch(`${baseUrl}/${cartId}`);
-        return cart;
-    }
-
-    async function updateCartInformation(cart) {
-        return efetch(`${baseUrl}/${cart.id}`, {
-            method: 'PUT',
-            body: JSON.stringify(cart)
-        });
-    }
-
-    async function deleteCart(cartId) {
-        return efetch(`${baseUrl}/${cartId}`, {
-            method: 'DELETE'
-        });
-    }
-
-    return {
-        fetchUserCart,
-        addItemToCart,
-        updateItemQuantity,
-        removeItemFromCart,
-        clearMyCart,
-        createCart,
-        fetchCartInformation,
-        updateCartInformation,
-        deleteCart
-    };
-}
-
-export default makeCartService();
+export default new CartService();

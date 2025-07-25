@@ -342,12 +342,20 @@ const changePassword = async () => {
 
 .main-title {
   text-align: center;
-  color: #333;
-  margin-bottom: 40px;
-  font-size: 2.5em;
-  font-weight: 700;
+  color: #4b3bff; /* Màu đậm hiện đại hơn */
+  margin-bottom: 50px;
+  font-size: 2.75em;
+  font-weight: 800;
   position: relative;
-  padding-bottom: 15px;
+  padding-bottom: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.main-title:hover {
+  color: #21124d; /* Thêm hiệu ứng đổi màu khi hover */
 }
 
 .main-title::after {
@@ -356,11 +364,25 @@ const changePassword = async () => {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px;
-  height: 4px;
-  background: linear-gradient(to right, #6C63FF, #A044FF); /* Gradient tím */
-  border-radius: 2px;
+  width: 100px;
+  height: 5px;
+  background: linear-gradient(90deg, #6C63FF, #A044FF, #6C63FF); /* Gradient chuyển động nhẹ */
+  border-radius: 4px;
+  animation: glowLine 2s infinite linear;
 }
+
+@keyframes glowLine {
+  0% {
+    box-shadow: 0 0 5px #a044ff;
+  }
+  50% {
+    box-shadow: 0 0 15px #6c63ff;
+  }
+  100% {
+    box-shadow: 0 0 5px #a044ff;
+  }
+}
+
 
 /* Thông báo trạng thái chung */
 .status-message {
@@ -561,7 +583,7 @@ textarea {
 }
 
 .submit-button {
-  background-image: linear-gradient(to right, #4CAF50, #66BB6A); /* Gradient xanh lá */
+  background-image: linear-gradient(to right, #6C63FF, #A044FF);
   color: white;
 }
 
@@ -570,8 +592,8 @@ textarea {
 }
 
 .change-password-button {
-  background-image: linear-gradient(to right, #FFC107, #FFD54F); /* Gradient vàng cam */
-  color: #333; /* Màu chữ đen hoặc đậm */
+  background-image: linear-gradient(to right, #7d74cb, #1946a0); /* Gradient vàng cam */
+  color: #ffffff; /* Màu chữ đen hoặc đậm */
 }
 
 .change-password-button:hover:not(:disabled) {

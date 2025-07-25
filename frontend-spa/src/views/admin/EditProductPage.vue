@@ -79,9 +79,11 @@
         
         <div class="form-actions-styled">
           <button type="submit" :disabled="isSubmitting" class="btn-submit-styled">
-            {{ isSubmitting ? 'Đang cập nhật...' : 'Cập nhật Sản phẩm' }}
+            <i class="fas fa-save me-2"></i> {{ isSubmitting ? 'Đang cập nhật...' : 'Cập nhật Sản phẩm' }}
           </button>
-          <button type="button" @click="cancelEdit" class="btn-cancel-styled">Hủy</button>
+          <button type="button" @click="cancelEdit" class="btn-cancel-styled">
+            <i class="fas fa-times-circle me-2"></i> Hủy
+          </button>
         </div>
       </div>
     </form>
@@ -125,7 +127,6 @@ const handleImageUpload = (event) => {
   if (file) {
     selectedFile.value = file;
     selectedFilePreviewUrl.value = URL.createObjectURL(file);
-    // Clear image_url if a file is selected
     if (productData.value) {
       productData.value.image_url = '';
     }
@@ -156,7 +157,6 @@ async function submitForm() {
       }
     } else {
       dataToSend = { ...productData.value };
-      // Ensure image_url is null if empty string, or deleted if undefined
       if (dataToSend.image_url === '') { 
         dataToSend.image_url = null; 
       } else if (dataToSend.image_url === undefined) {

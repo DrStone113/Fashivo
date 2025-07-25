@@ -5,7 +5,8 @@ async function efetch(url, options = {}) {
   let result = {};
   let json = {};
 
-  const token = localStorage.getItem('jwtToken');
+  // SỬA LỖI: Lấy token từ key 'jwt' thay vì 'jwtToken'
+  const token = localStorage.getItem('jwt'); 
 
   const headers = {
     ...options.headers,
@@ -47,7 +48,10 @@ async function efetch(url, options = {}) {
 
   if (!result.ok || json.status !== 'success') {
     if (result.status === 401) {
-      localStorage.removeItem('jwtToken');
+      // SỬA LỖI: Xóa token từ key 'jwt'
+      localStorage.removeItem('jwt');
+      // Có thể thêm logic để chuyển hướng người dùng về trang đăng nhập
+      // Ví dụ: router.push('/login'); (nếu router có thể truy cập ở đây)
       throw new Error(json.message || 'Unauthorized: Vui lòng đăng nhập lại.');
     }
     throw new Error(json.message || `API request failed with status ${result.status}`); 
