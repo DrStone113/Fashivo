@@ -64,14 +64,16 @@ export const useCartStore = defineStore('cart', {
           }
         }
 
+        const product = { ...item.product, price: normalizedPrice };
+
+        if (product.category_name && !product.category) {
+          product.category = { name: product.category_name };
+        }
+
         return {
           ...item,
-          // Thêm thuộc tính selected, mặc định là true. Nếu đã tồn tại thì giữ nguyên.
           selected: item.selected !== undefined ? item.selected : true,
-          product: {
-            ...item.product,
-            price: normalizedPrice // Gán giá đã chuẩn hóa
-          }
+          product: product
         };
       });
     },
@@ -141,6 +143,26 @@ export const useCartStore = defineStore('cart', {
 
     async addItem(product, quantity = 1) {
       this.cartError = null;
+      const existingItem = this.items.find((item) => item.product_id === product.id);
+
+      if (existingItem) {
+        await this.updateCartItem(product.id, existingItem.quantity + quantity);
+        return;
+      }
+
+      const newItem = {
+        product_id: product.id,
+        quantity: quantity,
+        selected: true,
+        product: {
+          ...product,
+          price: Number(String(product.price)) / 1,
+          category: product.category
+        }
+      };
+
+      this.items.push(this._normalizeCartItems([newItem])[0]);
+
       try {
         const authStore = useAuthStore();
         if (!authStore.isAuthenticated) {
@@ -150,32 +172,14 @@ export const useCartStore = defineStore('cart', {
           if (existingItemIndex !== -1) {
             guestCart[existingItemIndex].quantity += quantity;
           } else {
-            // When adding to guest cart, normalize price similarly
-            let normalizedProductPrice = Number(String(product.price));
-            normalizedProductPrice = normalizedProductPrice / 10; // Divide by 10
-
-            guestCart.push({
-              product_id: product.id,
-              quantity: quantity,
-              selected: true, // Thêm sản phẩm vào giỏ với trạng thái được chọn
-              product: {
-                id: product.id,
-                name: product.name,
-                price: normalizedProductPrice,
-                image_url: product.image_url
-              }
-            });
+            guestCart.push(newItem);
           }
           localStorage.setItem('guestCart', JSON.stringify(guestCart));
-          this.items = this._normalizeCartItems(guestCart);
-          console.log('Item added to guest cart:', this.items);
           return;
         }
-
         await cartService.addItem(product.id, quantity);
-        await this.fetchUserCart();
-        console.log('Item added to user cart via API.');
       } catch (error) {
+        this.items.pop();
         this.cartError = error.message;
         console.error('Error adding item to cart:', error);
         throw error;
@@ -184,28 +188,26 @@ export const useCartStore = defineStore('cart', {
 
     async updateCartItem(productId, quantity) {
       this.cartError = null;
+      const itemIndex = this.items.findIndex((item) => item.product_id === productId);
+      if (itemIndex === -1) return;
+
+      const originalQuantity = this.items[itemIndex].quantity;
+      this.items[itemIndex].quantity = quantity;
+
       try {
         const authStore = useAuthStore();
         if (!authStore.isAuthenticated) {
           const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
-          const itemIndex = guestCart.findIndex((item) => item.product_id === productId);
-          if (itemIndex !== -1) {
-            if (quantity <= 0) {
-              guestCart.splice(itemIndex, 1);
-            } else {
-              guestCart[itemIndex].quantity = quantity;
-            }
+          const guestItemIndex = guestCart.findIndex((item) => item.product_id === productId);
+          if (guestItemIndex !== -1) {
+            guestCart[guestItemIndex].quantity = quantity;
+            localStorage.setItem('guestCart', JSON.stringify(guestCart));
           }
-          localStorage.setItem('guestCart', JSON.stringify(guestCart));
-          this.items = this._normalizeCartItems(guestCart);
-          console.log('Guest cart item updated:', this.items);
           return;
         }
-
         await cartService.updateItemQuantity(productId, quantity);
-        await this.fetchUserCart();
-        console.log('User cart item updated via API.');
       } catch (error) {
+        this.items[itemIndex].quantity = originalQuantity;
         this.cartError = error.message;
         console.error('Error updating item quantity:', error);
         throw error;
@@ -214,21 +216,22 @@ export const useCartStore = defineStore('cart', {
 
     async removeCartItem(productId) {
       this.cartError = null;
+      const itemIndex = this.items.findIndex((item) => item.product_id === productId);
+      if (itemIndex === -1) return;
+
+      const removedItem = this.items.splice(itemIndex, 1)[0];
+
       try {
         const authStore = useAuthStore();
         if (!authStore.isAuthenticated) {
           let guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
           guestCart = guestCart.filter((item) => item.product_id !== productId);
           localStorage.setItem('guestCart', JSON.stringify(guestCart));
-          this.items = this._normalizeCartItems(guestCart);
-          console.log('Guest cart item removed:', this.items);
           return;
         }
-
         await cartService.removeItem(productId);
-        await this.fetchUserCart();
-        console.log('User cart item removed via API.');
       } catch (error) {
+        this.items.splice(itemIndex, 0, removedItem);
         this.cartError = error.message;
         console.error('Error removing item from cart:', error);
         throw error;
