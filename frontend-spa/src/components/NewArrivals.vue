@@ -24,7 +24,10 @@
           <div v-for="product in products" :key="product.id" class="col-lg-3 col-md-6 col-sm-10">
             <div class="product-card-styled">
               <div class="product-image-wrapper">
-                <img :src="product.image_url" :alt="product.name" class="img-fluid product-image-styled" @error="setDefaultImage">
+                <div v-if="!product.image_url || product.imageHasError" class="no-image-placeholder">
+                  <span>NO IMAGE</span>
+                </div>
+                <img v-else :src="product.image_url" :alt="product.name" class="img-fluid product-image-styled" @error="onImageError">
                 <div class="product-overlay-styled">
                   <div class="product-actions-styled">
                     <button @click="addToCart(product)" class="btn-action-styled btn-primary-styled">
@@ -95,13 +98,7 @@ const filters = ref({
 const { products, isLoading, isError, error } = useProduct().fetchProducts(page, filters);
 
 const addToCart = (product) => {
-  cartStore.addItem({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    image: product.image_url, 
-    quantity: 1
-  });
+  cartStore.addItem(product, 1);
 };
 
 const viewProduct = (productId) => {
@@ -112,8 +109,19 @@ const toggleWishlist = (product) => {
   product.isWishlisted = !product.isWishlisted;
 };
 
-const setDefaultImage = (event) => {
-  event.target.src = DEFAULT_IMAGE;
+const onImageError = (event) => {
+  const img = event.target;
+  const productContainer = img.closest('.product-card-styled');
+  if (productContainer) {
+    const productName = productContainer.querySelector('.product-name-styled')?.textContent;
+    if (productName) {
+      const product = products.value.find(p => p.name === productName);
+      if (product) {
+        product.imageHasError = true;
+      }
+    }
+  }
+  img.style.display = 'none';
 };
 </script>
 
@@ -159,6 +167,18 @@ const setDefaultImage = (event) => {
 @keyframes fadeIn {
   0% { opacity: 0; }
   100% { opacity: 1; }
+}
+
+.no-image-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  color: #a0a0a0;
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 
 /* Product Card Styling */

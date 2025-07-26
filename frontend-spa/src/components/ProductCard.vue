@@ -4,11 +4,15 @@
     @click="goToProductDetails"
   >
     <div class="product-image-container-styled">
+      <div v-if="!product.image_url || imageError" class="no-image-placeholder">
+        <span>NO IMAGE</span>
+      </div>
       <img 
-        :src="product.image_url || '/public/image/products/BLANK.jpg.png'" 
+        v-else
+        :src="product.image_url" 
         :alt="product.name"
         class="product-image-styled"
-        onerror="this.onerror=null;this.src='/public/image/products/BLANK.jpg.png';"
+        @error="onImageError"
       >
       <span class="stock-info-styled" :class="stockClass">
         {{ product.stock > 0 && product.available ? `In Stock (${product.stock})` : 'Out of Stock' }}
@@ -49,6 +53,7 @@
       <div class="product-details-styled">
         <p class="product-type-styled">{{ product.type }}</p>
         <h3 class="product-name-styled">{{ product.name }}</h3>
+        <p class="product-category-styled">{{ product.category?.name || 'Uncategorized' }}</p>
       </div>
 
       <div class="product-footer-styled">
@@ -80,7 +85,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore'; 
 import productService from '@/services/product.service'; 
@@ -103,6 +108,12 @@ const emit = defineEmits(['add-to-cart', 'buy-now', 'delete-product']);
 const router = useRouter();
 const authStore = useAuthStore(); 
 const queryClient = useQueryClient(); 
+
+const imageError = ref(false);
+
+const onImageError = () => {
+  imageError.value = true;
+};
 
 const isAdmin = computed(() => {
   return authStore.user && authStore.user.role === 'admin';
@@ -214,6 +225,18 @@ const confirmDeleteProduct = async () => {
   transform: scale(1.1); /* Zoom effect on hover */
 }
 
+.no-image-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  color: #a0a0a0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
 /* Unavailable Overlay */
 .unavailable-overlay-styled {
   position: absolute;
@@ -263,16 +286,25 @@ const confirmDeleteProduct = async () => {
   letter-spacing: 0.5px;
 }
 
+.product-category-styled {
+  color: #a855f7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .product-name-styled {
-  font-size: 0.9rem; /* Even smaller name */
-  font-weight: 600; /* Less bold */
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #170f59;
-  line-height: 1.2;
-  margin: 0;
-  text-overflow: ellipsis; /* Add ellipsis for long names */
+  line-height: 1.3;
+  margin: 0 0 4px;
+  text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-  text-align: center;
+  text-align: left;
 }
 
 /* Product Footer (Price & Actions) */
@@ -284,7 +316,8 @@ const confirmDeleteProduct = async () => {
   justify-content: center;
 }
 
-.footer-info-styled, .footer-actions-styled {
+.footer-info-styled,
+.footer-actions-styled {
   transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
@@ -303,7 +336,7 @@ const confirmDeleteProduct = async () => {
   gap: 8px; /* Less space between buttons */
   opacity: 0;
   transform: translateY(10px); /* Start a bit lower */
-  pointer-events: none; 
+  pointer-events: none;
 }
 
 .product-card-styled:hover .footer-info-styled {
@@ -315,7 +348,7 @@ const confirmDeleteProduct = async () => {
 .product-card-styled:hover .footer-actions-styled {
   opacity: 1;
   transform: translateY(0);
-  pointer-events: auto; 
+  pointer-events: auto;
 }
 
 .product-price-styled {

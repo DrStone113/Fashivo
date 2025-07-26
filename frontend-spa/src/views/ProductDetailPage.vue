@@ -14,14 +14,18 @@
       <div class="col-md-6 mb-4">
         <!-- Fixed size image container -->
         <div class="product-image-container">
+          <div v-if="!product.image_url || imageError" class="no-image-placeholder">
+            <span>NO IMAGE</span>
+          </div>
           <img 
-            :src="product.image_url || '/public/image/BLANK.jpg'" 
-            class="product-detail-image"
-            alt="Product Image"
+            v-else
+            :src="product.image_url" 
+            :alt="product.name"
+            class="product-image-styled"
             @load="onImageLoad"
             @error="onImageError"
           >
-          <div v-if="imageLoading" class="image-loading-overlay">
+          <div v-if="imageLoading && !imageError" class="image-loading-overlay">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">Loading image...</span>
             </div>
@@ -93,6 +97,7 @@ const quantity = ref(1);
 const successMessage = ref('');
 const errorMessage = ref('');
 const imageLoading = ref(true);
+const imageError = ref(false);
 
 // Watch for product changes to reset quantity and messages
 watch(product, (newProduct) => {
@@ -101,15 +106,18 @@ watch(product, (newProduct) => {
     successMessage.value = '';
     errorMessage.value = '';
     imageLoading.value = true;
+    imageError.value = false;
   }
 }, { immediate: true });
 
 const onImageLoad = () => {
   imageLoading.value = false;
+  imageError.value = false;
 };
 
 const onImageError = () => {
   imageLoading.value = false;
+  imageError.value = true;
   console.error('Failed to load product image');
 };
 
@@ -151,7 +159,7 @@ const addToCart = async () => {
   background-color: #f8f9fa;
 }
 
-.product-detail-image {
+.product-image-styled {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -159,7 +167,7 @@ const addToCart = async () => {
   transition: transform 0.3s ease;
 }
 
-.product-detail-image:hover {
+.product-image-styled:hover {
   transform: scale(1.05);
 }
 
@@ -174,6 +182,18 @@ const addToCart = async () => {
   justify-content: center;
   background-color: rgba(255, 255, 255, 0.8);
   z-index: 10;
+}
+
+.no-image-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  color: #a0a0a0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 /* Responsive adjustments */

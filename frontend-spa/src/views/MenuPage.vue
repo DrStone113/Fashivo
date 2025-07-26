@@ -108,37 +108,27 @@ function changeCurrentPage(page) {
 }
 
 function handleAddToCart(product) {
-  // ADD THIS LOG LINE RIGHT BEFORE CALLING cartStore.addItem
-  console.log('--- Debugging Add to Cart (from MenuPage) ---');
-  console.log('Product object being added:', product);
-  console.log('Product ID:', product.id);
-  console.log('Product Name:', product.name);
-  console.log('Product Price BEFORE adding to cart:', product.price); // <--- MOST IMPORTANT LOG
-  console.log('Product Type (if any):', product.type);
-  console.log('-------------------------------------------');
-
+  const productToAdd = {
+    ...product,
+    category: { name: product.category_name }
+  };
   if (product.stock > 0) {
-    cartStore.addItem(product, 1);
+    cartStore.addItem(productToAdd, 1);
   } else {
-    alert('Product is out of stock!'); // Notify if out of stock
+    alert('Product is out of stock!');
   }
 }
 
 function handleBuyNow(product) {
-  // ADD THIS LOG LINE RIGHT BEFORE CALLING cartStore.addItem
-  console.log('--- Debugging Buy Now (from MenuPage) ---');
-  console.log('Product object being bought:', product);
-  console.log('Product ID:', product.id);
-  console.log('Product Name:', product.name);
-  console.log('Product Price BEFORE buying now:', product.price); // <--- MOST IMPORTANT LOG
-  console.log('Product Type (if any):', product.type);
-  console.log('---------------------------------------');
-
+  const productToAdd = {
+    ...product,
+    category: { name: product.category_name }
+  };
   if (product.stock > 0) {
-    cartStore.addItem(product, 1);
+    cartStore.addItem(productToAdd, 1);
     router.push('/cart');
   } else {
-    alert('Product is out of stock!'); // Notify if out of stock
+    alert('Product is out of stock!');
   }
 }
 
