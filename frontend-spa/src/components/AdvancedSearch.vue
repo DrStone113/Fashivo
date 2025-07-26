@@ -50,6 +50,7 @@
               min="0"
               class="price-input-styled"
             >
+            <span class="price-input-separator">-</span>
             <input 
               type="number" 
               v-model.number.lazy="filters.maxPrice" 
@@ -253,7 +254,7 @@ watch(filters, (newFilters) => {
 
 .form-input-styled, .form-select-styled, .price-input-styled {
   width: 100%;
-  padding: 10px 12px; /* Smaller padding */
+  padding: 4px 4px; /* Smaller padding */
   border: 1px solid #ced4da;
   border-radius: 8px; /* Less rounded */
   font-size: 0.9rem; /* Smaller font */
