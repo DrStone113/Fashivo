@@ -71,7 +71,7 @@
             :disabled="isProductUnavailable"
           >
             <i class="fas fa-bolt me-2"></i>
-            <span>View Cart</span>
+            <span>Buy</span>
           </button>
         </div>
       </div>
