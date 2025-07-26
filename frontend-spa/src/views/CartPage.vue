@@ -20,6 +20,15 @@
         <div class="cart-items-section">
           <!-- Header cho danh sách sản phẩm -->
           <div class="cart-item-header">
+            <div class="header-col select-col">
+              <input 
+                type="checkbox" 
+                class="select-all-checkbox"
+                :checked="isAllSelected"
+                @change="cartStore.setSelectAll($event.target.checked)"
+                :disabled="isEmpty"
+              />
+            </div>
             <div class="header-col product-col">Sản phẩm</div>
             <div class="header-col price-col">Giá</div>
             <div class="header-col quantity-col">Số lượng</div>
@@ -29,6 +38,14 @@
 
           <!-- Danh sách sản phẩm trong giỏ hàng (dạng card) -->
           <div v-for="(item) in cartItems" :key="item.product_id" class="cart-item-card">
+            <div class="item-select-col">
+              <input 
+                type="checkbox" 
+                class="item-checkbox"
+                v-model="item.selected"
+                @change="cartStore.setItemSelection(item.product_id, item.selected)"
+              />
+            </div>
             <div class="item-product-info">
               <div class="item-image-wrapper">
                 <img 
@@ -107,12 +124,13 @@
           <button
             @click="handleProceedToCheckout"
             class="checkout-main-btn"
-            :disabled="isEmpty || isLoadingCart || !authStore.isAuthenticated"
+            :disabled="isEmpty || isLoadingCart || !authStore.isAuthenticated || selectedItemsCount === 0"
           >
             <i class="fas fa-money-check-alt"></i>
             <span v-if="isLoadingCart">Đang xử lý...</span>
             <span v-else-if="!authStore.isAuthenticated">Đăng nhập để thanh toán</span>
-            <span v-else>Xóa toàn bộ giỏ hàng</span>
+            <span v-else-if="selectedItemsCount === 0">Chọn sản phẩm để thanh toán</span>
+            <span v-else>Thanh toán ({{ selectedItemsCount }} sản phẩm)</span>
           </button>
 
           <!-- Thông báo yêu cầu đăng nhập -->
@@ -128,11 +146,11 @@
     <!-- Modal xác nhận thanh toán -->
     <div v-if="showConfirmation" class="modal-overlay">
       <div class="modal-content-styled">
-        <h4 class="modal-title">Xác nhận xóa toàn bộ giỏ hàng</h4>
-        <p class="modal-text">Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng? Giỏ hàng sẽ bị xóa hết tất cả.</p>
+        <h4 class="modal-title">Xác nhận Thanh toán</h4>
+        <p class="modal-text">Bạn có chắc chắn muốn thanh toán cho {{ selectedItemsCount }} sản phẩm đã chọn? Các sản phẩm này sẽ được xóa khỏi giỏ hàng sau khi thanh toán.</p>
         <div class="modal-actions">
           <button @click="cancelConfirmation" class="modal-btn cancel-modal-btn" :disabled="isLoadingCart">Hủy</button>
-          <button @click="confirmCheckout" class="modal-btn confirm-modal-btn" :disabled="isLoadingCart">Xác nhận xóa</button>
+          <button @click="confirmCheckout" class="modal-btn confirm-modal-btn" :disabled="isLoadingCart">Xác nhận</button>
         </div>
       </div>
     </div>
@@ -144,22 +162,27 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore'; 
 import { useRouter } from 'vue-router'; 
+import { storeToRefs } from 'pinia';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const router = useRouter();
 
+// Sử dụng storeToRefs để các getters và state trở nên reactive
+const { 
+  items: cartItems, 
+  totalItemsInCart, 
+  totalCartAmount, 
+  isEmpty, 
+  isLoadingCart, 
+  cartError,
+  isAllSelected,
+  selectedItemsCount
+} = storeToRefs(cartStore);
+
 const successMessage = ref('');
 const errorMessage = ref('');
 const showConfirmation = ref(false);
-
-const cartItems = computed(() => cartStore.items);
-const totalItemsInCart = computed(() => cartStore.totalItemsInCart);
-// ĐÃ SỬA LỖI Ở ĐÂY: Thay đổi cartStore.totalPrice thành cartStore.totalCartAmount
-const totalCartAmount = computed(() => cartStore.totalCartAmount); 
-const isEmpty = computed(() => cartStore.isEmpty);
-const isLoadingCart = computed(() => cartStore.isLoadingCart);
-const cartError = computed(() => cartStore.cartError);
 
 onMounted(() => {
   cartStore.fetchUserCart();
@@ -236,12 +259,13 @@ const confirmCheckout = async () => {
   try {
     successMessage.value = '';
     errorMessage.value = '';
-    await cartStore.clearCart(); 
+    // Sử dụng action mới để checkout các sản phẩm đã chọn
+    await cartStore.checkoutSelectedItems(); 
     
-    successMessage.value = 'Bạn đã thanh toán thành công! Giỏ hàng của bạn đã được xóa.';
-    console.log('Checkout successful! Cart cleared.');
+    successMessage.value = 'Bạn đã thanh toán thành công! Các sản phẩm đã chọn đã được xóa khỏi giỏ hàng.';
+    console.log('Checkout successful! Selected items cleared.');
     showConfirmation.value = false; 
-    await cartStore.fetchUserCart(); 
+    // fetchUserCart đã được gọi bên trong checkoutSelectedItems, không cần gọi lại ở đây.
   } catch (error) {
     errorMessage.value = error.message || 'Failed to complete checkout.';
     console.error('Error during checkout:', error);
@@ -353,6 +377,20 @@ watch(cartError, (newVal) => {
   text-decoration: underline;
 }
 
+/* CSS cho checkbox */
+.select-col, .item-select-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.select-all-checkbox, .item-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #6C63FF; /* Tùy chỉnh màu của checkbox */
+}
+
+
 /* Layout 2 cột cho nội dung giỏ hàng */
 .cart-content-layout {
   display: flex;
@@ -386,8 +424,8 @@ watch(cartError, (newVal) => {
 /* Header cho danh sách sản phẩm */
 .cart-item-header {
   display: grid;
-  /* Cột sản phẩm rộng hơn, các cột còn lại bằng nhau và nhỏ hơn */
-  grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; 
+  /* Thêm cột cho checkbox, giảm chiều rộng cột sản phẩm một chút */
+  grid-template-columns: 0.3fr 2.7fr 1fr 1fr 1fr 0.5fr;
   gap: 15px;
   padding: 15px 25px;
   background-color: #4b3bff;
@@ -413,7 +451,7 @@ watch(cartError, (newVal) => {
 .cart-item-card {
   display: grid;
   /* Phải khớp với header để căn chỉnh */
-  grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr; 
+  grid-template-columns: 0.3fr 2.7fr 1fr 1fr 1fr 0.5fr;
   gap: 15px;
   background: #bebbdb;
   padding: 15px 25px;
@@ -859,6 +897,12 @@ watch(cartError, (newVal) => {
   .cart-item-header {
     display: none; /* Ẩn header trên tablet và mobile */
   }
+
+  .item-select-col {
+    order: -1; /* Hiển thị checkbox đầu tiên */
+    margin-bottom: 15px;
+  }
+
   .cart-item-card {
     /* Thay đổi từ grid sang flex để các phần tử có thể xếp chồng hoặc dàn hàng tùy ý */
     display: flex; 

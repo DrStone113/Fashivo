@@ -1,6 +1,6 @@
 const express = require("express");
 const userController = require("../controllers/user.controller");
-const userSchemas = require("../schema/user.schemas"); 
+const userSchemas = require("../schema/user.schemas");
 const { validate } = require("../middlewares/validator.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require("multer");
@@ -13,13 +13,13 @@ const router = express.Router();
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Corrected path for consistency. Ensure 'public/avatars' exists.
-    cb(null, 'public/avatars');
+    cb(null, "public/avatars");
   },
   filename: (req, file, cb) => {
     const ext = file.mimetype.split("/")[1];
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, `avatar-${uniqueSuffix}.${ext}`);
-  }
+  },
 });
 
 const multerFilter = (req, file, cb) => {
@@ -40,42 +40,52 @@ const upload = multer({
 module.exports.setup = (app) => {
   app.use("/api/v1/users", router);
 
-  router.route("/")
+  router
+    .route("/")
     .get(
-      authenticate, // <--- THÊM: Yêu cầu xác thực
-      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xem tất cả user
-      validate(userSchemas.getUserQuerySchema), userController.getAllUsers
+      authenticate, // ADD: Require authentication
+      restrictTo("admin"), // ADD: Only admins can view all users
+      validate(userSchemas.getUserQuerySchema),
+      userController.getAllUsers
     )
+
     .post(
-      authenticate, // <--- THÊM: Yêu cầu xác thực
-      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được tạo user (nếu đây là endpoint tạo user bởi admin)
+      authenticate, // ADD: Require authentication
+      restrictTo("admin"), // ADD: Only admins can create users
       upload.single("avatarFile"), // Expects field name 'avatar' for file upload
       validate(userSchemas.createUserSchema),
       userController.createUser
     )
+
     .delete(
-      authenticate, // <--- THÊM: Yêu cầu xác thực
-      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xóa tất cả user
+      authenticate, // ADD: Require authentication
+      restrictTo("admin"), // ADD: Only admins can delete all users
       userController.deleteAllUsers
     );
 
-  router.route("/:id")
+  router
+    .route("/:id")
     .get(
-      authenticate, // <--- THÊM: Yêu cầu xác thực
-      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xem user theo ID
-      validate(userSchemas.userIdParamSchema), userController.getUserById
+      authenticate, // ADD: Require authentication
+      restrictTo("admin"), // ADD: Only admins can view a user by ID
+      validate(userSchemas.userIdParamSchema),
+      userController.getUserById
     )
-    .put( // Changed from PUT to PATCH for partial updates with updateUserSchema
-      authenticate, // <--- THÊM: Yêu cầu xác thực
-      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được cập nhật user
+
+    .put(
+      // Changed from PUT to PATCH for partial updates with updateUserSchema
+      authenticate, // ADD: Require authentication
+      restrictTo("admin"), // ADD: Only admins can update a user
       upload.single("avatarFile"), // Allow avatar update
       validate(userSchemas.updateUserSchema), // Validate both params (from schema) and body
       userController.updateUser
     )
+
     .delete(
-      authenticate, // <--- THÊM: Yêu cầu xác thực
-      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xóa user
-      validate(userSchemas.userIdParamSchema), userController.deleteUser
+      authenticate, // ADD: Require authentication
+      restrictTo("admin"), // ADD: Only admins can delete a user
+      validate(userSchemas.userIdParamSchema),
+      userController.deleteUser
     );
 
   router.all("/", methodNotAllowed);

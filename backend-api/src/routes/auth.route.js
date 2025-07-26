@@ -1,60 +1,60 @@
-// src/routes/auth.route.js
+const express = require("express");
 
-const express = require('express');
-const authController = require('../controllers/auth.controller');
-const authSchemas = require('../schema/auth.schemas');
-const { validate } = require('../middlewares/validator.middleware');
-const { authenticate, restrictTo } = require('../middlewares/auth.middleware');
+const authController = require("../controllers/auth.controller");
+const authSchemas = require("../schema/auth.schemas");
+const { validate } = require("../middlewares/validator.middleware");
+const { authenticate, restrictTo } = require("../middlewares/auth.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
-const multer = require('multer'); 
-const { authLimiter } = require('../middlewares/rateLimit.middleware');
+const multer = require("multer");
+const { authLimiter } = require("../middlewares/rateLimit.middleware");
 
 const router = express.Router();
 
-// Cấu hình Multer cho việc upload file avatar
-// Đảm bảo thư mục public/avatars tồn tại
+// Multer configuration for avatar file uploads
+// Ensure the public/avatars directory exists
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/avatars'); 
+    cb(null, "public/avatars");
   },
   filename: (req, file, cb) => {
-    // Dùng ID user nếu có (khi update profile), nếu không thì dùng timestamp (khi đăng ký)
+    // Use user ID if available (for profile updates), otherwise use a timestamp (for signups)
     const identifier = req.user ? `user-${req.user.id}` : `temp-${Date.now()}`;
-    const ext = file.mimetype.split('/')[1];
+    const ext = file.mimetype.split("/")[1];
     cb(null, `${identifier}-${Date.now()}.${ext}`);
-  }
+  },
 });
 
-// Filter để chỉ cho phép upload ảnh
+// Filter to allow only image uploads
 const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')) {
+  if (file.mimetype.startsWith("image")) {
     cb(null, true);
   } else {
-    cb(new Error('Chỉ chấp nhận file ảnh!'), false);
+    cb(new Error("Only image files are allowed!"), false);
   }
 };
 
-const upload = multer({ 
+const upload = multer({
   storage: multerStorage,
   fileFilter: multerFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // Giới hạn kích thước file 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
 });
 
-
 module.exports.setup = (app) => {
-  app.use('/api/v1/auth', router);
+  app.use("/api/v1/auth", router);
 
-  // Routes không cần bảo vệ (public routes)
-  router.route('/signup')
+  // Unprotected routes (public)
+  router
+    .route("/signup")
     .post(
       authLimiter,
-      upload.single('avatar'), // CHO PHÉP UPLOAD MỘT FILE AVATAR KHI ĐĂNG KÝ
-      validate(authSchemas.signupSchema), 
+      upload.single("avatar"), // Allow uploading a single avatar file during signup
+      validate(authSchemas.signupSchema),
       authController.signup
     )
     .all(methodNotAllowed);
 
-  router.route('/login')
+  router
+    .route("/login")
     .post(
       authLimiter,
       upload.none(),
@@ -63,43 +63,45 @@ module.exports.setup = (app) => {
     )
     .all(methodNotAllowed);
 
-  router.route('/forgot-password')
+  router
+    .route("/forgot-password")
     .post(
       upload.none(),
-      validate(authSchemas.forgotPasswordSchema), 
+      validate(authSchemas.forgotPasswordSchema),
       authController.forgotPassword
     )
     .all(methodNotAllowed);
 
-  router.route('/reset-password/:token')
-    .patch( 
+  router
+    .route("/reset-password/:token")
+    .patch(
       upload.none(),
-      validate(authSchemas.resetPasswordSchema), 
+      validate(authSchemas.resetPasswordSchema),
       authController.resetPassword
     )
     .all(methodNotAllowed);
 
-  // Route logout không cần xác thực (thường là vậy)
-  router.route('/logout')
-    .post(authController.logout) 
-    .all(methodNotAllowed);
+  // Logout route doesn't typically require authentication
+  router.route("/logout").post(authController.logout).all(methodNotAllowed);
 
-  // Routes cần bảo vệ (authenticate middleware sẽ được áp dụng cho tất cả các route bên dưới)
-  router.use(authenticate); 
+  // Protected routes (authenticate middleware will be applied to all routes below)
+  router.use(authenticate);
 
-  // Route để lấy thông tin của chính mình và CẬP NHẬT (PATCH)
-  router.route('/me')
+  // Route to get and update (PATCH) the current user's information
+  router
+    .route("/me")
     .get(authController.getMe)
-    .patch( 
-      upload.single('avatar'), 
-      validate(authSchemas.updateProfileSchema), 
+    .patch(
+      upload.single("avatar"),
+      validate(authSchemas.updateProfileSchema),
       authController.updateMe
     )
     .all(methodNotAllowed);
 
-  // Route cập nhật mật khẩu (cần xác thực)
-  router.route('/update-password') 
-    .patch( 
+  // Route to update password (requires authentication)
+  router
+    .route("/update-password")
+    .patch(
       upload.none(),
       validate(authSchemas.updatePasswordSchema),
       authController.updateMyPassword

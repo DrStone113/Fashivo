@@ -1,5 +1,5 @@
-// ct313hm02-project-DrStone113/backend-api/src/routes/product.router.js
 const express = require("express");
+
 const productController = require("../controllers/product.controller");
 const productSchemas = require("../schema/product.schemas");
 const { validate } = require("../middlewares/validator.middleware");
@@ -13,13 +13,14 @@ const router = express.Router();
 // Multer setup for product images
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/image/products'); // <-- SỬA TỪ 'img' THÀNH 'image'
+    cb(null, "public/image/products"); // Destination for product images
   },
+
   filename: (req, file, cb) => {
     const ext = file.mimetype.split("/")[1];
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, `product-${uniqueSuffix}.${ext}`);
-  }
+  },
 });
 
 const multerFilter = (req, file, cb) => {
@@ -40,43 +41,45 @@ const upload = multer({
 module.exports.setup = (app) => {
   app.use("/api/v1/product", router);
 
-  router.route("/")
+  router
+    .route("/")
     .get(
       validate(productSchemas.getProductQuerySchema),
       productController.getAllProducts
     )
     .post(
       authenticate,
-      restrictTo('admin'),
+      restrictTo("admin"),
       upload.single("imageFile"),
       validate(productSchemas.createProductSchema),
       productController.createProduct
     )
     .delete(
       authenticate,
-      restrictTo('admin'),
+      restrictTo("admin"),
       productController.deleteAllProducts
     );
 
-  router.route("/:id")
+  router
+    .route("/:id")
     .get(
       validate(productSchemas.productIdParamSchema),
       productController.getProductById
     )
     .put(
       authenticate,
-      restrictTo('admin'),
+      restrictTo("admin"),
       upload.single("imageFile"),
       validate(productSchemas.updateProductSchema),
       productController.updateProduct
     )
     .delete(
       authenticate,
-      restrictTo('admin'),
+      restrictTo("admin"),
       validate(productSchemas.productIdParamSchema),
       productController.deleteProduct
     );
 
   router.all("/", methodNotAllowed);
   router.all("/:id", methodNotAllowed);
-}
+};

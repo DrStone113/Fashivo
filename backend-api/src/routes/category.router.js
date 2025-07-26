@@ -1,5 +1,5 @@
-// backend-api/src/routes/category.router.js
 const express = require("express");
+
 const multer = require("multer");
 const categoryController = require("../controllers/category.controller");
 const categorySchemas = require("../schema/category.schemas"); // Correct path
@@ -21,15 +21,16 @@ module.exports.setup = (app) => {
       categoryController.getAllCategories
     )
     .post(
-      authenticate, // Yêu cầu xác thực
-      restrictTo("admin"), // Chỉ admin mới được POST
+      authenticate, // Require authentication
+      restrictTo("admin"), // Only admins can POST
       upload.none(), // Process text fields from multipart/form-data
       validate(categorySchemas.createCategorySchema), // Use create schema
       categoryController.createCategory
     )
+
     .delete(
-      authenticate, // Yêu cầu xác thực
-      restrictTo("admin"), // Chỉ admin mới được DELETE ALL
+      authenticate, // Require authentication
+      restrictTo("admin"), // Only admins can DELETE ALL
       categoryController.deleteAllCategories
     );
 
@@ -41,15 +42,16 @@ module.exports.setup = (app) => {
     )
     .put(
       // Or PATCH
-      authenticate, // Yêu cầu xác thực
-      restrictTo("admin"), // Chỉ admin mới được PUT
+      authenticate, // Require authentication
+      restrictTo("admin"), // Only admins can PUT
       upload.none(), // Process text fields from multipart/form-data
       validate(categorySchemas.updateCategorySchema), // Use update schema
       categoryController.updateCategory
     )
+
     .delete(
-      authenticate, // Yêu cầu xác thực
-      restrictTo("admin"), // Chỉ admin mới được DELETE theo ID
+      authenticate, // Require authentication
+      restrictTo("admin"), // Only admins can DELETE by ID
       validate({ params: categorySchemas.categoryIdParamSchema }),
       categoryController.deleteCategory
     );
