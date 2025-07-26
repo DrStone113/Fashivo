@@ -1,10 +1,6 @@
-/**
- * Wraps an async function to catch any errors and pass them to the next middleware.
- * @param {Function} fn The async function to wrap.
- * @returns {Function} A new function that handles errors.
- */
+// ct313hm02-project-DrStone113/backend-api/src/catchAsync.js
 const catchAsync = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 module.exports = catchAsync;

@@ -55,13 +55,13 @@ const routes = [
     path: '/admin/products/:id/edit', // Đường dẫn rõ ràng cho trang chỉnh sửa admin
     name: 'AdminEditProduct', // Tên route độc đáo cho việc chỉnh sửa
     component: EditProductPage, // Component EditProductPage bạn đã tạo
-    props: true, // Quan trọng: cho phép truyền ID vào component
+    props: true // Quan trọng: cho phép truyền ID vào component
     // meta: { requiresAuth: true, requiredRole: 'admin' }, // Kích hoạt bảo vệ route nếu có Auth Store
   },
   {
     path: '/admin/products/add', // URL cho trang thêm sản phẩm
     name: 'AddProduct', // Tên route để điều hướng đến
-    component: AddProductPage, // Component AddProductPage
+    component: AddProductPage // Component AddProductPage
     // meta: { requiresAuth: true, requiredRole: 'admin' }, // Bảo vệ route này nếu cần
   },
   {
@@ -73,6 +73,20 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return { ...savedPosition, behavior: 'instant' };
+    }
+
+    if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'smooth'
+      };
+    }
+
+    return { top: 0, left: 0, behavior: 'instant' };
+  }
 });
 export default router;

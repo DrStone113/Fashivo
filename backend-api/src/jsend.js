@@ -1,8 +1,9 @@
+// src/jsend.js
 /**
- * JSend success response format.
- * @param {object | null} data - The payload to be returned.
- * @returns {{status: 'success', data: object | null}} - The JSend success object.
- */
+
+* @param {object | null} data
+* @returns {status: 'success', data: object | null }
+*/
 function success(data = null) {
   return {
     status: "success",
@@ -11,39 +12,41 @@ function success(data = null) {
 }
 
 /**
- * JSend fail response format.
- * @param {string} message - A meaningful, end-user-readable message explaining what went wrong.
- * @param {object | null} [data] - Optional data associated with the failure.
- * @returns {{status: 'fail', message: string, data?: object}} - The JSend fail object.
+ * @param {string} message
+ * @param {object | null} [data]
+ * @returns {status: 'fail', message: string, data: object | undefined }
  */
 function fail(message, data = null) {
-  const response = {
+  if (data) {
+    return {
+      status: "fail",
+      message,
+      data,
+    };
+  }
+  return {
     status: "fail",
     message,
   };
-  if (data) {
-    response.data = data;
-  }
-  return response;
 }
-
 /**
- * JSend error response format.
- * @param {string} message - A meaningful, end-user-readable message explaining the error.
- * @param {object | null} [data] - Optional data associated with the error.
- * @returns {{status: 'error', message: string, data?: object}} - The JSend error object.
+ * @param {string} message
+ * @param {object | null} [data]
+ * @returns {status: 'error', message: string, data: object | undefined }
  */
 function error(message, data = null) {
-  const response = {
+  if (data) {
+    return {
+      status: "error",
+      message,
+      data,
+    };
+  }
+  return {
     status: "error",
     message,
   };
-  if (data) {
-    response.data = data;
-  }
-  return response;
 }
-
 module.exports = {
   success,
   fail,
