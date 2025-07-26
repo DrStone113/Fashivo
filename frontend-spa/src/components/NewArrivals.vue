@@ -29,15 +29,15 @@
                   <div class="product-actions-styled">
                     <button @click="addToCart(product)" class="btn-action-styled btn-primary-styled">
                       <i class="bi bi-cart-plus"></i>
-                      <span>Thêm vào giỏ</span>
+                      <span>Add to cart</span>
                     </button>
                     <button @click="viewProduct(product.id)" class="btn-action-styled btn-light-styled">
                       <i class="bi bi-eye"></i>
-                      <span>Xem chi tiết</span>
+                      <span>View details</span>
                     </button>
                     <button @click="toggleWishlist(product)" class="btn-action-styled btn-light-styled">
                       <i class="bi" :class="product.isWishlisted ? 'bi-heart-fill text-danger' : 'bi-heart'"></i>
-                      <span>{{ product.isWishlisted ? 'Đã thích' : 'Yêu thích' }}</span>
+                      <span>{{ product.isWishlisted ? 'Wishlisted' : 'Wishlist' }}</span>
                     </button>
                   </div>
                 </div>
@@ -59,7 +59,7 @@
         
         <div class="text-center mt-5">
           <router-link to="/menu" class="btn-view-all">
-            Xem tất cả sản phẩm
+            All products
             <i class="bi bi-arrow-right ms-2"></i>
           </router-link>
         </div>
@@ -68,7 +68,7 @@
       <!-- Trạng thái không có sản phẩm -->
       <div v-else class="state-container empty-state">
         <i class="fas fa-box-open empty-icon animate-pulse-slow-css"></i>
-        <p class="empty-message-text">Chưa có sản phẩm mới nào. Vui lòng quay lại sau!</p>
+        <p class="empty-message-text">No new products yet. Please check back later!</p>
       </div>
     </div>
   </section>
@@ -80,6 +80,7 @@ import { useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cartStore';
 import useProduct from '@/composables/useProduct'; 
 import { DEFAULT_IMAGE } from '@/constants'; 
+import { formatCurrency } from '@/utils/formatters';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -92,17 +93,6 @@ const filters = ref({
 }); 
 
 const { products, isLoading, isError, error } = useProduct().fetchProducts(page, filters);
-
-const formatCurrency = (value) => {
-  const numericValue = Number(value);
-  if (isNaN(numericValue)) {
-    return value;
-  }
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(numericValue);
-};
 
 const addToCart = (product) => {
   cartStore.addItem({
