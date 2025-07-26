@@ -175,20 +175,16 @@ watch(filters, (newFilters) => {
 .advanced-search-styled {
   background: white;
   border: 1px solid #e0e0e0; /* Lighter border */
-  border-radius: 18px; /* More rounded */
+  border-radius: 12px; /* Less rounded */
   overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); /* Deeper shadow */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Lighter shadow */
   transition: box-shadow 0.3s ease;
   font-family: 'Poppins', sans-serif; /* Poppins font */
-  /* Add these lines to control the width */
-  width: 300px; /* You can adjust this value as needed */
-  /* Or, if you want it to be responsive but not too small: */
-  /* max-width: 300px; */
-  /* min-width: 250px; */ /* To ensure it doesn't get too small on smaller screens */
+  width: 100%; /* Full width */
 }
 
 .advanced-search-styled:hover {
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12); /* Even deeper shadow on hover */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Less deep shadow on hover */
 }
 
 /* Search Header */
@@ -196,38 +192,36 @@ watch(filters, (newFilters) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px; /* More padding */
+  padding: 14px 18px; /* Less padding */
   cursor: pointer;
   user-select: none;
-  background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); /* Purple to Blue Gradient */
-  color: white;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Subtle white border */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  background: #f8f9fa; /* Light background */
+  color: #333; /* Dark text */
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.3s ease;
 }
 
 .search-header-styled:hover {
-  background: linear-gradient(45deg, #ec4899, #a855f7); /* Reverse gradient on hover */
+  background: #e9ecef; /* Slightly darker on hover */
 }
 
 .search-header-styled h3 {
   margin: 0;
-  font-size: 1.1rem; /* Larger font */
-  font-weight: 700; /* Bolder */
-  color: white;
+  font-size: 1rem; /* Smaller font */
+  font-weight: 600; /* Less bold */
+  color: #333;
   display: flex;
   align-items: center;
-  gap: 10px; /* More space */
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+  gap: 8px; /* Less space */
 }
 
 .toggle-btn-styled {
   background: transparent;
   border: none;
-  color: white; /* White icon */
+  color: #333; /* Dark icon */
   cursor: pointer;
-  padding: 8px; /* Larger click area */
-  font-size: 1.2rem; /* Larger icon */
+  padding: 6px; /* Smaller click area */
+  font-size: 1rem; /* Smaller icon */
   transition: transform 0.2s ease;
 }
 
@@ -237,32 +231,32 @@ watch(filters, (newFilters) => {
 
 /* Filters Container */
 .filters-container-styled {
-  padding: 20px; /* More padding */
+  padding: 15px; /* Less padding */
   display: flex;
   flex-direction: column;
-  gap: 20px; /* More space between filter groups */
+  gap: 15px; /* Less space between filter groups */
 }
 
 .filter-group-styled {
   display: flex;
   flex-direction: column;
-  gap: 10px; /* More space between label and input */
+  gap: 8px; /* Less space between label and input */
 }
 
 .filter-label {
   font-weight: 600; /* Bolder label */
   color: #495057;
-  font-size: 0.9rem; /* Slightly larger label */
+  font-size: 0.8rem; /* Smaller label */
   text-transform: uppercase; /* Uppercase label */
   letter-spacing: 0.5px;
 }
 
 .form-input-styled, .form-select-styled, .price-input-styled {
   width: 100%;
-  padding: 12px 15px; /* Larger padding */
+  padding: 10px 12px; /* Smaller padding */
   border: 1px solid #ced4da;
-  border-radius: 10px; /* More rounded */
-  font-size: 0.95rem; /* Slightly larger font */
+  border-radius: 8px; /* Less rounded */
+  font-size: 0.9rem; /* Smaller font */
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   background-color: #f8f9fa;
   color: #333;
@@ -287,13 +281,13 @@ watch(filters, (newFilters) => {
 }
 
 .category-chip-item {
-  padding: 8px 15px; /* Larger padding */
+  padding: 6px 12px; /* Smaller padding */
   border: 1px solid #e0e0e0;
-  border-radius: 20px; /* More rounded */
+  border-radius: 16px; /* Less rounded */
   background: #f0f2f5; /* Light grey background */
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 0.85rem; /* Slightly larger font */
+  font-size: 0.8rem; /* Smaller font */
   color: #495057;
   font-weight: 500;
 }
@@ -323,16 +317,16 @@ watch(filters, (newFilters) => {
 .checkbox-label-styled {
   display: flex;
   align-items: center;
-  gap: 10px; /* More space */
+  gap: 8px; /* Less space */
   cursor: pointer;
-  font-size: 0.95rem; /* Slightly larger font */
+  font-size: 0.9rem; /* Smaller font */
   font-weight: 500;
   color: #495057;
 }
 
 .checkbox-input-styled {
-  width: 20px; /* Larger checkbox */
-  height: 20px;
+  width: 18px; /* Smaller checkbox */
+  height: 18px;
   accent-color: #a855f7; /* Purple accent color */
   border: 2px solid #a855f7; /* Purple border */
   border-radius: 4px; /* Slightly rounded */
@@ -349,13 +343,13 @@ watch(filters, (newFilters) => {
   background: linear-gradient(45deg, #f1f3f5, #e0e2e5); /* Light grey gradient */
   color: #6c757d;
   border: none; /* Removed border */
-  padding: 12px; /* Larger padding */
-  border-radius: 10px; /* More rounded */
+  padding: 10px; /* Smaller padding */
+  border-radius: 8px; /* Less rounded */
   cursor: pointer;
-  font-size: 0.95rem; /* Slightly larger font */
-  font-weight: 700; /* Bolder */
+  font-size: 0.9rem; /* Smaller font */
+  font-weight: 600; /* Less bold */
   transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .btn-clear-filters:hover {

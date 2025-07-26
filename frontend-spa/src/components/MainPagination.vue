@@ -1,7 +1,7 @@
 <template>
   <nav aria-label="Page navigation" class="pagination-nav-styled">
     <ul class="pagination-list-styled">
-      <li class="page-item-styled" :class="{ disabled: currentPage === 1 }">
+      <li class="page-item-styled prev-item" :class="{ disabled: currentPage === 1 }">
         <a class="page-link-styled prev-next-btn" href="#" @click.prevent="changePage(currentPage - 1)">
           Previous
         </a>
@@ -11,7 +11,7 @@
           {{ page }}
         </a>
       </li>
-      <li class="page-item-styled" :class="{ disabled: currentPage === totalPages }">
+      <li class="page-item-styled next-item" :class="{ disabled: currentPage === totalPages }">
         <a class="page-link-styled prev-next-btn" href="#" @click.prevent="changePage(currentPage + 1)">
           Next
         </a>
@@ -62,6 +62,16 @@ const changePage = (page) => {
 
 .page-item-styled {
   margin: 0 4px; /* Small space between items */
+}
+
+.prev-item {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.next-item {
+  margin-left: auto;
+  margin-right: 0;
 }
 
 .page-link-styled {

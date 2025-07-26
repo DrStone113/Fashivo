@@ -37,7 +37,7 @@
           <span class="badge bg-info text-dark">Category: {{ product.category_name }}</span>
         </div>
         <div class="mb-3">
-          <p class="fs-4 fw-bold">Price: {{ product.price }} VND</p>
+          <p class="fs-4 fw-bold">Price: {{ formatCurrency(product.price) }}</p>
           <p class="fs-5">Availability:
             <span :class="{ 'text-success': product.stock > 0, 'text-danger': product.stock === 0 }">
               {{ product.stock > 0 ? `In Stock (${product.stock} items)` : 'Out of Stock' }}
@@ -72,6 +72,7 @@ import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import useProduct from '@/composables/useProduct';
 import { useCartStore } from '@/store/cartStore';
+import { formatCurrency } from '@/utils/formatters';
 
 const route = useRoute();
 const cartStore = useCartStore();

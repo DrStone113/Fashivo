@@ -58,7 +58,7 @@
 
 <script setup>
 import AdvancedSearch from '@/components/AdvancedSearch.vue';
-import ProductCard from '@/components/ProductCard.vue'; // Đảm bảo đúng component này
+import ProductCard from '@/components/ProductCard.vue'; // Ensure this is the correct component
 import MainPagination from '@/components/MainPagination.vue';
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -108,29 +108,29 @@ function changeCurrentPage(page) {
 }
 
 function handleAddToCart(product) {
-  // THÊM DÒNG LOG NÀY NGAY TRƯỚC KHI GỌI cartStore.addItem
+  // ADD THIS LOG LINE RIGHT BEFORE CALLING cartStore.addItem
   console.log('--- Debugging Add to Cart (from MenuPage) ---');
   console.log('Product object being added:', product);
   console.log('Product ID:', product.id);
   console.log('Product Name:', product.name);
-  console.log('Product Price BEFORE adding to cart:', product.price); // <--- LOG QUAN TRỌNG NHẤT
+  console.log('Product Price BEFORE adding to cart:', product.price); // <--- MOST IMPORTANT LOG
   console.log('Product Type (if any):', product.type);
   console.log('-------------------------------------------');
 
   if (product.stock > 0) {
     cartStore.addItem(product, 1);
   } else {
-    alert('Sản phẩm đã hết hàng!'); // Thông báo nếu hết hàng
+    alert('Product is out of stock!'); // Notify if out of stock
   }
 }
 
 function handleBuyNow(product) {
-  // THÊM DÒNG LOG NÀY NGAY TRƯỚC KHI GỌI cartStore.addItem
+  // ADD THIS LOG LINE RIGHT BEFORE CALLING cartStore.addItem
   console.log('--- Debugging Buy Now (from MenuPage) ---');
   console.log('Product object being bought:', product);
   console.log('Product ID:', product.id);
   console.log('Product Name:', product.name);
-  console.log('Product Price BEFORE buying now:', product.price); // <--- LOG QUAN TRỌNG NHẤT
+  console.log('Product Price BEFORE buying now:', product.price); // <--- MOST IMPORTANT LOG
   console.log('Product Type (if any):', product.type);
   console.log('---------------------------------------');
 
@@ -138,7 +138,7 @@ function handleBuyNow(product) {
     cartStore.addItem(product, 1);
     router.push('/cart');
   } else {
-    alert('Sản phẩm đã hết hàng!'); // Thông báo nếu hết hàng
+    alert('Product is out of stock!'); // Notify if out of stock
   }
 }
 
@@ -148,28 +148,26 @@ function reloadPage() {
 </script>
 
 <style scoped>
-/* Giữ nguyên các style đã có */
+/* Keep existing styles */
 .container.main-content {
-  max-width: 1400px;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  gap: 30px;
+  gap: 20px;
   align-items: flex-start;
-  padding: 0 20px;
 
-  /* THÊM BACKGROUND VÀO ĐÂY */
-  background-color: #ffffff; /* Ví dụ: màu nền trắng */
-  /* Hoặc hình ảnh nền */
+  /* ADD BACKGROUND HERE */
+  background-color: #ffffff; /* Example: white background */
+  /* Or background image */
   /* background-image: url('/path/to/your/image.jpg'); */
   /* background-size: cover; */
   /* background-position: center; */
   /* background-repeat: no-repeat; */
 
-  border-radius: 10px; /* Bo góc nhẹ cho đẹp */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Thêm đổ bóng */
-  margin-top: 20px; /* Khoảng cách với hero section */
-  margin-bottom: 40px; /* Khoảng cách với footer (nếu có) */
+  border-radius: 8px; /* Slight rounding for aesthetics */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add drop shadow */
+  margin-top: 15px; /* Spacing with hero section */
+  margin-bottom: 30px; /* Spacing with footer (if any) */
 }
 
 .menu-page {
@@ -180,27 +178,27 @@ function reloadPage() {
 .hero-section {
   background: linear-gradient(45deg, #6a11cb, #2575fc); /* Blue-purple gradient */
   color: white;
-  padding: 60px 20px;
+  padding: 40px 20px;
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .hero-title {
-  font-size: 2.8rem;
+  font-size: 2.2rem;
   font-weight: 700;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
 }
 
 .hero-subtitle {
-  font-size: 1.1rem;
+  font-size: 1rem;
   opacity: 0.9;
-  max-width: 600px;
+  max-width: 500px;
   margin: 10px auto 0;
 }
 
 /* Main Content Layout */
 .container.main-content {
-  max-width: 1400px;
+  max-width: 100vw;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -222,8 +220,8 @@ function reloadPage() {
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 15px;
 }
 
 .state-container {
@@ -301,7 +299,7 @@ function reloadPage() {
     font-size: 2.2rem;
   }
   .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }
 </style>

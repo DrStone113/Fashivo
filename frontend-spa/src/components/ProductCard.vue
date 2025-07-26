@@ -10,9 +10,12 @@
         class="product-image-styled"
         onerror="this.onerror=null;this.src='/public/image/products/BLANK.jpg.png';"
       >
+      <span class="stock-info-styled" :class="stockClass">
+        {{ product.stock > 0 && product.available ? `In Stock (${product.stock})` : 'Out of Stock' }}
+      </span>
       
       <div v-if="isProductUnavailable" class="unavailable-overlay-styled">
-        <span class="unavailable-text-styled">Hết hàng</span>
+        <span class="unavailable-text-styled">Out of Stock</span>
       </div>
       
       <div v-if="isAdmin" class="admin-actions-styled">
@@ -50,10 +53,7 @@
 
       <div class="product-footer-styled">
         <div class="footer-info-styled">
-          <p class="product-price-styled">{{ formatPrice(product.price) }}</p>
-          <span class="stock-info-styled" :class="stockClass">
-            {{ product.stock > 0 && product.available ? `Còn hàng (${product.stock})` : 'Hết hàng' }}
-          </span>
+          <p class="product-price-styled">{{ formatCurrency(product.price) }}</p>
         </div>
 
         <div class="footer-actions-styled">
@@ -85,6 +85,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore'; 
 import productService from '@/services/product.service'; 
 import { useQueryClient } from '@tanstack/vue-query'; 
+import { formatCurrency } from '@/utils/formatters';
 
 const props = defineProps({
   product: {
@@ -115,17 +116,6 @@ const stockClass = computed(() => ({
   'in-stock-styled': props.product.stock > 0 && props.product.available,
   'out-of-stock-styled': props.product.stock === 0 || !props.product.available
 }));
-
-const formatPrice = (price) => {
-  const numericPrice = Number(price);
-  if (isNaN(numericPrice)) {
-    return '';
-  }
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(numericPrice);
-};
 
 const goToProductDetails = () => {
   if (props.product && props.product.id) {
@@ -164,19 +154,19 @@ const addProduct = () => {
 };
 
 const confirmDeleteProduct = async () => {
-  // Thay thế window.confirm bằng một modal tùy chỉnh nếu có thể
-  const isConfirmed = window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${props.product.name}" không?`);
+  // Replace window.confirm with a custom modal if possible
+  const isConfirmed = window.confirm(`Are you sure you want to delete the product "${props.product.name}"?`);
   
   if (isConfirmed) {
     try {
       await productService.deleteProduct(props.product.id);
-      alert('Sản phẩm đã được xóa thành công!'); // Thay bằng modal thông báo
+      alert('Product deleted successfully!'); // Replace with a notification modal
       
       queryClient.invalidateQueries(['products']); 
 
     } catch (error) {
-      console.error('Lỗi khi xóa sản phẩm:', error);
-      alert('Không thể xóa sản phẩm: ' + (error.message || 'Lỗi không xác định.')); // Thay bằng modal thông báo lỗi
+      console.error('Error deleting product:', error);
+      alert('Could not delete product: ' + (error.message || 'Unknown error.')); // Replace with an error notification modal
     }
   }
 };
@@ -186,10 +176,10 @@ const confirmDeleteProduct = async () => {
 /* General Product Card Styling */
 .product-card-styled {
   background: white;
-  border-radius: 18px; /* More rounded corners */
+  border-radius: 12px; /* Less rounded corners */
   overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Initial subtle shadow */
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Lighter shadow */
+  transition: all 0.3s ease; /* Faster transition */
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -199,9 +189,9 @@ const confirmDeleteProduct = async () => {
 }
 
 .product-card-styled:hover {
-  transform: translateY(-10px) scale(1.01); /* Lift and slight scale */
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2); /* Deeper shadow */
-  border: 3px solid #a855f7; /* Purple border on hover */
+  transform: translateY(-5px); /* Less lift */
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); /* Less deep shadow */
+  border: 2px solid #a855f7; /* Thinner border on hover */
 }
 
 /* Product Image Container */
@@ -231,31 +221,30 @@ const confirmDeleteProduct = async () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+  background-color: rgba(0, 0, 0, 0.5); /* Lighter overlay */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10;
-  backdrop-filter: blur(5px); /* Blur effect */
-  -webkit-backdrop-filter: blur(5px); /* For Safari */
+  backdrop-filter: blur(4px); /* Less blur */
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .unavailable-text-styled {
-  color: white;
-  font-weight: 700; /* Bolder */
-  font-size: 1.8em; /* Larger text */
-  padding: 10px 25px;
-  border: 3px solid white; /* Thicker border */
-  border-radius: 10px; /* More rounded */
+  color: #333;
+  font-weight: 700;
+  font-size: 1.5em;
+  padding: 12px 28px;
+  border: 3px solid #333;
+  border-radius: 8px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  background-color: rgba(255, 255, 255, 0.1); /* Subtle background for text */
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* Text shadow */
+  letter-spacing: 1.5px;
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 /* Product Info Section */
 .product-info-styled {
-  padding: 18px; /* More padding */
+  padding: 15px; /* Less padding */
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -275,10 +264,10 @@ const confirmDeleteProduct = async () => {
 }
 
 .product-name-styled {
-  font-size: 1.15rem; /* Larger name */
-  font-weight: 700; /* Bolder */
+  font-size: 0.9rem; /* Even smaller name */
+  font-weight: 600; /* Less bold */
   color: #170f59;
-  line-height: 1.4;
+  line-height: 1.2;
   margin: 0;
   text-overflow: ellipsis; /* Add ellipsis for long names */
   white-space: nowrap;
@@ -289,7 +278,7 @@ const confirmDeleteProduct = async () => {
 /* Product Footer (Price & Actions) */
 .product-footer-styled {
   position: relative;
-  min-height: 60px; /* Increased height to accommodate actions */
+  min-height: 50px; /* Decreased height */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -311,15 +300,15 @@ const confirmDeleteProduct = async () => {
   left: 0;
   width: 100%;
   display: flex;
-  gap: 10px; /* More space between buttons */
+  gap: 8px; /* Less space between buttons */
   opacity: 0;
-  transform: translateY(15px); /* Start further down */
+  transform: translateY(10px); /* Start a bit lower */
   pointer-events: none; 
 }
 
 .product-card-styled:hover .footer-info-styled {
   opacity: 0;
-  transform: translateY(-15px); /* Move up further */
+  transform: translateY(-10px); /* Move up less */
   pointer-events: none;
 }
 
@@ -330,47 +319,51 @@ const confirmDeleteProduct = async () => {
 }
 
 .product-price-styled {
-  font-size: 1.4rem; /* Larger price */
-  font-weight: 800; /* Bolder */
+  font-size: 1rem; /* Final price reduction */
+  font-weight: 700; /* Less bold */
   color: #ec4899; /* Vibrant pink */
   margin: 0;
 }
 
 .stock-info-styled {
-  font-size: 0.85rem; /* Slightly larger */
-  padding: 4px 10px;
-  border-radius: 8px; /* More rounded */
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.75rem; /* Final stock info reduction */
+  padding: 3px 8px;
+  border-radius: 6px; /* Less rounded */
   font-weight: 600;
   text-transform: uppercase;
+  z-index: 5;
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 .in-stock-styled {
-  background-color: #e6ffed; /* Light green */
-  color: #1a5e20; /* Dark green text */
+  background-color: rgba(26, 94, 32, 0.8); /* Dark green with transparency */
 }
 
 .out-of-stock-styled {
-  background-color: #ffe6e6; /* Light red */
-  color: #8c0000; /* Dark red text */
+  display: none;
 }
 
 /* Action Buttons (Add to Cart, Buy Now) */
 .action-btn-styled {
   flex: 1;
-  padding: 12px 10px; /* Larger padding */
+  padding: 8px 6px; /* Even smaller padding */
   border: none;
-  border-radius: 12px; /* More rounded */
-  font-size: 0.9rem; /* Slightly larger font */
-  font-weight: 700; /* Bolder */
+  border-radius: 8px; /* Less rounded */
+  font-size: 0.75rem; /* Even smaller font */
+  font-weight: 600; /* Less bold */
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px; /* More space between icon and text */
+  gap: 4px; /* Less space between icon and text */
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .add-to-cart-btn-styled {
