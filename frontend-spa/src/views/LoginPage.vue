@@ -1,13 +1,13 @@
 <template>
   <div class="login-page-wrapper-styled">
     <div class="login-container-styled">
-      <h2 class="main-title-styled">Đăng Nhập</h2>
+      <h2 class="main-title-styled">Login</h2>
 
       <div class="login-form-section-styled card-section-styled">
-        <h3 class="section-title-styled">Chào Mừng Trở Lại!</h3>
+        <h3 class="section-title-styled">Welcome Back!</h3>
         <form @submit.prevent="handleLogin">
           <div class="form-group-styled">
-            <label for="email" class="form-label-styled">Địa chỉ Email</label>
+            <label for="email" class="form-label-styled">Email Address</label>
             <input 
               type="email" 
               class="form-control-styled" 
@@ -15,11 +15,11 @@
               v-model="email" 
               required 
               autocomplete="email" 
-              placeholder="Nhập địa chỉ email của bạn"
+              placeholder="Enter your email address"
             >
           </div>
           <div class="form-group-styled">
-            <label for="password" class="form-label-styled">Mật khẩu</label>
+            <label for="password" class="form-label-styled">Password</label>
             <input 
               type="password" 
               class="form-control-styled" 
@@ -27,7 +27,7 @@
               v-model="password" 
               required 
               autocomplete="current-password" 
-              placeholder="Nhập mật khẩu của bạn"
+              placeholder="Enter your password"
             >
           </div>
           
@@ -35,14 +35,14 @@
           
           <button type="submit" class="action-button-styled submit-button-styled" :disabled="isLoading">
             <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            <i v-else class="fas fa-sign-in-alt me-2"></i> Đăng Nhập
+            <i v-else class="fas fa-sign-in-alt me-2"></i> Login
           </button>
         </form>
         <p class="mt-4 text-center dont-have-account-text-styled">
-          Chưa có tài khoản? <router-link to="/register" class="register-link-styled">Đăng ký tại đây</router-link>
+          Don't have an account? <router-link to="/register" class="register-link-styled">Register here</router-link>
         </p>
         <p class="text-center forgot-password-text-styled">
-          <router-link to="/forgot-password" class="forgot-password-link-styled">Quên mật khẩu?</router-link>
+          <router-link to="/forgot-password" class="forgot-password-link-styled">Forgot password?</router-link>
         </p>
       </div>
     </div>
@@ -71,7 +71,7 @@ const handleLogin = async () => {
     const redirectPath = route.query.redirect || '/';
     router.push(redirectPath); 
   } catch (error) {
-    errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.';
+    errorMessage.value = error.message || 'Login failed. Please check your credentials.';
   } finally {
     isLoading.value = false;
   }

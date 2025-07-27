@@ -1,14 +1,14 @@
 <template>
   <div class="register-page-wrapper-styled">
     <div class="register-container-styled">
-      <h2 class="main-title-styled">Đăng Ký Tài Khoản Mới</h2>
+      <h2 class="main-title-styled">Create a New Account</h2>
 
       <form @submit.prevent="handleRegister" class="register-forms-layout-styled">
         <!-- Phần 1: Thông tin tài khoản và Avatar -->
         <div class="register-section-styled card-section-styled">
-          <h3 class="section-title-styled">Thông Tin Tài Khoản</h3>
+          <h3 class="section-title-styled">Account Information</h3>
           <div class="form-group-styled">
-            <label for="name" class="form-label-styled">Họ và Tên</label>
+            <label for="name" class="form-label-styled">Full Name</label>
             <input 
               type="text" 
               class="form-control-styled" 
@@ -16,11 +16,11 @@
               v-model="name" 
               required 
               autocomplete="name" 
-              placeholder="Nhập họ và tên của bạn"
+              placeholder="Enter your full name"
             >
           </div>
           <div class="form-group-styled">
-            <label for="email" class="form-label-styled">Địa chỉ Email</label>
+            <label for="email" class="form-label-styled">Email Address</label>
             <input 
               type="email" 
               class="form-control-styled" 
@@ -28,11 +28,11 @@
               v-model="email" 
               required 
               autocomplete="email" 
-              placeholder="Nhập địa chỉ email của bạn"
+              placeholder="Enter your email address"
             >
           </div>
           <div class="form-group-styled">
-            <label for="password" class="form-label-styled">Mật khẩu</label>
+            <label for="password" class="form-label-styled">Password</label>
             <input 
               type="password" 
               class="form-control-styled" 
@@ -40,11 +40,11 @@
               v-model="password" 
               required 
               autocomplete="new-password" 
-              placeholder="Tạo mật khẩu"
+              placeholder="Create a password"
             >
           </div>
           <div class="form-group-styled">
-            <label for="passwordConfirm" class="form-label-styled">Xác nhận mật khẩu</label>
+            <label for="passwordConfirm" class="form-label-styled">Confirm Password</label>
             <input 
               type="password" 
               class="form-control-styled" 
@@ -52,38 +52,38 @@
               v-model="passwordConfirm" 
               required 
               autocomplete="new-password" 
-              placeholder="Xác nhận mật khẩu"
+              placeholder="Confirm your password"
             >
           </div>
           <div class="form-group-styled avatar-upload-group-styled">
-            <label for="avatar" class="form-label-styled">Ảnh đại diện (Tùy chọn)</label>
+            <label for="avatar" class="form-label-styled">Avatar (Optional)</label>
             <input type="file" class="form-control-styled file-input-styled" id="avatar" @change="handleAvatarUpload" accept="image/*">
-            <small class="help-text-styled">Chọn một file ảnh để làm avatar.</small>
+            <small class="help-text-styled">Choose an image file for your avatar.</small>
           </div>
         </div>
 
         <!-- Phần 2: Thông tin liên hệ -->
         <div class="register-section-styled card-section-styled">
-          <h3 class="section-title-styled">Thông Tin Liên Hệ</h3>
+          <h3 class="section-title-styled">Contact Information</h3>
           <div class="form-group-styled">
-            <label for="phone" class="form-label-styled">Số điện thoại (Tùy chọn)</label>
+            <label for="phone" class="form-label-styled">Phone Number (Optional)</label>
             <input 
               type="tel" 
               class="form-control-styled" 
               id="phone" 
               v-model="phone" 
               autocomplete="tel" 
-              placeholder="Nhập số điện thoại"
+              placeholder="Enter your phone number"
             >
           </div>
           <div class="form-group-styled">
-            <label for="address" class="form-label-styled">Địa chỉ (Tùy chọn)</label>
+            <label for="address" class="form-label-styled">Address (Optional)</label>
             <textarea 
               class="form-control-styled form-textarea-styled" 
               id="address" 
               v-model="address" 
               autocomplete="street-address" 
-              placeholder="Nhập địa chỉ của bạn"
+              placeholder="Enter your address"
             ></textarea>
           </div>
         </div>
@@ -93,13 +93,13 @@
           <div v-if="errorMessage" class="status-message-styled error-message-styled">{{ errorMessage }}</div>
           <button type="submit" class="action-button-styled submit-button-styled" :disabled="isLoading">
             <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            <i v-else class="fas fa-user-plus me-2"></i> Đăng Ký
+            <i v-else class="fas fa-user-plus me-2"></i> Register
           </button>
         </div>
       </form>
 
       <p class="mt-4 text-center already-account-text-styled">
-        Đã có tài khoản? <router-link to="/login" class="login-link-styled">Đăng nhập tại đây</router-link>
+        Already have an account? <router-link to="/login" class="login-link-styled">Login here</router-link>
       </p>
     </div>
   </div>
@@ -131,12 +131,12 @@ const handleRegister = async () => {
   isLoading.value = true;
 
   if (password.value !== passwordConfirm.value) {
-    errorMessage.value = 'Mật khẩu không khớp.';
+    errorMessage.value = 'Passwords do not match.';
     isLoading.value = false;
     return;
   }
   if (password.value.length < 6) { // Thêm validation cho độ dài mật khẩu
-    errorMessage.value = 'Mật khẩu phải có ít nhất 6 ký tự.';
+    errorMessage.value = 'Password must be at least 6 characters long.';
     isLoading.value = false;
     return;
   }
@@ -153,10 +153,10 @@ const handleRegister = async () => {
       role: 'user' 
     };
     await authStore.signup(userData);
-    alert('Đăng ký thành công! Vui lòng đăng nhập.'); 
+    alert('Registration successful! Please log in.'); 
     router.push('/login');
   } catch (error) {
-    errorMessage.value = error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+    errorMessage.value = error.message || 'Registration failed. Please try again.';
   } finally {
     isLoading.value = false;
   }

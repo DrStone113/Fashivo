@@ -1,69 +1,69 @@
 <template>
   <div class="profile-page-wrapper">
     <div class="profile-container">
-      <h2 class="main-title">Thông Tin Hồ Sơ Của Bạn</h2>
+      <h2 class="main-title">Your Profile Information</h2>
 
       <div v-if="!authStore.isAuthenticated" class="status-message warning-message">
-        <i class="fas fa-exclamation-triangle"></i> Vui lòng <router-link to="/login" class="alert-link">đăng nhập</router-link> để xem và cập nhật hồ sơ của bạn.
+        <i class="fas fa-exclamation-triangle"></i> Please <router-link to="/login" class="alert-link">log in</router-link> to view and update your profile.
       </div>
 
       <div v-else class="profile-forms-layout">
         <div class="profile-section card-section">
-          <h3 class="section-title">Cập Nhật Thông Tin Cá Nhân</h3>
+          <h3 class="section-title">Update Personal Information</h3>
           <form @submit.prevent="updateProfile">
             <div class="form-group">
-              <label for="name" class="form-label">Họ và Tên</label>
+              <label for="name" class="form-label">Full Name</label>
               <input 
                 type="text" 
                 class="form-control" 
                 id="name" 
                 v-model="userForm.name" 
                 required 
-                placeholder="Nhập họ và tên của bạn"
+                placeholder="Enter your full name"
                 autocomplete="name" 
               >
             </div>
             <div class="form-group">
-              <label for="email" class="form-label">Địa chỉ Email</label>
+              <label for="email" class="form-label">Email Address</label>
               <input 
                 type="email" 
                 class="form-control" 
                 id="email" 
                 v-model="userForm.email" 
                 required 
-                placeholder="Nhập địa chỉ email mới"
+                placeholder="Enter new email address"
                 autocomplete="email" 
               >
             </div>
             <div class="form-group">
-              <label for="phone" class="form-label">Số điện thoại</label>
+              <label for="phone" class="form-label">Phone Number</label>
               <input 
                 type="tel" 
                 class="form-control" 
                 id="phone" 
                 v-model="userForm.phone" 
-                placeholder="Nhập số điện thoại"
+                placeholder="Enter your phone number"
                 autocomplete="tel" 
               >
             </div>
             <div class="form-group">
-              <label for="address" class="form-label">Địa chỉ</label>
+              <label for="address" class="form-label">Address</label>
               <textarea 
                 class="form-control" 
                 id="address" 
                 v-model="userForm.address" 
-                placeholder="Nhập địa chỉ của bạn"
+                placeholder="Enter your address"
                 autocomplete="street-address" 
               ></textarea>
             </div>
             <div class="form-group avatar-upload-group">
-              <label for="avatar" class="form-label">Ảnh đại diện</label>
+              <label for="avatar" class="form-label">Avatar</label>
               <input type="file" class="form-control file-input" id="avatar" @change="handleAvatarUpload" accept="image/*">
               <div v-if="userForm.avatar_url" class="current-avatar-preview mt-2">
-                Ảnh hiện tại: 
+                Current avatar: 
                 <img :src="userForm.avatar_url" alt="Avatar" class="img-thumbnail-styled" onerror="this.onerror=null;this.src='/public/image/products/BLANK.jpg.png';">
               </div>
-              <small class="help-text">Chọn một file ảnh mới để thay đổi avatar. Ảnh sẽ được nén tự động.</small>
+              <small class="help-text">Select a new image file to change your avatar. The image will be compressed automatically.</small>
             </div>
 
             <div v-if="errorMessage" class="status-message error-message">{{ errorMessage }}</div>
@@ -71,13 +71,13 @@
 
             <button type="submit" class="action-button submit-button" :disabled="isLoading">
               <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-              <i v-else class="fas fa-user-edit"></i> Cập Nhật Hồ Sơ
+              <i v-else class="fas fa-user-edit"></i> Update Profile
             </button>
           </form>
         </div>
 
         <div class="profile-section card-section">
-          <h3 class="section-title">Thay Đổi Mật Khẩu</h3>
+          <h3 class="section-title">Change Password</h3>
           <form @submit.prevent="changePassword">
             <!-- THÊM TRƯỜNG USERNAME/EMAIL ẨN CHO MỤC ĐÍCH AUTOCOMPLETE -->
             <!-- Trường này sẽ không hiển thị nhưng giúp trình duyệt liên kết mật khẩu -->
@@ -90,38 +90,38 @@
             >
             
             <div class="form-group">
-              <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
+              <label for="currentPassword" class="form-label">Current Password</label>
               <input 
                 type="password" 
                 class="form-control" 
                 id="currentPassword" 
                 v-model="passwordForm.currentPassword" 
                 required 
-                placeholder="Nhập mật khẩu hiện tại"
+                placeholder="Enter your current password"
                 autocomplete="current-password" 
               >
             </div>
             <div class="form-group">
-              <label for="newPassword" class="form-label">Mật khẩu mới</label>
+              <label for="newPassword" class="form-label">New Password</label>
               <input 
                 type="password" 
                 class="form-control" 
                 id="newPassword" 
                 v-model="passwordForm.newPassword" 
                 required 
-                placeholder="Nhập mật khẩu mới"
+                placeholder="Enter new password"
                 autocomplete="new-password" 
               >
             </div>
             <div class="form-group">
-              <label for="newPasswordConfirm" class="form-label">Xác nhận mật khẩu mới</label>
+              <label for="newPasswordConfirm" class="form-label">Confirm New Password</label>
               <input 
                 type="password" 
                 class="form-control" 
                 id="newPasswordConfirm" 
                 v-model="passwordForm.newPasswordConfirm" 
                 required 
-                placeholder="Xác nhận mật khẩu mới"
+                placeholder="Confirm new password"
                 autocomplete="new-password" 
               >
             </div>
@@ -131,7 +131,7 @@
 
             <button type="submit" class="action-button change-password-button" :disabled="passwordLoading">
               <span v-if="passwordLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-              <i v-else class="fas fa-key"></i> Thay Đổi Mật Khẩu
+              <i v-else class="fas fa-key"></i> Change Password
             </button>
           </form>
         </div>
@@ -230,7 +230,7 @@ const handleAvatarUpload = async (event) => {
       userForm.avatarFile = compressedFile;
       userForm.avatar_url = URL.createObjectURL(compressedFile); 
     } catch (error) {
-      errorMessage.value = 'Lỗi khi nén ảnh: ' + error.message;
+      errorMessage.value = 'Error compressing image: ' + error.message;
       console.error('Image compression error:', error);
       userForm.avatarFile = null;
       userForm.avatar_url = authStore.user?.avatar_url || ''; 
@@ -274,10 +274,10 @@ const updateProfile = async () => {
     }
     
     await authStore.updateProfile(dataToSend);
-    successMessage.value = 'Hồ sơ đã được cập nhật thành công!';
+    successMessage.value = 'Profile updated successfully!';
     userForm.avatarFile = null; 
   } catch (error) {
-    errorMessage.value = error.message || 'Cập nhật hồ sơ thất bại.';
+    errorMessage.value = error.message || 'Profile update failed.';
   } finally {
     isLoading.value = false;
   }
@@ -289,12 +289,12 @@ const changePassword = async () => {
   passwordLoading.value = true;
 
   if (passwordForm.newPassword !== passwordForm.newPasswordConfirm) {
-    passwordErrorMessage.value = 'Mật khẩu mới không khớp.';
+    passwordErrorMessage.value = 'New passwords do not match.';
     passwordLoading.value = false;
     return;
   }
   if (passwordForm.newPassword.length < 6) { 
-    passwordErrorMessage.value = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+    passwordErrorMessage.value = 'New password must be at least 6 characters long.';
     passwordLoading.value = false;
     return;
   }
@@ -305,12 +305,12 @@ const changePassword = async () => {
       passwordForm.newPassword,
       passwordForm.newPasswordConfirm
     );
-    passwordSuccessMessage.value = 'Mật khẩu đã được thay đổi thành công!';
+    passwordSuccessMessage.value = 'Password changed successfully!';
     passwordForm.currentPassword = '';
     passwordForm.newPassword = '';
     passwordForm.newPasswordConfirm = '';
   } catch (error) {
-    passwordErrorMessage.value = error.message || 'Thay đổi mật khẩu thất bại.';
+    passwordErrorMessage.value = error.message || 'Password change failed.';
   } finally {
     passwordLoading.value = false;
   }
