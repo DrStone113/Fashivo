@@ -1,14 +1,14 @@
 <template>
   <div class="edit-product-page-styled">
-    <h2 class="page-title-styled">Chỉnh Sửa Sản Phẩm</h2>
+    <h2 class="page-title-styled">Edit Product</h2>
     
-    <p v-if="loading" class="loading-message">Đang tải thông tin sản phẩm...</p>
-    <p v-if="queryError" class="error-message-styled">Lỗi khi tải sản phẩm: {{ queryError.message }}</p>
+    <p v-if="loading" class="loading-message">Loading product information...</p>
+    <p v-if="queryError" class="error-message-styled">Error loading product: {{ queryError.message }}</p>
 
     <form @submit.prevent="submitForm" v-if="productData" class="product-edit-form-styled">
       
       <div class="image-section-styled">
-        <h3 class="section-heading">Ảnh sản phẩm</h3>
+        <h3 class="section-heading">Product Image</h3>
         <div class="main-image-preview-container">
           <img 
             :src="selectedFilePreviewUrl || productData.image_url || '/public/image/products/BLANK.jpg.png'" 
@@ -19,7 +19,7 @@
         </div>
         
         <div class="form-group-styled">
-          <label for="image_upload" class="form-label-styled">Tải lên Ảnh Mới:</label>
+          <label for="image_upload" class="form-label-styled">Upload New Image:</label>
           <input 
             type="file" 
             id="image_upload" 
@@ -27,72 +27,79 @@
             @change="handleImageUpload"
             class="file-input-styled"
           >
-          <small class="help-text-styled">Chọn một file ảnh (JPG, PNG, GIF) để thay thế ảnh hiện tại.</small>
+          <small class="help-text-styled">Select an image file (JPG, PNG, GIF) to replace the current image.</small>
         </div>
 
         <div class="form-group-styled">
-          <label for="image_url_text" class="form-label-styled">Hoặc nhập URL Ảnh:</label>
+          <label for="image_url_text" class="form-label-styled">Or enter Image URL:</label>
           <input 
             type="text" 
             id="image_url_text" 
             v-model="productData.image_url" 
             :disabled="!!selectedFile" 
-            placeholder="Để trống nếu tải lên file"
+            placeholder="Leave blank if uploading a file"
             class="form-input-styled"
           >
-          <small class="help-text-styled" v-if="selectedFile">URL ảnh bị vô hiệu hóa khi có file được chọn.</small>
+          <small class="help-text-styled" v-if="selectedFile">Image URL is disabled when a file is selected.</small>
         </div>
       </div>
 
       <div class="details-section-styled">
-        <h3 class="section-heading">Thông tin sản phẩm</h3>
+        <h3 class="section-heading">Product Information</h3>
         <div class="form-group-styled">
-          <label for="name" class="form-label-styled">Tên sản phẩm:</label>
+          <label for="name" class="form-label-styled">Product Name:</label>
           <input type="text" id="name" v-model="productData.name" required class="form-input-styled">
         </div>
 
         <div class="form-group-styled">
-          <label for="description" class="form-label-styled">Mô tả:</label>
+          <label for="description" class="form-label-styled">Description:</label>
           <textarea id="description" v-model="productData.description" class="form-textarea-styled"></textarea>
         </div>
 
         <div class="form-group-styled">
-          <label for="price" class="form-label-styled">Giá:</label>
-          <input type="number" id="price" v-model.number="productData.price" required min="0" class="form-input-styled">
+          <label for="price" class="form-label-styled">Price (VND):</label>
+          <input
+            type="text"
+            id="price"
+            v-model="formattedPrice"
+            required
+            class="form-input-styled"
+            placeholder="Enter product price"
+          />
         </div>
 
         <div class="form-group-styled">
-          <label for="stock" class="form-label-styled">Số lượng tồn kho:</label>
+          <label for="stock" class="form-label-styled">Stock Quantity:</label>
           <input type="number" id="stock" v-model.number="productData.stock" required min="0" class="form-input-styled">
         </div>
 
         <div class="form-group-styled">
-          <label for="type" class="form-label-styled">Loại sản phẩm:</label>
+          <label for="type" class="form-label-styled">Product Type:</label>
           <input type="text" id="type" v-model="productData.type" class="form-input-styled">
         </div>
 
         <div class="form-group-styled checkbox-group-styled">
           <input type="checkbox" id="available" v-model="productData.available" class="checkbox-input-styled">
-          <label for="available" class="checkbox-label-styled">Sản phẩm có sẵn để bán</label>
-          <small class="help-text-styled">Bỏ chọn nếu bạn muốn ẩn sản phẩm khỏi cửa hàng hoặc tạm ngừng bán.</small>
+          <label for="available" class="checkbox-label-styled">Product is available for sale</label>
+          <small class="help-text-styled">Uncheck if you want to hide the product from the store or temporarily stop selling.</small>
         </div>
         
         <div class="form-actions-styled">
           <button type="submit" :disabled="isSubmitting" class="btn-submit-styled">
-            <i class="fas fa-save me-2"></i> {{ isSubmitting ? 'Đang cập nhật...' : 'Cập nhật Sản phẩm' }}
+            <i class="fas fa-save me-2"></i> {{ isSubmitting ? 'Updating...' : 'Update Product' }}
           </button>
           <button type="button" @click="cancelEdit" class="btn-cancel-styled">
-            <i class="fas fa-times-circle me-2"></i> Hủy
+            <i class="fas fa-times-circle me-2"></i> Cancel
           </button>
         </div>
       </div>
     </form>
-    <p v-else-if="!loading && !queryError" class="no-product-found">Không tìm thấy sản phẩm.</p>
+    <p v-else-if="!loading && !queryError" class="no-product-found">Product not found.</p>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query'; 
 import useProduct from '@/composables/useProduct'; 
@@ -111,6 +118,25 @@ const queryClient = useQueryClient();
 const { product, isLoading: loading, isError: queryError } = useProduct().fetchProduct(ref(route.params.id));
 
 const fromPage = ref(parseInt(route.query.fromPage || '1'));
+
+const formattedPrice = computed({
+  get() {
+    if (productData.value && productData.value.price != null) {
+      const priceAsNumber = parseFloat(productData.value.price);
+      if (!isNaN(priceAsNumber)) {
+        return Math.round(priceAsNumber).toLocaleString('vi-VN');
+      }
+    }
+    return '';
+  },
+  set(value) {
+    if (productData.value) {
+      // Remove non-digit characters and parse to a number
+      const numericValue = parseInt(value.replace(/\D/g, ''), 10);
+      productData.value.price = isNaN(numericValue) ? 0 : numericValue;
+    }
+  },
+});
 
 watch(product, (newProduct) => {
   if (newProduct) {
@@ -168,11 +194,11 @@ async function submitForm() {
     
     queryClient.invalidateQueries(['products']); 
 
-    console.log('Cập nhật sản phẩm thành công! Đang điều hướng về trang:', fromPage.value); 
+    console.log('Product updated successfully! Redirecting to page:', fromPage.value); 
     router.push({ path: '/menu', query: { page: fromPage.value } }); 
   } catch (err) {
-    console.error('Lỗi khi cập nhật sản phẩm:', err);
-    alert('Cập nhật sản phẩm thất bại: ' + (err.message || 'Lỗi không xác định.'));
+    console.error('Error updating product:', err);
+    alert('Failed to update product: ' + (err.message || 'Unknown error.'));
   } finally {
     isSubmitting.value = false;
   }

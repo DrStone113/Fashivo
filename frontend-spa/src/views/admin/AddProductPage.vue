@@ -1,12 +1,12 @@
 <template>
   <div class="add-product-page-styled">
-    <h2 class="page-title-styled">Thêm Sản Phẩm Mới</h2>
+    <h2 class="page-title-styled">Add New Product</h2>
     
     <form @submit.prevent="submitForm" class="product-add-form-styled">
       
       <!-- Phần tải ảnh -->
       <div class="image-section-styled">
-        <h3 class="section-heading">Ảnh sản phẩm</h3>
+        <h3 class="section-heading">Product Image</h3>
         <div class="main-image-preview-container">
           <!-- Ảnh xem trước hoặc placeholder -->
           <img 
@@ -18,7 +18,7 @@
         </div>
         
         <div class="form-group-styled">
-          <label for="image_upload" class="form-label-styled">Tải lên Ảnh Sản Phẩm:</label>
+          <label for="image_upload" class="form-label-styled">Upload Product Image:</label>
           <input 
             type="file" 
             id="image_upload" 
@@ -27,64 +27,71 @@
             required 
             class="file-input-styled"
           >
-          <small class="help-text-styled">Chọn một file ảnh (JPG, PNG, GIF) cho sản phẩm (bắt buộc).</small>
+          <small class="help-text-styled">Select an image file (JPG, PNG, GIF) for the product (required).</small>
         </div>
 
         <div class="form-group-styled">
-          <label for="image_url_text" class="form-label-styled">Hoặc nhập URL Ảnh:</label>
+          <label for="image_url_text" class="form-label-styled">Or enter Image URL:</label>
           <input 
             type="text" 
             id="image_url_text" 
             v-model="productData.image_url" 
             :disabled="!!selectedFile" 
-            placeholder="Để trống nếu tải lên file"
+            placeholder="Leave blank if uploading a file"
             class="form-input-styled"
           >
-          <small class="help-text-styled" v-if="selectedFile">URL ảnh bị vô hiệu hóa khi có file được chọn.</small>
+          <small class="help-text-styled" v-if="selectedFile">Image URL is disabled when a file is selected.</small>
         </div>
       </div>
 
       <!-- Phần thông tin chi tiết sản phẩm -->
       <div class="details-section-styled">
-        <h3 class="section-heading">Thông tin sản phẩm</h3>
+        <h3 class="section-heading">Product Information</h3>
         <div class="form-group-styled">
-          <label for="name" class="form-label-styled">Tên sản phẩm:</label>
-          <input type="text" id="name" v-model="productData.name" required placeholder="Nhập tên sản phẩm" class="form-input-styled">
+          <label for="name" class="form-label-styled">Product Name:</label>
+          <input type="text" id="name" v-model="productData.name" required placeholder="Enter product name" class="form-input-styled">
         </div>
 
         <div class="form-group-styled">
-          <label for="description" class="form-label-styled">Mô tả:</label>
-          <textarea id="description" v-model="productData.description" placeholder="Mô tả chi tiết về sản phẩm" class="form-textarea-styled"></textarea>
+          <label for="description" class="form-label-styled">Description:</label>
+          <textarea id="description" v-model="productData.description" placeholder="Detailed description of the product" class="form-textarea-styled"></textarea>
         </div>
 
         <div class="form-group-styled">
-          <label for="price" class="form-label-styled">Giá:</label>
-          <input type="number" id="price" v-model.number="productData.price" required min="0" placeholder="0" class="form-input-styled">
+          <label for="price" class="form-label-styled">Price (VND):</label>
+          <input
+            type="text"
+            id="price"
+            v-model="formattedPrice"
+            required
+            class="form-input-styled"
+            placeholder="Enter product price"
+          />
         </div>
 
         <div class="form-group-styled">
-          <label for="stock" class="form-label-styled">Số lượng tồn kho:</label>
+          <label for="stock" class="form-label-styled">Stock Quantity:</label>
           <input type="number" id="stock" v-model.number="productData.stock" required min="0" placeholder="0" class="form-input-styled">
         </div>
 
         <div class="form-group-styled">
-          <label for="type" class="form-label-styled">Loại sản phẩm:</label>
-          <input type="text" id="type" v-model="productData.type" placeholder="Ví dụ: Áo thun, Quần jean, Giày" class="form-input-styled">
+          <label for="type" class="form-label-styled">Product Type:</label>
+          <input type="text" id="type" v-model="productData.type" placeholder="e.g., T-shirt, Jeans, Shoes" class="form-input-styled">
         </div>
 
         <!-- Trường available -->
         <div class="form-group-styled checkbox-group-styled">
           <input type="checkbox" id="available" v-model="productData.available" class="checkbox-input-styled">
-          <label for="available" class="checkbox-label-styled">Sản phẩm có sẵn để bán</label>
-          <small class="help-text-styled">Bỏ chọn nếu bạn muốn ẩn sản phẩm khỏi cửa hàng hoặc tạm ngừng bán.</small>
+          <label for="available" class="checkbox-label-styled">Product is available for sale</label>
+          <small class="help-text-styled">Uncheck if you want to hide the product from the store or temporarily stop selling.</small>
         </div>
         
         <div class="form-actions-styled">
           <button type="submit" :disabled="isSubmitting" class="btn-submit-styled">
-            <i class="fas fa-plus-circle me-2"></i> {{ isSubmitting ? 'Đang thêm...' : 'Thêm Sản phẩm' }}
+            <i class="fas fa-plus-circle me-2"></i> {{ isSubmitting ? 'Adding...' : 'Add Product' }}
           </button>
           <button type="button" @click="cancelAdd" class="btn-cancel-styled">
-            <i class="fas fa-times-circle me-2"></i> Hủy
+            <i class="fas fa-times-circle me-2"></i> Cancel
           </button>
         </div>
       </div>
@@ -93,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'; 
+import { ref, computed } from 'vue'; 
 import { useRouter } from 'vue-router';
 import productService from '@/services/product.service'; 
 import { useQueryClient } from '@tanstack/vue-query'; // THÊM DÒNG NÀY
@@ -115,6 +122,24 @@ const isSubmitting = ref(false);
 const selectedFile = ref(null); 
 const selectedFilePreviewUrl = ref(null); 
 
+const formattedPrice = computed({
+  get() {
+    if (productData.value && productData.value.price != null) {
+      const priceAsNumber = parseFloat(productData.value.price);
+      if (!isNaN(priceAsNumber)) {
+        return Math.round(priceAsNumber).toLocaleString('vi-VN');
+      }
+    }
+    return '';
+  },
+  set(value) {
+    if (productData.value) {
+      const numericValue = parseInt(value.replace(/\D/g, ''), 10);
+      productData.value.price = isNaN(numericValue) ? 0 : numericValue;
+    }
+  },
+});
+
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -131,11 +156,11 @@ async function submitForm() {
   if (isSubmitting.value) return;
 
   if (!productData.value.name || productData.value.price <= 0 || productData.value.stock < 0) {
-    alert('Vui lòng điền đầy đủ Tên, Giá, và Số lượng tồn kho.');
+    alert('Please fill in the Name, Price, and Stock Quantity.');
     return;
   }
   if (!selectedFile.value && !productData.value.image_url) {
-    alert('Vui lòng tải lên một ảnh hoặc nhập URL ảnh cho sản phẩm.');
+    alert('Please upload an image or enter an image URL for the product.');
     return;
   }
 
@@ -163,15 +188,15 @@ async function submitForm() {
     
     await productService.createProduct(dataToSend); 
     
-    alert('Thêm sản phẩm thành công!');
+    alert('Product added successfully!');
     
     // QUAN TRỌNG: Vô hiệu hóa cache của query 'products' để buộc nó fetch lại dữ liệu mới nhất
     queryClient.invalidateQueries(['products']); 
 
     router.push({ path: '/menu', query: { page: 1 } }); 
   } catch (err) {
-    console.error('Lỗi khi thêm sản phẩm:', err);
-    alert('Thêm sản phẩm thất bại: ' + (err.message || 'Lỗi không xác định.'));
+    console.error('Error adding product:', err);
+    alert('Failed to add product: ' + (err.message || 'Unknown error.'));
   } finally {
     isSubmitting.value = false;
   }
