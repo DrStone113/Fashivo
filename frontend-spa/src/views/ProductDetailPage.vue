@@ -63,6 +63,22 @@
           {{ errorMessage }}
         </div>
         <router-link to="/menu" class="btn btn-outline-secondary mt-3">Back to Products</router-link>
+
+        <!-- Admin Buttons -->
+        <div v-if="isAdmin" class="admin-actions mt-4 p-3 border rounded bg-light">
+          <h5 class="mb-3">Admin Actions</h5>
+          <div class="d-flex flex-wrap gap-2">
+            <router-link to="/admin/products/add" class="btn btn-success">
+              <i class="fas fa-plus-circle me-1"></i> Add New Product
+            </router-link>
+            <button @click="editProduct" class="btn btn-warning">
+              <i class="fas fa-edit me-1"></i> Edit Product
+            </button>
+            <button @click="deleteProduct" class="btn btn-danger">
+              <i class="fas fa-trash-alt me-1"></i> Delete Product
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     <div v-else class="alert alert-warning text-center my-5">
@@ -73,12 +89,19 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import useProduct from '@/composables/useProduct';
 import { useCartStore } from '@/store/cartStore';
+import { useAuthStore } from '@/store/authStore';
 import { formatCurrency } from '@/utils/formatters';
+import productService from '@/services/product.service';
+import { useQueryClient } from '@tanstack/vue-query';
 
 const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const queryClient = useQueryClient();
+const isAdmin = computed(() => authStore.user?.role === 'admin');
 const cartStore = useCartStore();
 
 // Create a computed property for the product ID from the route params
@@ -141,6 +164,46 @@ const addToCart = async () => {
   } catch (err) {
     console.error('Failed to add to cart:', err);
     errorMessage.value = err.message || 'Failed to add product to cart.';
+    successMessage.value = '';
+  }
+};
+
+const editProduct = () => {
+  if (product.value) {
+    router.push({ 
+      name: 'AdminEditProduct', 
+      params: { id: product.value.id }
+    });
+  }
+};
+
+const deleteProduct = async () => {
+  if (!product.value) {
+    errorMessage.value = 'Cannot delete: Product data not loaded.';
+    return;
+  }
+
+  const confirmation = window.confirm(`Are you sure you want to delete "${product.value.name}"? This action cannot be undone.`);
+  if (!confirmation) {
+    return;
+  }
+
+  try {
+    await productService.deleteProduct(product.value.id);
+    successMessage.value = `Product "${product.value.name}" has been deleted successfully.`;
+    errorMessage.value = '';
+    
+    // Invalidate queries to refetch product lists
+    queryClient.invalidateQueries(['products']);
+    queryClient.invalidateQueries(['product', product.value.id]);
+
+    // Redirect to the main menu after a short delay
+    setTimeout(() => {
+      router.push('/menu');
+    }, 2000);
+  } catch (err) {
+    console.error('Failed to delete product:', err);
+    errorMessage.value = err.message || 'Failed to delete product.';
     successMessage.value = '';
   }
 };
