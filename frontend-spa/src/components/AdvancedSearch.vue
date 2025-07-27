@@ -98,6 +98,7 @@
 
 <script setup>
 import { reactive, watch, ref, onMounted } from 'vue';
+import debounce from '@/utils/debounce';
 import categoryService from '@/services/category.service';
 
 const emit = defineEmits(['filter-change']);
@@ -149,6 +150,8 @@ const clearFilters = () => {
   filters.maxPrice = defaultMaxPrice;
   filters.inStock = false;
   filters.sortBy = 'name,asc';
+  // Emit immediately after clearing
+  emit('filter-change', { ...filters });
 };
 
 const loadCategories = async () => {
@@ -165,8 +168,12 @@ onMounted(() => {
   loadCategories();
 });
 
-watch(filters, (newFilters) => {
+const debouncedEmit = debounce((newFilters) => {
   emit('filter-change', newFilters);
+}, 500);
+
+watch(filters, (newFilters) => {
+  debouncedEmit(newFilters);
 }, { deep: true });
 </script>
 
