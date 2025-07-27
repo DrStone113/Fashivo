@@ -75,18 +75,18 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
+    // If coming back to a page, restore the previous scroll position
     if (savedPosition) {
-      return { ...savedPosition, behavior: 'instant' };
+      return savedPosition;
     }
 
-    if (to.hash) {
-      return {
-        el: to.hash,
-        behavior: 'smooth'
-      };
+    // If navigating to a different route, scroll to the top
+    if (to.path !== from.path) {
+      return { top: 0, left: 0 };
     }
 
-    return { top: 0, left: 0, behavior: 'instant' };
+    // Otherwise, maintain the current scroll position (e.g., for query changes)
+    return {};
   }
 });
 export default router;
