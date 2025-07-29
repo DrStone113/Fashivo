@@ -1,54 +1,84 @@
-// backend-api/src/routes/user.router.js
-const express = require('express');
-const userController = require('../controllers/user.controller');
-const { userSchema, userIdParamSchema, updateUserSchema } = require("../schema/user.schemas"); 
-const { validate } = require("../middlewares/validator.middleware"); 
+const express = require("express");
+const userController = require("../controllers/user.controller");
+const userSchemas = require("../schema/user.schemas"); 
+const { validate } = require("../middlewares/validator.middleware");
+const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require("multer");
-
-// Cấu hình Multer để lưu trữ ảnh avatar
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/avatars/"); 
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
+const ApiError = require("../api-error");
+const { authenticate, restrictTo } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-router.post(
-  "/",
-  upload.single("avatarFile"), 
-  validate(userSchema), 
-  userController.createUser
-);
+// Multer setup for avatar uploads
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Corrected path for consistency. Ensure 'public/avatars' exists.
+    cb(null, 'public/avatars');
+  },
+  filename: (req, file, cb) => {
+    const ext = file.mimetype.split("/")[1];
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `avatar-${uniqueSuffix}.${ext}`);
+  }
+});
 
-router.get(
-  "/",
-  userController.getAllUsers
-);
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image")) {
+    cb(null, true);
+  } else {
+    cb(new ApiError(400, "Not an image! Please upload only images."), false);
+  }
+};
 
-router.get(
-  "/:id",
-  validate(userIdParamSchema),
-  userController.getUserById
-);
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit for avatars
+});
 
-router.put(
-  "/:id",
-  upload.single("avatarFile"), 
-  validate(updateUserSchema), 
-  userController.updateUser
-);
+// ROUTES
+module.exports.setup = (app) => {
+  app.use("/api/v1/users", router);
 
-router.delete(
-  "/:id",
-  validate(userIdParamSchema),
-  userController.deleteUser
-);
+  router.route("/")
+    .get(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xem tất cả user
+      validate(userSchemas.getUserQuerySchema), userController.getAllUsers
+    )
+    .post(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được tạo user (nếu đây là endpoint tạo user bởi admin)
+      upload.single("avatarFile"), // Expects field name 'avatar' for file upload
+      validate(userSchemas.createUserSchema),
+      userController.createUser
+    )
+    .delete(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xóa tất cả user
+      userController.deleteAllUsers
+    );
 
-exports.setup = (app) => {
-  app.use("/api/v1/users", router); 
+  router.route("/:id")
+    .get(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xem user theo ID
+      validate(userSchemas.userIdParamSchema), userController.getUserById
+    )
+    .put( // Changed from PUT to PATCH for partial updates with updateUserSchema
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được cập nhật user
+      upload.single("avatarFile"), // Allow avatar update
+      validate(userSchemas.updateUserSchema), // Validate both params (from schema) and body
+      userController.updateUser
+    )
+    .delete(
+      authenticate, // <--- THÊM: Yêu cầu xác thực
+      restrictTo('admin'), // <--- THÊM: Chỉ admin mới được xóa user
+      validate(userSchemas.userIdParamSchema), userController.deleteUser
+    );
+
+  router.all("/", methodNotAllowed);
+  router.all("/:id", methodNotAllowed);
+  router.all("/*", methodNotAllowed);
 };

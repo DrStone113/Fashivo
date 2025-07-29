@@ -1,5 +1,5 @@
 // ct313hm02-project-DrStone113/backend-api/src/services/category.service.js
-const knex = require('../config/db'); // Đảm bảo đường dẫn đúng đến file cấu hình Knex của bạn
+const knex = require('../config/db');
 
 class CategoryService {
   constructor(knexInstance) {
@@ -12,8 +12,7 @@ class CategoryService {
       name: categoryData.name,
       url_path: categoryData.url_path,
       description: categoryData.description,
-      // created_at và updated_at sẽ được set tự động bởi DB hoặc bởi Knex nếu bạn có default values
-    }).returning('*'); // Trả về toàn bộ bản ghi đã tạo
+    }).returning('*');
     return newCategory;
   }
 
@@ -52,22 +51,21 @@ class CategoryService {
 
   // UPDATE
   async updateCategory(id, updateData) {
-    // Thêm updated_at vào dữ liệu cập nhật
-    updateData.updated_at = new Date();
+    // `updated_at` is handled by DB trigger, no need to set here
     const [updatedCategory] = await this.knex('categories')
       .where({ id: id })
       .update(updateData)
-      .returning('*'); // Trả về bản ghi đã cập nhật
+      .returning('*');
     return updatedCategory;
   }
 
   // DELETE
   async deleteCategory(id) {
     const deletedCount = await this.knex('categories').where({ id: id }).del();
-    return deletedCount > 0; // Trả về true nếu có bản ghi bị xóa, ngược lại là false
+    return deletedCount > 0;
   }
 
-  // DELETE ALL (Nếu bạn muốn một endpoint để xóa tất cả categories, hãy thêm vào OpenAPI spec)
+  // DELETE ALL
   async deleteAllCategories() {
     await this.knex('categories').del();
   }

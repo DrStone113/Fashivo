@@ -1,3 +1,4 @@
+// backend-api/src/services/cart.service.js
 const knex = require('../config/db'); // Đảm bảo đường dẫn đúng đến file cấu hình Knex của bạn
 const ApiError = require('../api-error'); // Import ApiError để ném lỗi nghiệp vụ
 
@@ -14,12 +15,13 @@ class CartService {
    * @returns {Object} Giỏ hàng và các mục đã được thêm/cập nhật.
    */
   async createOrUpdateCart(userId, items) {
-    // Bắt đầu một transaction để đảm bảo tính toàn vẹn dữ liệu
+    console.log('CartService: createOrUpdateCart called for user:', userId, 'with items:', items);
     return await this.knex.transaction(async trx => {
       let cart = await trx('carts').where({ user_id: userId }).first();
+      console.log('CartService: createOrUpdateCart - Existing cart:', cart);
 
       if (!cart) {
-        // Nếu người dùng chưa có giỏ hàng, tạo mới
+        console.log('CartService: createOrUpdateCart - Creating new cart for user:', userId);
         [cart] = await trx('carts').insert({ user_id: userId }).returning('*');
       }
 
@@ -28,53 +30,64 @@ class CartService {
 
       for (const item of items) {
         const { product_id, quantity } = item;
+        console.log(`CartService: createOrUpdateCart - Processing item product_id: ${product_id}, quantity: ${quantity}`);
 
         // 1. Kiểm tra sự tồn tại của sản phẩm và tồn kho
         const product = await trx('products').where({ id: product_id }).first();
         if (!product) {
+          console.error(`CartService: Product with ID ${product_id} not found.`);
           throw new ApiError(404, `Product with ID ${product_id} not found.`);
         }
-        if (!product.available) { // Giả sử 'available' là boolean để kiểm tra còn hàng
+        if (!product.available) {
+          console.warn(`CartService: Product '${product.name}' is not available.`);
           throw new ApiError(400, `Product '${product.name}' is not available.`);
         }
+        console.log('CartService: Product found:', product);
 
         const existingCartItem = await trx('cart_items')
           .where({ cart_id: cartId, product_id: product_id })
           .first();
+        console.log('CartService: Existing cart item:', existingCartItem);
 
         let finalQuantity = quantity;
         if (existingCartItem) {
-          // Nếu sản phẩm đã có trong giỏ, cộng thêm số lượng
           finalQuantity += existingCartItem.quantity;
+          console.log('CartService: Existing item, new final quantity:', finalQuantity);
         }
 
         // 2. Kiểm tra số lượng yêu cầu so với tồn kho
         if (finalQuantity > product.stock) {
+          console.warn(`CartService: Not enough stock for product '${product.name}'. Available: ${product.stock}, Requested: ${finalQuantity}`);
           throw new ApiError(400, `Not enough stock for product '${product.name}'. Available: ${product.stock}, Requested: ${finalQuantity}`);
         }
 
         if (existingCartItem) {
-          // Cập nhật số lượng và giá (giá tại thời điểm cập nhật)
+          console.log(`CartService: Updating existing cart item ${existingCartItem.id} for product ${product_id} to quantity ${finalQuantity}`);
           const [updatedItem] = await trx('cart_items')
             .where({ cart_id: cartId, product_id: product_id })
             .update({
               quantity: finalQuantity,
-              price: product.price, // Cập nhật giá sản phẩm hiện tại
-              updated_at: new Date()
+              price: product.price,
+              updated_at: knex.fn.now() // Sử dụng knex.fn.now() cho timestamp
             })
             .returning('*');
           results.push(updatedItem);
         } else {
-          // Thêm mới sản phẩm vào giỏ hàng
+          console.log(`CartService: Adding new cart item for product ${product_id} with quantity ${finalQuantity}`);
           const [newItem] = await trx('cart_items').insert({
             cart_id: cartId,
             product_id,
             quantity: finalQuantity,
-            price: product.price, // Lưu giá sản phẩm tại thời điểm thêm vào giỏ
+            price: product.price,
+            created_at: knex.fn.now(), // Thêm created_at cho item mới
+            updated_at: knex.fn.now()
           }).returning('*');
           results.push(newItem);
         }
       }
+      // Cập nhật updated_at của giỏ hàng chính
+      await trx('carts').where({ id: cartId }).update({ updated_at: knex.fn.now() });
+      console.log('CartService: createOrUpdateCart - Transaction complete.');
       return { cart, items: results };
     });
   }
@@ -86,6 +99,7 @@ class CartService {
    * @returns {Object} Danh sách các giỏ hàng và thông tin phân trang.
    */
   async getAllCarts(filters) {
+    console.log('CartService: getAllCarts called with filters:', filters);
     let query = this.knex('carts')
       .select(
         'carts.id as cart_id',
@@ -95,16 +109,16 @@ class CartService {
         'cart_items.id as cart_item_id',
         'cart_items.product_id',
         'cart_items.quantity',
-        'cart_items.price as item_price', // Giá của sản phẩm tại thời điểm thêm vào giỏ
+        'cart_items.price as item_price',
         'products.name as product_name',
         'products.description as product_description',
-        'products.price as current_product_price', // Giá hiện tại của sản phẩm
+        'products.price as current_product_price',
         'products.image_url as product_image_url',
         'products.available as product_available'
       )
       .join('cart_items', 'carts.id', 'cart_items.cart_id')
       .join('products', 'cart_items.product_id', 'products.id')
-      .orderBy('carts.id') // Sắp xếp để gom nhóm dễ hơn nếu cần
+      .orderBy('carts.id')
       .orderBy('cart_items.id');
 
     if (filters.user_id) {
@@ -124,7 +138,6 @@ class CartService {
 
     const rawCarts = await query.offset(offset).limit(limit);
 
-    // Xử lý dữ liệu thô để nhóm các mục giỏ hàng vào từng giỏ hàng
     const groupedCarts = rawCarts.reduce((acc, row) => {
       let cart = acc.find(c => c.id === row.cart_id);
       if (!cart) {
@@ -142,17 +155,20 @@ class CartService {
         product_id: row.product_id,
         quantity: row.quantity,
         item_price: row.item_price,
-        product_name: row.product_name,
-        product_description: row.product_description,
-        current_product_price: row.current_product_price,
-        product_image_url: row.product_image_url,
-        product_available: row.product_available,
+        product: { // Group product details under a 'product' object
+            id: row.product_id,
+            name: row.product_name,
+            description: row.product_description,
+            price: row.current_product_price,
+            image_url: row.product_image_url,
+            available: row.product_available
+        }
       });
       return acc;
     }, []);
 
     const totalPages = Math.ceil(totalRecords / limit);
-
+    console.log('CartService: getAllCarts - Grouped carts:', groupedCarts);
     return {
       carts: groupedCarts,
       totalItems: totalRecords,
@@ -168,10 +184,13 @@ class CartService {
    * @returns {Object|null} Giỏ hàng của người dùng hoặc null nếu không tìm thấy.
    */
   async getCartByUserId(userId) {
+    console.log('CartService: getCartByUserId called for user ID:', userId);
     const cart = await this.knex('carts').where({ user_id: userId }).first();
     if (!cart) {
+      console.log('CartService: getCartByUserId - No cart found for user ID:', userId);
       return null;
     }
+    console.log('CartService: getCartByUserId - Found cart:', cart);
 
     const items = await this.knex('cart_items')
       .select(
@@ -183,12 +202,31 @@ class CartService {
         'products.description as product_description',
         'products.price as current_product_price',
         'products.image_url as product_image_url',
-        'products.available as product_available'
+        'products.available as product_available',
+        'products.stock as product_stock' // Thêm stock vào đây
       )
       .where({ cart_id: cart.id })
       .join('products', 'cart_items.product_id', 'products.id');
 
-    return { ...cart, items };
+    // Transform items to match frontend's expected structure
+    const transformedItems = items.map(item => ({
+        id: item.cart_item_id, // ID của cart_item
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.item_price, // Giá của sản phẩm tại thời điểm thêm vào giỏ
+        product: { // Đối tượng product chi tiết
+            id: item.product_id,
+            name: item.product_name,
+            description: item.product_description,
+            price: item.current_product_price, // Giá hiện tại của sản phẩm
+            image_url: item.product_image_url,
+            available: item.product_available,
+            stock: item.product_stock // Thêm stock vào đối tượng product
+        }
+    }));
+    console.log('CartService: getCartByUserId - Transformed items:', transformedItems);
+
+    return { ...cart, items: transformedItems };
   }
 
   /**
@@ -197,10 +235,13 @@ class CartService {
    * @returns {Object|null} Giỏ hàng hoặc null nếu không tìm thấy.
    */
   async getCartById(cartId) {
+    console.log('CartService: getCartById called for cart ID:', cartId);
     const cart = await this.knex('carts').where({ id: cartId }).first();
     if (!cart) {
+      console.log('CartService: getCartById - No cart found for ID:', cartId);
       return null;
     }
+    console.log('CartService: getCartById - Found cart:', cart);
 
     const items = await this.knex('cart_items')
       .select(
@@ -212,12 +253,30 @@ class CartService {
         'products.description as product_description',
         'products.price as current_product_price',
         'products.image_url as product_image_url',
-        'products.available as product_available'
+        'products.available as product_available',
+        'products.stock as product_stock' // Thêm stock vào đây
       )
       .where({ cart_id: cart.id })
       .join('products', 'cart_items.product_id', 'products.id');
 
-    return { ...cart, items };
+    const transformedItems = items.map(item => ({
+        id: item.cart_item_id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.item_price,
+        product: {
+            id: item.product_id,
+            name: item.product_name,
+            description: item.product_description,
+            price: item.current_product_price,
+            image_url: item.product_image_url,
+            available: item.product_available,
+            stock: item.product_stock
+        }
+    }));
+    console.log('CartService: getCartById - Transformed items:', transformedItems);
+
+    return { ...cart, items: transformedItems };
   }
 
   /**
@@ -228,18 +287,23 @@ class CartService {
    * @returns {Object|null} Mục giỏ hàng đã cập nhật hoặc null nếu không tìm thấy.
    */
   async updateCartItem(cartId, productId, quantity) {
+    console.log(`CartService: updateCartItem called for cart ${cartId}, product ${productId}, quantity ${quantity}`);
     return await this.knex.transaction(async trx => {
       // 1. Lấy thông tin sản phẩm để kiểm tra tồn kho
       const product = await trx('products').where({ id: productId }).first();
       if (!product) {
+        console.error(`CartService: updateCartItem - Product with ID ${productId} not found.`);
         throw new ApiError(404, `Product with ID ${productId} not found.`);
       }
       if (!product.available) {
+        console.warn(`CartService: updateCartItem - Product '${product.name}' is not available.`);
         throw new ApiError(400, `Product '${product.name}' is not available.`);
       }
       if (quantity > product.stock) {
+        console.warn(`CartService: updateCartItem - Not enough stock for product '${product.name}'. Available: ${product.stock}, Requested: ${quantity}`);
         throw new ApiError(400, `Not enough stock for product '${product.name}'. Available: ${product.stock}, Requested: ${quantity}`);
       }
+      console.log('CartService: updateCartItem - Product found and available/stock checked.');
 
       // 2. Cập nhật mục trong giỏ hàng
       const [updatedItem] = await trx('cart_items')
@@ -247,13 +311,17 @@ class CartService {
         .update({
           quantity,
           price: product.price, // Cập nhật giá sản phẩm hiện tại khi số lượng thay đổi
-          updated_at: new Date()
+          updated_at: knex.fn.now()
         })
         .returning('*');
+      console.log('CartService: updateCartItem - Updated cart item:', updatedItem);
 
       // 3. Cập nhật timestamp của giỏ hàng cha
       if (updatedItem) {
-        await trx('carts').where({ id: cartId }).update({ updated_at: new Date() });
+        await trx('carts').where({ id: cartId }).update({ updated_at: knex.fn.now() });
+        console.log('CartService: updateCartItem - Parent cart updated_at updated.');
+      } else {
+          console.warn('CartService: updateCartItem - No item was updated by Knex query.'); // <-- THÊM DÒNG NÀY
       }
 
       return updatedItem;
@@ -267,12 +335,15 @@ class CartService {
    * @returns {boolean} True nếu xóa thành công, false nếu không tìm thấy.
    */
   async deleteCartItem(cartId, productId) {
+    console.log(`CartService: deleteCartItem called for cart ${cartId}, product ${productId}`);
     const deletedCount = await this.knex('cart_items')
       .where({ cart_id: cartId, product_id: productId })
       .del();
-    // Cập nhật timestamp của giỏ hàng cha sau khi xóa mục
     if (deletedCount > 0) {
-      await this.knex('carts').where({ id: cartId }).update({ updated_at: new Date() });
+      await this.knex('carts').where({ id: cartId }).update({ updated_at: knex.fn.now() });
+      console.log(`CartService: deleted ${deletedCount} item(s) from cart ${cartId}. Parent cart updated.`);
+    } else {
+      console.log(`CartService: No item ${productId} found in cart ${cartId} to delete.`);
     }
     return deletedCount > 0;
   }
@@ -283,10 +354,11 @@ class CartService {
    * @returns {boolean} True nếu xóa thành công, false nếu không tìm thấy.
    */
   async deleteCart(cartId) {
-    // Xóa các mục trong giỏ trước, sau đó xóa giỏ hàng
+    console.log(`CartService: deleteCart called for cart ${cartId}`);
     return await this.knex.transaction(async trx => {
       await trx('cart_items').where({ cart_id: cartId }).del();
       const deletedCount = await trx('carts').where({ id: cartId }).del();
+      console.log(`CartService: deleted ${deletedCount} cart(s) with ID ${cartId}.`);
       return deletedCount > 0;
     });
   }
@@ -296,10 +368,10 @@ class CartService {
    * @returns {number} Số lượng giỏ hàng đã xóa.
    */
   async deleteAllCarts() {
-    // Xóa tất cả các mục trong giỏ hàng trước
+    console.log('CartService: deleteAllCarts called.');
     await this.knex('cart_items').del();
-    // Sau đó xóa tất cả các giỏ hàng
     const deletedCount = await this.knex('carts').del();
+    console.log(`CartService: Deleted all ${deletedCount} carts.`);
     return deletedCount;
   }
 }

@@ -6,13 +6,14 @@ const { validate } = require("../middlewares/validator.middleware");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const multer = require("multer");
 const ApiError = require("../api-error");
+const { authenticate, restrictTo } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-// Multer setup
+// Multer setup for product images
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/img/products');
+    cb(null, 'public/image/products'); // <-- SỬA TỪ 'img' THÀNH 'image'
   },
   filename: (req, file, cb) => {
     const ext = file.mimetype.split("/")[1];
@@ -32,7 +33,7 @@ const multerFilter = (req, file, cb) => {
 const upload = multer({
   storage: multerStorage,
   fileFilter: multerFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
 // ROUTES
@@ -40,24 +41,42 @@ module.exports.setup = (app) => {
   app.use("/api/v1/product", router);
 
   router.route("/")
-    .get(validate(productSchemas.getProductQuerySchema), productController.getAllProducts)
+    .get(
+      validate(productSchemas.getProductQuerySchema),
+      productController.getAllProducts
+    )
     .post(
+      authenticate,
+      restrictTo('admin'),
       upload.single("imageFile"),
-      validate(productSchemas.productSchema),
+      validate(productSchemas.createProductSchema),
       productController.createProduct
     )
-    .delete(productController.deleteAllProducts);
+    .delete(
+      authenticate,
+      restrictTo('admin'),
+      productController.deleteAllProducts
+    );
 
   router.route("/:id")
-    .get(validate(productSchemas.productIdParamSchema), productController.getProductById)
-    .put(
+    .get(
       validate(productSchemas.productIdParamSchema),
+      productController.getProductById
+    )
+    .put(
+      authenticate,
+      restrictTo('admin'),
       upload.single("imageFile"),
-      validate(productSchemas.productSchema),
+      validate(productSchemas.updateProductSchema),
       productController.updateProduct
     )
-    .delete(validate(productSchemas.productIdParamSchema), productController.deleteProduct);
+    .delete(
+      authenticate,
+      restrictTo('admin'),
+      validate(productSchemas.productIdParamSchema),
+      productController.deleteProduct
+    );
 
   router.all("/", methodNotAllowed);
   router.all("/:id", methodNotAllowed);
-};
+}
